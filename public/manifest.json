@@ -1,0 +1,27 @@
+
+{
+  "name": "Odjezdová tabule Praha Motol",
+  "short_name": "Praha Motol",
+  "description": "Živá odjezdová tabule pro zastávky v oblasti Praha Motol s real-time informacemi o tramvajích a autobusech",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1f2937",
+  "theme_color": "#1f2937",
+  "orientation": "landscape-primary",
+  "categories": ["transport", "utilities", "productivity"],
+  "lang": "cs",
+  "icons": [
+    {
+      "src": "/pictures/3d61981b-bfa0-4df6-9951-b52e55947255.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/pictures/56467aa3-5959-4c85-a8f1-70e58d7414c6.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
