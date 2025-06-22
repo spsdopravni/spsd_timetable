@@ -97,4 +97,4 @@ Tento projekt je open source a dostupný pod MIT licencí.
 
 Vytvořeno pro SPSD By Adam ''Brozovec'' Brož
 ```
-</lov-codee>
+
