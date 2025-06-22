@@ -3,8 +3,8 @@ import type { Station, Departure } from "@/types/pid";
 const API_BASE = "https://api.golemio.cz";
 
 // Dva API klíče pro rozdělení zátěže
-const API_KEY_1 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzcwNCwiaWF0IjoxNzUwMjUzNjc5LCJleHAiOjExNzUwMjUzNjc5LCJpc3MiOiJnb2xlbWlvIiwianRpIjoiZDEzMWEwMjYtZGI4YS00N2I1LWI4NWEtMWMyNzQ0MzFhNDYxIn0.s1zoIPh9U5fkfUJwYO3Q5SwP9oIEdE6mkF3h3sv2lOk";
-const API_KEY_2 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzcwNywiaWF0IjoxNzUwMjcxODUwLCJleHAiOjExNzUwMjcxODUwLCJpc3MiOiJnb2xlbWlvIiwianRpIjoiY2M5YmZmMTctMDViMi00YWU5LWEwMzMtMWE3NmFiODBjNTRhIn0.Tlave6j70aXobhJZtS3ZA5QK2pisvwS6M8FZkOCd0Uk";
+const API_KEY_1 = "";
+const API_KEY_2 = "";
 
 // Mapování stanic na API klíče
 const STATION_API_MAPPING: {[key: string]: string} = {
