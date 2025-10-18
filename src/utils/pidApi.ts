@@ -292,13 +292,38 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
 
         const currentStop = dep.last_stop?.name;
 
-        // Log all available vehicle features for debugging
-        if (features.length > 0) {
-          console.log(`🚌 Vehicle ${vehicleNumber} features:`, features);
-        }
+        // Vehicle position data
+        const vehiclePosition = dep.vehicle_position;
+        const currentLatitude = vehiclePosition?.latitude;
+        const currentLongitude = vehiclePosition?.longitude;
+        const lastUpdate = vehiclePosition?.last_position_at;
+        const currentSpeed = vehiclePosition?.speed;
+
+        // Zajímavé údaje pro dopravní školu
+        const stopSequence = dep.stop_sequence; // Pořadí zastávky na trase
+        const distanceTraveled = dep.shape_dist_traveled; // Ujetá vzdálenost na trase
+        const blockId = dep.trip?.block_id; // ID bloku - skupina jízd stejného vozidla
+        const serviceId = dep.trip?.service_id; // ID služby - provozní den
+        const wheelchairAccessible = dep.trip?.wheelchair_accessible; // Bezbariérovost spoje
+        const bikesAllowed = dep.trip?.bikes_allowed; // Povolení kol
+        const routeLongName = dep.route?.long_name; // Dlouhý název linky
+        const routeColor = dep.route?.color; // Barva linky
+        const routeTextColor = dep.route?.text_color; // Barva textu linky
+        const agencyName = dep.route?.agency?.name; // Název dopravce
+        const agencyUrl = dep.route?.agency?.url; // Web dopravce
+        const stopHeadsign = dep.stop_headsign; // Směrová tabule pro tuto zastávku
+        const pickupType = dep.pickup_type; // Typ nástupu (0=pravidelný, 1=žádný, 2=na znamení, 3=koordinovat s řidičem)
+        const dropOffType = dep.drop_off_type; // Typ výstupu
+
+        // Log all available data for debugging
         if (dep.vehicle) {
-          console.log(`🔧 Full vehicle data for ${vehicleNumber}:`, dep.vehicle);
-          console.log(`📊 Vehicle info extracted:`, vehicleInfo);
+          console.log(`🚌 Full vehicle data for ${vehicleNumber}:`, dep.vehicle);
+        }
+        if (dep.vehicle_position) {
+          console.log(`📍 Vehicle position data:`, dep.vehicle_position);
+        }
+        if (dep.trip) {
+          console.log(`🚇 Trip data:`, dep.trip);
         }
 
         let tripId = dep.trip?.id;
@@ -352,7 +377,24 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
           boarding_wheelchair: boardingWheelchair,
           current_stop: currentStop,
           route_id: routeId,
-          platform_code: dep.stop?.platform_code
+          platform_code: dep.stop?.platform_code,
+          current_latitude: currentLatitude,
+          current_longitude: currentLongitude,
+          last_position_update: lastUpdate,
+          current_speed: currentSpeed,
+          stop_sequence: stopSequence,
+          distance_traveled: distanceTraveled,
+          block_id: blockId,
+          service_id: serviceId,
+          bikes_allowed: bikesAllowed,
+          route_long_name: routeLongName,
+          route_color: routeColor,
+          route_text_color: routeTextColor,
+          agency_name: agencyName,
+          agency_url: agencyUrl,
+          stop_headsign: stopHeadsign,
+          pickup_type: pickupType,
+          drop_off_type: dropOffType
         };
         
         console.log("✨ Processed departure:", processed);

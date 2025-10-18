@@ -41,6 +41,23 @@ export interface Departure {
   boarding_wheelchair?: boolean;
   vehicle_age?: number;
   vehicle_model?: string;
+  current_latitude?: number;
+  current_longitude?: number;
+  last_position_update?: string;
+  current_speed?: number;
+  stop_sequence?: number;
+  distance_traveled?: number;
+  block_id?: string;
+  service_id?: string;
+  bikes_allowed?: boolean;
+  route_long_name?: string;
+  route_color?: string;
+  route_text_color?: string;
+  agency_name?: string;
+  agency_url?: string;
+  stop_headsign?: string;
+  pickup_type?: number;
+  drop_off_type?: number;
 }
 
 export interface StopTime {
