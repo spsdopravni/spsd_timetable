@@ -59,9 +59,10 @@ const enrichDepartureData = async (departure: any): Promise<any> => {
   }
 
   try {
-    // Zkusíme načíst trip details
+    // Zkusíme načíst trip details - možná jiný endpoint
+    console.log(`🔍 Trying trip enrichment for: ${departure.trip_id}`);
     const tripResponse = await fetch(
-      `${API_BASE}/v2/pid/gtfs/trips/${departure.trip_id}`,
+      `${API_BASE}/v2/pid/trips/${departure.trip_id}`,
       { headers: getHeadersForExtendedData() }
     );
 
@@ -82,6 +83,11 @@ const enrichDepartureData = async (departure: any): Promise<any> => {
       };
     } else {
       console.log(`⚠️ Trip endpoint ${tripResponse.status}: ${tripResponse.statusText} pro ${departure.trip_id}`);
+      // Pokud endpoint neexistuje, vrátíme původní data
+      if (tripResponse.status === 404) {
+        console.log(`🚫 Endpoint /trips/ neexistuje, vypínám enrichment`);
+        return departure;
+      }
     }
   } catch (error) {
     console.log(`⚠️ Nepodařilo se načíst rozšířené údaje pro trip ${departure.trip_id}`);
