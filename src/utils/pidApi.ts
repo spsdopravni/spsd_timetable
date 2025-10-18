@@ -2,9 +2,10 @@ import type { Station, Departure } from "@/types/pid";
 
 const API_BASE = "https://api.golemio.cz";
 
-// Dva API klíče pro rozdělení zátěže
+// API klíče pro různé endpointy
 const API_KEY_1 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzcwNCwiaWF0IjoxNzYwNzkxMjUwLCJleHAiOjExNzYwNzkxMjUwLCJpc3MiOiJnb2xlbWlvIiwianRpIjoiM2Y4MWJiMjItM2YxNC00ODgxLThlMDYtYjQ1YmRlOTYzZjk3In0.BR0653y2bfG0zxdkOYvDgvywRR9Z9nXB4NlatJXR38A";
-const API_KEY_2 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzcwNywiaWF0IjoxNzYwNzkxMjc4LCJleHAiOjExNzYwNzkxMjc4LCJpc3MiOiJnb2xlbWlvIiwianRpIjoiN2U2ZTViOWMtYjkyOS00NzZlLTk0MmItYTY4NzdkM2M2MjNjIn0._K4k4Mrfy1_cWiy3Za_DRrCOX4gfbrz8p0rVZypVFq8";
+const API_KEY_2 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzcwNywiaWF0IjoxNjA3OTEyNzgsImV4cCI6MTE3NjA3OTEyNzgsImlzcyI6ImdvbGVtaW8iLCJqdGkiOiI3ZTZlNWI5Yy1iOTI5LTQ3NmUtOTQyYi1hNjg3N2QzYzYyM2MifQ._K4k4Mrfy1_cWiy3Za_DRrCOX4gfbrz8p0rVZypVFq8";
+let API_KEY_3 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDA0NiwiaWF0IjoxNzYwNzk0NjU3LCJleHAiOjExNzYwNzk0NjU3LCJpc3MiOiJnb2xlbWlvIiwianRpIjoiNzAwZmNkOGYtMzYyOS00MjZjLThmYTgtNTU2YTJlZmE1YmFlIn0.r6hVewQXnk8TaowFb7s7lDveyA6XYYGnxe_qlzUbhZM"; // Třetí API klíč pro rozšířené údaje
 
 // Mapování stanic na API klíče
 const STATION_API_MAPPING: {[key: string]: string} = {
@@ -17,6 +18,12 @@ const STATION_API_MAPPING: {[key: string]: string} = {
   "U394Z3": API_KEY_2,
   "U394Z4P": API_KEY_2,
   "U394Z4": API_KEY_2,
+};
+
+// Funkce pro nastavení třetího API klíče
+export const setThirdApiKey = (key: string) => {
+  API_KEY_3 = key;
+  console.log('✅ Třetí API klíč nastaven pro rozšířené údaje');
 };
 
 const getApiKeyForStation = (stationId: string): string => {
@@ -33,6 +40,47 @@ const getHeadersForStation = (stationId: string) => ({
   "X-Access-Token": getApiKeyForStation(stationId),
   "Content-Type": "application/json"
 });
+
+const getHeadersForExtendedData = () => ({
+  "X-Access-Token": API_KEY_3 || API_KEY_1,
+  "Content-Type": "application/json"
+});
+
+// Funkce pro obohacení dat o rozšířené údaje z dalších endpointů
+const enrichDepartureData = async (departure: any): Promise<any> => {
+  if (!API_KEY_3 || !departure.trip_id) {
+    return departure; // Bez třetího klíče nemůžeme načíst rozšířené údaje
+  }
+
+  try {
+    // Zkusíme načíst trip details
+    const tripResponse = await fetch(
+      `${API_BASE}/v2/pid/gtfs/trips/${departure.trip_id}`,
+      { headers: getHeadersForExtendedData() }
+    );
+
+    if (tripResponse.ok) {
+      const tripData = await tripResponse.json();
+      console.log(`🚇 Načetena trip data pro ${departure.trip_id}:`, tripData);
+
+      // Přidáme rozšířené údaje
+      return {
+        ...departure,
+        block_id: tripData.block_id,
+        service_id: tripData.service_id,
+        shape_id: tripData.shape_id,
+        agency_name: tripData.route?.agency?.name,
+        route_long_name: tripData.route?.long_name,
+        route_color: tripData.route?.color,
+        route_text_color: tripData.route?.text_color
+      };
+    }
+  } catch (error) {
+    console.log(`⚠️ Nepodařilo se načíst rozšířené údaje pro trip ${departure.trip_id}`);
+  }
+
+  return departure;
+};
 
 export const searchStations = async (query: string): Promise<Station[]> => {
   try {
@@ -193,7 +241,7 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
         const apiKey = getApiKeyForStation(stationId);
         console.log(`🔑 Using API key ${apiKey === API_KEY_1 ? '1' : '2'} for station ${stationId}`);
         
-        const url = `${API_BASE}/v2/pid/departureboards/?ids=${stationId}&limit=20&minutesBefore=0&minutesAfter=30`;
+        const url = `${API_BASE}/v2/pid/departureboards/?ids=${stationId}&limit=20&minutesBefore=0&minutesAfter=30&includeMetaData=true&includeVehicles=true`;
         console.log(`🔄 Trying API URL for station ${stationId}:`, url);
         
         const response = await fetch(url, { headers });
@@ -315,13 +363,16 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
         const pickupType = dep.pickup_type;
         const dropOffType = dep.drop_off_type;
 
-        // Log all available data for debugging - ukažme celou strukturu
-        console.log(`🔍 KOMPLETNÍ DATA PRO DEBUGGING:`, dep);
-        console.log(`🚌 Vehicle:`, dep.vehicle);
-        console.log(`📍 Vehicle position:`, dep.vehicle_position);
-        console.log(`🚇 Trip:`, dep.trip);
-        console.log(`🛤️ Route:`, dep.route);
-        console.log(`🏁 Stop:`, dep.stop);
+        // Zkontrolujeme, jaké údaje má API skutečně k dispozici
+        if (dep.vehicle_number) {
+          console.log(`🚌 Vozidlo ${dep.vehicle_number} - dostupné údaje:`, Object.keys(dep).filter(key => dep[key] !== undefined && dep[key] !== null));
+        }
+
+        // Zkusme jiný endpoint pro vehicle positions
+        if (dep.vehicle_number && !dep.block_id) {
+          console.log(`⚠️ CHYBÍ ROZŠÍŘENÉ ÚDAJE! Možná potřebujeme jiný endpoint nebo API klíč.`);
+          console.log(`🔍 Doporučuji zkusit: /v2/pid/vehicles/positions nebo /v2/pid/gtfs/trips`);
+        }
 
         let tripId = dep.trip?.id;
         let tripNumber = undefined;
@@ -415,8 +466,19 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
       // Seřadíme všechny odjezdy podle času
       .sort((a: any, b: any) => a.arrival_timestamp - b.arrival_timestamp)
       .slice(0, 8);
-    
+
     console.log("🏁 Final processed departures (sorted by time):", processedDepartures);
+
+    // Obohacení dat o rozšířené údaje pokud je dostupný třetí API klíč
+    if (API_KEY_3) {
+      console.log("🔄 Obohacuji data o rozšířené údaje...");
+      const enrichedDepartures = await Promise.all(
+        processedDepartures.map(dep => enrichDepartureData(dep))
+      );
+      console.log("✨ Obohacená data:", enrichedDepartures);
+      return enrichedDepartures;
+    }
+
     return processedDepartures;
   } catch (error: any) {
     console.error("💥 Error fetching departures:", error);

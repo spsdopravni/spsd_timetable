@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Clock, AlertTriangle, Info, Snowflake, Car, MapPin, Wrench, Bus, Wind, Wifi, Accessibility, Bike, Zap, Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { getDepartures } from "@/utils/pidApi";
+import { getDepartures, setThirdApiKey } from "@/utils/pidApi";
 import type { Departure } from "@/types/pid";
 
 interface TramDeparturesProps {
@@ -68,8 +68,12 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
   };
 
   useEffect(() => {
+    // Přidáme globální funkci pro nastavení třetího API klíče
+    (window as any).setThirdApiKey = setThirdApiKey;
+    console.log("🔧 Pro nastavení třetího API klíče použij: window.setThirdApiKey('your-key')");
+
     const stationChanged = JSON.stringify(previousStationId) !== JSON.stringify(stationId);
-    
+
     if (stationChanged) {
       console.log(`🔄 Station changed from ${JSON.stringify(previousStationId)} to ${JSON.stringify(stationId)}`);
       setLoading(true);
