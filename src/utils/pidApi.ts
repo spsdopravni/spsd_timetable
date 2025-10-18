@@ -249,7 +249,7 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
         const apiKey = getApiKeyForStation(stationId);
         console.log(`🔑 Using API key ${apiKey === API_KEY_1 ? '1' : '2'} for station ${stationId}`);
         
-        const url = `${API_BASE}/v2/pid/departureboards/?ids=${stationId}&limit=20&minutesBefore=0&minutesAfter=30&includeMetaData=true&includeVehicles=true`;
+        const url = `${API_BASE}/v2/pid/departureboards/?ids=${stationId}&limit=20&minutesBefore=0&minutesAfter=30`;
         console.log(`🔄 Trying API URL for station ${stationId}:`, url);
         
         const response = await fetch(url, { headers });
