@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Clock, AlertTriangle, Info, Snowflake, Car, MapPin, Wrench, Bus } from "lucide-react";
+import { Clock, AlertTriangle, Info, Snowflake, Car, MapPin, Wrench, Bus, Wind, Wifi, Accessibility, Bike, Zap, Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getDepartures } from "@/utils/pidApi";
@@ -136,12 +136,52 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
 
   const getServiceAlerts = (departure: Departure) => {
     const alerts = [];
-    
+
     const headsign = departure.headsign?.toLowerCase() || '';
-    
+
     const isShortened = headsign.includes('jen do') || headsign.includes('pouze do');
     const isToDepot = headsign.includes('vozovna') && !headsign.includes('ústředn');
-    
+
+    if (departure.air_conditioning) {
+      alerts.push({
+        icon: <Snowflake className="w-5 h-5 text-cyan-600" style={{ width: `${1.5 * textSize}rem`, height: `${1.5 * textSize}rem` }} />,
+        text: "Klimatizace",
+        color: "bg-cyan-100 text-cyan-800"
+      });
+    }
+
+    if (departure.wifi) {
+      alerts.push({
+        icon: <Wifi className="w-5 h-5 text-blue-600" style={{ width: `${1.5 * textSize}rem`, height: `${1.5 * textSize}rem` }} />,
+        text: "WiFi",
+        color: "bg-blue-100 text-blue-800"
+      });
+    }
+
+    if (departure.low_floor) {
+      alerts.push({
+        icon: <Accessibility className="w-5 h-5 text-green-600" style={{ width: `${1.5 * textSize}rem`, height: `${1.5 * textSize}rem` }} />,
+        text: "Nízká podlaha",
+        color: "bg-green-100 text-green-800"
+      });
+    }
+
+    if (departure.usb_charging) {
+      alerts.push({
+        icon: <Zap className="w-5 h-5 text-yellow-600" style={{ width: `${1.5 * textSize}rem`, height: `${1.5 * textSize}rem` }} />,
+        text: "USB nabíjení",
+        color: "bg-yellow-100 text-yellow-800"
+      });
+    }
+
+    if (departure.bike_rack) {
+      alerts.push({
+        icon: <Bike className="w-5 h-5 text-orange-600" style={{ width: `${1.5 * textSize}rem`, height: `${1.5 * textSize}rem` }} />,
+        text: "Stojan na kola",
+        color: "bg-orange-100 text-orange-800"
+      });
+    }
+
     if (isShortened) {
       alerts.push({
         icon: <AlertTriangle className="w-5 h-5 text-yellow-600" style={{ width: `${1.5 * textSize}rem`, height: `${1.5 * textSize}rem` }} />,
@@ -149,7 +189,7 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
         color: "bg-yellow-100 text-yellow-800"
       });
     }
-    
+
     if (isToDepot) {
       alerts.push({
         icon: <Wrench className="w-5 h-5 text-orange-600" style={{ width: `${1.5 * textSize}rem`, height: `${1.5 * textSize}rem` }} />,
@@ -241,13 +281,14 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
   return (
     <Card className="shadow-lg bg-white/90 backdrop-blur-sm h-full border-2 border-gray-300 flex flex-col">
       <CardHeader className="pb-2 flex-shrink-0" style={{ paddingBottom: `${0.5 * textSize}rem` }}>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-gray-800" style={{ fontSize: `${2.8 * textSize}rem` }}>
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-1 sm:gap-2 lg:gap-0">
+          <CardTitle className="flex items-center gap-1 sm:gap-2 text-gray-800" style={{ fontSize: `${Math.max(1.8, 2.8 * textSize)}rem` }}>
             {customTitle || "Odjezdy (Do 30 Min.)"}
           </CardTitle>
-          <div className="text-gray-500 flex items-center gap-2" style={{ fontSize: `${1.6 * textSize}rem` }}>
-            <Clock className="w-5 h-5" style={{ width: `${2 * textSize}rem`, height: `${2 * textSize}rem` }} />
-            Aktualizováno {lastUpdate.toLocaleTimeString()}
+          <div className="text-gray-500 flex items-center gap-1 sm:gap-2" style={{ fontSize: `${Math.max(0.7, 1.2 * textSize)}rem` }}>
+            <Clock className="w-4 h-4 sm:w-5 sm:h-5" style={{ width: `${Math.max(0.8, 1.5 * textSize)}rem`, height: `${Math.max(0.8, 1.5 * textSize)}rem` }} />
+            <span className="hidden sm:inline">Aktualizováno </span>
+            {lastUpdate.toLocaleTimeString()}
           </div>
         </div>
       </CardHeader>
@@ -255,9 +296,9 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
         {limitedDepartures.length === 0 ? (
           <div className="text-center py-8 text-gray-600 flex-1 flex items-center justify-center">
             <div>
-              <Info className="w-20 h-20 mx-auto mb-4 text-gray-400" style={{ width: `${6 * textSize}rem`, height: `${6 * textSize}rem` }} />
-              <p style={{ fontSize: `${2.4 * textSize}rem` }}>Žádné odjezdy do 30 min</p>
-              <p style={{ fontSize: `${1.8 * textSize}rem` }}>Zkontrolujte později</p>
+              <Info className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 mx-auto mb-2 sm:mb-4 text-gray-400" style={{ width: `${Math.max(3, 4 * textSize)}rem`, height: `${Math.max(3, 4 * textSize)}rem` }} />
+              <p style={{ fontSize: `${Math.max(1.8, 2.8 * textSize)}rem` }}>Žádné odjezdy do 30 min</p>
+              <p style={{ fontSize: `${Math.max(1.4, 2.2 * textSize)}rem` }}>Zkontrolujte později</p>
             </div>
           </div>
         ) : (
@@ -270,37 +311,62 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
               const timeToArrival = departure.arrival_timestamp - Math.floor(Date.now() / 1000);
               
               return (
-                <div 
+                <div
                   key={index}
-                  className="flex items-center justify-between rounded-lg border border-gray-100 hover:shadow-md transition-all duration-200 bg-white relative flex-1"
-                  style={{ 
-                    padding: `${0.6 * textSize}rem`,
+                  className="flex flex-col lg:flex-row items-start lg:items-center justify-between rounded-lg border border-gray-100 hover:shadow-md transition-all duration-200 bg-white relative flex-1 gap-1 sm:gap-2 lg:gap-0"
+                  style={{
+                    padding: `${Math.max(0.3, 0.6 * textSize)}rem`,
                     marginBottom: `${0.3 * textSize}rem`,
-                    minHeight: `${6 * textSize}rem`
+                    minHeight: `${Math.max(4, 6 * textSize)}rem`
                   }}
                 >
-                  <div className="flex items-center gap-2" style={{ gap: `${0.6 * textSize}rem` }}>
-                    <div className={`rounded-lg flex items-center justify-center ${getRouteColor(departure.route_type)}`} 
-                         style={{ 
-                           width: `${4.5 * textSize}rem`,
-                           height: `${4.5 * textSize}rem`,
-                           minWidth: `${4.5 * textSize}rem`
+                  <div className="flex items-center gap-1 sm:gap-2 w-full lg:w-auto" style={{ gap: `${Math.max(0.2, 0.4 * textSize)}rem` }}>
+                    <div className={`rounded-lg flex items-center justify-center ${getRouteColor(departure.route_type)}`}
+                         style={{
+                           width: `${Math.max(2.0, 3.0 * textSize)}rem`,
+                           height: `${Math.max(2.0, 3.0 * textSize)}rem`,
+                           minWidth: `${Math.max(2.0, 3.0 * textSize)}rem`
                          }}>
-                      <span className="font-bold" style={{ fontSize: `${2.4 * textSize}rem` }}>
+                      <span className="font-bold" style={{ fontSize: `${Math.max(1.2, 2.4 * textSize)}rem` }}>
                         {departure.route_short_name}
                       </span>
                     </div>
-                    
+
                     <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1" style={{ marginBottom: `${0.2 * textSize}rem` }}>
-                        <div className="flex items-center gap-1" style={{ gap: `${0.4 * textSize}rem` }}>
-                          <span className="font-semibold text-gray-800" style={{ fontSize: `${1.8 * textSize}rem` }}>
+                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-1" style={{ marginBottom: `${0.1 * textSize}rem` }}>
+                        <div className="flex items-center gap-1 flex-wrap" style={{ gap: `${0.4 * textSize}rem` }}>
+                          <span className="font-semibold text-gray-800" style={{ fontSize: `${Math.max(1.2, 2.2 * textSize)}rem` }}>
                             {getDirectionDisplay(departure)}
                           </span>
                           {departure.wheelchair_accessible && (
-                            <span className="text-blue-600" style={{ fontSize: `${1.6 * textSize}rem` }}>♿</span>
+                            <span className="text-blue-600" style={{ fontSize: `${Math.max(0.7, 1.2 * textSize)}rem` }}>♿</span>
                           )}
-                          
+                          {departure.air_conditioning && (
+                            <div className="flex items-center" title="Klimatizace">
+                              <Snowflake className="text-cyan-600" style={{ width: `${Math.max(0.8, 1.4 * textSize)}rem`, height: `${Math.max(0.8, 1.4 * textSize)}rem` }} />
+                            </div>
+                          )}
+                          {departure.wifi && (
+                            <div className="flex items-center" title="WiFi">
+                              <Wifi className="text-blue-600" style={{ width: `${Math.max(0.8, 1.4 * textSize)}rem`, height: `${Math.max(0.8, 1.4 * textSize)}rem` }} />
+                            </div>
+                          )}
+                          {departure.low_floor && (
+                            <div className="flex items-center" title="Nízká podlaha">
+                              <Accessibility className="text-green-600" style={{ width: `${Math.max(0.8, 1.4 * textSize)}rem`, height: `${Math.max(0.8, 1.4 * textSize)}rem` }} />
+                            </div>
+                          )}
+                          {departure.bike_rack && (
+                            <div className="flex items-center" title="Stojan na kola">
+                              <Bike className="text-orange-600" style={{ width: `${Math.max(0.8, 1.4 * textSize)}rem`, height: `${Math.max(0.8, 1.4 * textSize)}rem` }} />
+                            </div>
+                          )}
+                          {departure.usb_charging && (
+                            <div className="flex items-center" title="USB nabíjení">
+                              <Zap className="text-yellow-600" style={{ width: `${Math.max(0.8, 1.4 * textSize)}rem`, height: `${Math.max(0.8, 1.4 * textSize)}rem` }} />
+                            </div>
+                          )}
+
                           {serviceAlerts.map((alert, alertIndex) => (
                             <div key={alertIndex} className="flex items-center" title={alert.text}>
                               {alert.icon}
@@ -308,30 +374,39 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
                           ))}
                         </div>
                       </div>
-                      
-                      <div className="flex items-center gap-2 text-gray-600" style={{ 
-                        fontSize: `${1.4 * textSize}rem`,
-                        gap: `${0.4 * textSize}rem`
+
+                      <div className="flex items-center gap-1 sm:gap-2 text-gray-600" style={{
+                        fontSize: `${Math.max(0.7, 1.2 * textSize)}rem`,
+                        gap: `${Math.max(0.2, 0.3 * textSize)}rem`
                       }}>
                         <div className="flex items-center gap-1" style={{ gap: `${0.3 * textSize}rem` }}>
-                          <Clock className="w-4 h-4" style={{ width: `${1.6 * textSize}rem`, height: `${1.6 * textSize}rem` }} />
+                          <Clock className="w-3 h-3 sm:w-4 sm:h-4" style={{ width: `${Math.max(0.6, 1.2 * textSize)}rem`, height: `${Math.max(0.6, 1.2 * textSize)}rem` }} />
                           {formatTime(timeToArrival)}
                         </div>
                       </div>
 
-                      <div className="text-gray-500" style={{ 
-                        fontSize: `${1.2 * textSize}rem`
+                      <div className="text-gray-500 hidden lg:block" style={{
+                        fontSize: `${Math.max(0.6, 1.0 * textSize)}rem`
                       }}>
-                        <div className="flex items-center gap-2 flex-wrap" style={{ gap: `${0.5 * textSize}rem` }}>
-                          {departure.vehicle_number && departure.trip_id && (
+                        <div className="flex items-center gap-1 sm:gap-2 flex-wrap" style={{ gap: `${Math.max(0.3, 0.4 * textSize)}rem` }}>
+                          {departure.vehicle_number && (
                             <div className="flex items-center gap-1" style={{ gap: `${0.3 * textSize}rem` }}>
-                              <Car className="w-3 h-3" style={{ width: `${1.3 * textSize}rem`, height: `${1.3 * textSize}rem` }} />
+                              <Car className="w-2 h-2 sm:w-3 sm:h-3" style={{ width: `${Math.max(0.5, 1.0 * textSize)}rem`, height: `${Math.max(0.5, 1.0 * textSize)}rem` }} />
                               <span>#{departure.vehicle_number}</span>
+                              {departure.vehicle_model && (
+                                <span className="text-gray-400">({departure.vehicle_model})</span>
+                              )}
+                            </div>
+                          )}
+                          {departure.vehicle_age && (
+                            <div className="flex items-center gap-1" style={{ gap: `${0.3 * textSize}rem` }}>
+                              <Calendar className="w-2 h-2 sm:w-3 sm:h-3" style={{ width: `${Math.max(0.5, 1.0 * textSize)}rem`, height: `${Math.max(0.5, 1.0 * textSize)}rem` }} />
+                              <span>{departure.vehicle_age} let</span>
                             </div>
                           )}
                           {departure.current_stop && (
                             <div className="flex items-center gap-1" style={{ gap: `${0.3 * textSize}rem` }}>
-                              <MapPin className="w-3 h-3" style={{ width: `${1.3 * textSize}rem`, height: `${1.3 * textSize}rem` }} />
+                              <MapPin className="w-2 h-2 sm:w-3 sm:h-3" style={{ width: `${Math.max(0.5, 1.0 * textSize)}rem`, height: `${Math.max(0.5, 1.0 * textSize)}rem` }} />
                               <span>{departure.current_stop}</span>
                             </div>
                           )}
@@ -357,17 +432,18 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
                         </div>
                       )}
 
-                      {/* Approaching vehicle notification positioned in the red circled area */}
+                      {/* Approaching vehicle notification */}
                       {approachingInfo && (
-                        <div className="absolute top-2 right-20 z-10">
-                          <div className="bg-green-600 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse shadow-lg border-2 border-green-400" 
-                               style={{ 
-                                 fontSize: `${1.0 * textSize}rem`,
-                                 padding: `${0.3 * textSize}rem ${0.8 * textSize}rem`
+                        <div className="absolute top-1 right-1 sm:top-2 sm:right-20 z-10">
+                          <div className="bg-green-600 text-white px-2 py-1 sm:px-3 sm:py-1 rounded-full text-xs font-bold animate-pulse shadow-lg border-2 border-green-400"
+                               style={{
+                                 fontSize: `${Math.max(0.6, 1.0 * textSize)}rem`,
+                                 padding: `${Math.max(0.2, 0.3 * textSize)}rem ${Math.max(0.4, 0.8 * textSize)}rem`
                                }}>
                             <div className="flex items-center gap-1">
                               <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
-                              Blíží se!
+                              <span className="hidden sm:inline">Blíží se!</span>
+                              <span className="sm:hidden">●</span>
                             </div>
                           </div>
                         </div>
@@ -375,15 +451,15 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
                     </div>
                   </div>
 
-                  <div className="text-right space-y-1 flex-shrink-0 relative" style={{ gap: `${0.3 * textSize}rem` }}>
-                    <div className="font-bold text-gray-800" style={{ fontSize: `${2.8 * textSize}rem` }}>
+                  <div className="text-center lg:text-right space-y-1 flex-shrink-0 relative w-full lg:w-auto" style={{ gap: `${Math.max(0.2, 0.3 * textSize)}rem` }}>
+                    <div className="font-bold text-gray-800" style={{ fontSize: `${Math.max(1.4, 2.8 * textSize)}rem` }}>
                       {formatDisplayTime(departure)}
                     </div>
-                    
-                    <Badge className={`${delayInfo.color}`} 
-                           style={{ 
-                             fontSize: `${1.0 * textSize}rem`,
-                             padding: `${0.3 * textSize}rem ${0.5 * textSize}rem`
+
+                    <Badge className={`${delayInfo.color} justify-center lg:justify-start`}
+                           style={{
+                             fontSize: `${Math.max(0.5, 0.8 * textSize)}rem`,
+                             padding: `${Math.max(0.1, 0.2 * textSize)}rem ${Math.max(0.2, 0.4 * textSize)}rem`
                            }}>
                       {delayInfo.text}
                     </Badge>
@@ -394,7 +470,7 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
             
             {/* Add empty flex items to fill remaining space when there are fewer departures */}
             {Array.from({ length: Math.max(0, 5 - limitedDepartures.length) }).map((_, index) => (
-              <div key={`empty-${index}`} className="flex-1" style={{ minHeight: `${6 * textSize}rem` }} />
+              <div key={`empty-${index}`} className="flex-1" style={{ minHeight: `${Math.max(3, 4 * textSize)}rem` }} />
             ))}
           </div>
         )}

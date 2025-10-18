@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run dev:*)",
+      "WebSearch",
+      "WebFetch(domain:api.golemio.cz)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

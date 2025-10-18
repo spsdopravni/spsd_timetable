@@ -32,6 +32,13 @@ export interface Departure {
   air_conditioning?: boolean;
   current_stop?: string;
   platform_code?: string;
+  wifi?: boolean;
+  low_floor?: boolean;
+  bike_rack?: boolean;
+  usb_charging?: boolean;
+  boarding_wheelchair?: boolean;
+  vehicle_age?: number;
+  vehicle_model?: string;
 }
 
 export interface StopTime {

@@ -254,10 +254,29 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
 
         const vehicleNumber = dep.vehicle?.registration_number;
         const vehicleType = dep.vehicle?.type;
-        const airConditioning = dep.vehicle?.features?.includes('air_conditioning') || 
-                               dep.vehicle?.features?.includes('klimatizace') ||
+        const vehicleModel = dep.vehicle?.sub_type || dep.vehicle?.model;
+        const vehicleAge = dep.vehicle?.production_year ? new Date().getFullYear() - dep.vehicle?.production_year : undefined;
+
+        // Features detection
+        const features = dep.vehicle?.features || [];
+        const airConditioning = features.includes('air_conditioning') ||
+                               features.includes('klimatizace') ||
                                dep.trip?.is_air_conditioned;
+        const wifi = features.includes('wifi') || features.includes('wi-fi');
+        const lowFloor = features.includes('low_floor') || features.includes('nizka_podlaha') || dep.trip?.is_low_floor;
+        const bikeRack = features.includes('bike_rack') || features.includes('kola');
+        const usbCharging = features.includes('usb') || features.includes('usb_charging') || features.includes('nabijeni');
+        const boardingWheelchair = features.includes('boarding_wheelchair') || dep.trip?.is_wheelchair_boarding;
+
         const currentStop = dep.last_stop?.name;
+
+        // Log all available vehicle features for debugging
+        if (features.length > 0) {
+          console.log(`🚌 Vehicle ${vehicleNumber} features:`, features);
+        }
+        if (dep.vehicle) {
+          console.log(`🔧 Full vehicle data for ${vehicleNumber}:`, dep.vehicle);
+        }
 
         let tripId = dep.trip?.id;
         if (tripId && tripId.includes('_')) {
@@ -283,7 +302,14 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
           alert_hash: dep.trip?.is_canceled ? 'canceled' : undefined,
           vehicle_number: vehicleNumber,
           vehicle_type: vehicleType,
+          vehicle_model: vehicleModel,
+          vehicle_age: vehicleAge,
           air_conditioning: airConditioning,
+          wifi: wifi,
+          low_floor: lowFloor,
+          bike_rack: bikeRack,
+          usb_charging: usbCharging,
+          boarding_wheelchair: boardingWheelchair,
           current_stop: currentStop,
           route_id: routeId,
           platform_code: dep.stop?.platform_code
