@@ -47,80 +47,9 @@ const getHeadersForStation = (stationId: string) => ({
   "Content-Type": "application/json"
 });
 
-const getHeadersForExtendedData = () => ({
-  "X-Access-Token": API_KEY_3 || API_KEY_1,
-  "Content-Type": "application/json"
-});
+// Headers pro extended data odstraněny
 
-// Funkce pro obohacení dat o rozšířené údaje z vehicle positions endpointu
-const enrichDepartureData = async (departure: any): Promise<any> => {
-  if (!API_KEY_3 || API_KEY_3.trim() === '' || !departure.trip_id || !departure.vehicle_number) {
-    return departure; // Bez třetího klíče nebo vehicle_number nemůžeme načíst rozšířené údaje
-  }
-
-  try {
-    // Zkusíme načíst vehicle position data - nejprve obecný endpoint
-    console.log(`🔍 Trying vehicle position enrichment for trip: ${departure.trip_id}`);
-    const vehicleResponse = await fetch(
-      `${API_BASE}/v2/public/vehiclepositions`,
-      { headers: getHeadersForExtendedData() }
-    );
-
-    if (vehicleResponse.ok) {
-      const allVehicles = await vehicleResponse.json();
-      console.log(`🚌 Načetena všechna vehicle data:`, allVehicles);
-
-      // Hledáme vozidlo podle trip_id nebo vehicle_number
-      const vehicleData = allVehicles.features?.find((vehicle: any) =>
-        vehicle.properties?.gtfs_trip_id === departure.trip_id ||
-        vehicle.properties?.vehicle_descriptor?.vehicle_registration_number === departure.vehicle_number
-      );
-
-      if (vehicleData) {
-        console.log(`✅ Nalezeno vozidlo pro trip ${departure.trip_id}:`, vehicleData);
-        const props = vehicleData.properties;
-
-        // Přidáme rozšířené údaje z vehicle position API
-        return {
-          ...departure,
-          // GTFS údaje
-          shape_id: props.shape_id,
-          shape_dist_traveled: props.shape_dist_traveled,
-          bearing: props.bearing,
-          state_position: props.state_position,
-          last_stop_sequence: props.last_stop_sequence,
-
-          // Vehicle descriptor údaje
-          vehicle_operator: props.vehicle_descriptor?.operator || departure.vehicle_operator,
-          vehicle_type: props.vehicle_descriptor?.vehicle_type || departure.vehicle_type,
-          vehicle_registration_number: props.vehicle_descriptor?.vehicle_registration_number || departure.vehicle_number,
-          is_wheelchair_accessible: props.vehicle_descriptor?.is_wheelchair_accessible,
-          is_air_conditioned: props.vehicle_descriptor?.is_air_conditioned,
-          has_usb_chargers: props.vehicle_descriptor?.has_usb_chargers,
-
-          // GPS údaje
-          current_latitude: vehicleData.geometry?.coordinates?.[1],
-          current_longitude: vehicleData.geometry?.coordinates?.[0],
-
-          // Real-time údaje
-          real_time_delay: props.delay
-        };
-      } else {
-        console.log(`⚠️ Vozidlo pro trip ${departure.trip_id} nenalezeno v vehicle positions`);
-      }
-    } else {
-      console.log(`⚠️ Vehicle position endpoint ${vehicleResponse.status}: ${vehicleResponse.statusText} pro vehicle ${departure.vehicle_number}`);
-      if (vehicleResponse.status === 404) {
-        console.log(`🚫 Endpoint /vehiclepositions/ neexistuje nebo vozidlo není nalezeno`);
-        return departure;
-      }
-    }
-  } catch (error) {
-    console.log(`⚠️ Nepodařilo se načíst vehicle position data pro vehicle ${departure.vehicle_number}`);
-  }
-
-  return departure;
-};
+// Vehicle enrichment funkce odstraněna
 
 export const searchStations = async (query: string): Promise<Station[]> => {
   try {
@@ -272,6 +201,7 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
     console.log("🔑 Using API keys based on station mapping");
     
     let allDepartures: any[] = [];
+    let allAlerts: any[] = [];
     let workingStations: string[] = [];
     
     // Zkusíme načíst odjezdy postupně pro každé ID s příslušným API klíčem
@@ -281,18 +211,17 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
         const apiKey = getApiKeyForStation(stationId);
         console.log(`🔑 Using API key ${apiKey === API_KEY_1 ? '1' : '2'} for station ${stationId}`);
         
-        // Zkusíme nejnovější verzi departures API
-        let url = `${API_BASE}/v4/pid/departureboards/?ids=${stationId}&limit=20&minutesBefore=0&minutesAfter=30`;
-        console.log(`🔄 Trying v4 API URL for station ${stationId}:`, url);
+        // Používáme třetí API klíč pro rozšířená data o vozidlech
+        const extendedHeaders = {
+          "X-Access-Token": API_KEY_3,
+          "Content-Type": "application/json"
+        };
 
-        let response = await fetch(url, { headers });
+        const url = `${API_BASE}/v2/pid/departureboards/?ids=${stationId}&limit=20&minutesBefore=0&minutesAfter=30`;
+        console.log(`🔄 Trying API URL for station ${stationId}:`, url);
+        console.log(`🔑 Using API key 3 for extended vehicle data`);
 
-        // Pokud v4 neexistuje, zkusíme v2
-        if (response.status === 404) {
-          console.log(`⚠️ v4 API neexistuje, zkouším v2 pro station ${stationId}`);
-          url = `${API_BASE}/v2/pid/departureboards/?ids=${stationId}&limit=20&minutesBefore=0&minutesAfter=30`;
-          response = await fetch(url, { headers });
-        }
+        const response = await fetch(url, { headers: extendedHeaders });
 
         if (response.status === 429) {
           console.log(`⚠️ Rate limit hit for station ${stationId} with API key ${apiKey === API_KEY_1 ? '1' : '2'}`);
@@ -315,6 +244,12 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
           } else {
             console.log(`⚠️ No departures found for station ${stationId}, but API responded OK`);
           }
+
+          // Shromažďujeme alerts/infotexts
+          if (data.infotexts && Array.isArray(data.infotexts) && data.infotexts.length > 0) {
+            allAlerts = [...allAlerts, ...data.infotexts];
+            console.log(`🚨 Found ${data.infotexts.length} alerts for station ${stationId}:`, data.infotexts);
+          }
         } else {
           console.log(`❌ Station ${stationId} returned ${response.status} - ${response.statusText}`);
         }
@@ -329,7 +264,10 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
     
     if (allDepartures.length === 0) {
       console.log("🚫 No departures found from any station");
-      return [];
+      return {
+        departures: [],
+        alerts: allAlerts
+      };
     }
     
     const processedDepartures = allDepartures
@@ -363,6 +301,17 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
         const vehicleNumber = dep.vehicle?.vehicle_registration_number || dep.vehicle?.registration_number;
         const vehicleOperator = dep.vehicle?.operator;
         const vehicleType = dep.vehicle?.vehicle_type;
+
+        // Debug logování vehicle dat a trip_id
+        console.log(`🚌 RAW DEPARTURE DATA for ${dep.route?.short_name}:`, dep);
+        console.log(`🚌 Vehicle data extracted:`, {
+          'dep.vehicle': dep.vehicle,
+          'vehicleNumber': vehicleNumber,
+          'vehicleOperator': vehicleOperator,
+          'vehicleType': vehicleType,
+          'trip_id': dep.trip?.id,
+          'ALL_KEYS': Object.keys(dep)
+        });
         const vehicleModel = dep.vehicle?.sub_type || dep.vehicle?.model || dep.vehicle?.vehicle_type?.short_name;
         const vehicleAge = dep.vehicle?.production_year ? new Date().getFullYear() - dep.vehicle?.production_year : undefined;
 
@@ -375,15 +324,15 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
           length: dep.vehicle?.length
         };
 
-        // Features detection podle API dokumentace
-        const airConditioning = dep.vehicle?.is_air_conditioned;
+        // Features detection podle skutečné API struktury - stejně jako low_floor
         const usbCharging = dep.vehicle?.has_usb_chargers;
-        const boardingWheelchair = dep.vehicle?.is_wheelchair_accessible;
+        const boardingWheelchair = dep.trip?.is_wheelchair_accessible;
 
         // Fallback na starší field names pokud nejsou k dispozici nové
         const features = dep.vehicle?.features || [];
         const wifi = features.includes('wifi') || features.includes('wi-fi');
         const lowFloor = features.includes('low_floor') || features.includes('nizka_podlaha') || dep.trip?.is_low_floor;
+        const airConditioning = features.includes('air_conditioning') || features.includes('klimatizace') || dep.trip?.is_air_conditioned;
         const bikeRack = features.includes('bike_rack') || features.includes('kola');
 
         const currentStop = dep.last_stop?.name;
@@ -516,22 +465,20 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
 
     console.log("🏁 Final processed departures (sorted by time):", processedDepartures);
 
-    // Obohacení dat o rozšířené údaje pokud je dostupný třetí API klíč
-    if (API_KEY_3 && API_KEY_3.trim() !== '') {
-      console.log("🔄 Obohacuji data o rozšířené údaje...");
-      const enrichedDepartures = await Promise.all(
-        processedDepartures.map(dep => enrichDepartureData(dep))
-      );
-      console.log("✨ Obohacená data:", enrichedDepartures);
-      return enrichedDepartures;
-    } else {
-      console.log("📊 Základní data hotova. Pro rozšířené údaje nastav třetí API klíč.");
-    }
+    // Enrichment odstraněn
+    console.log("📊 Základní data hotova.");
+    console.log(`🚨 Total alerts collected: ${allAlerts.length}`, allAlerts);
 
-    return processedDepartures;
+    return {
+      departures: processedDepartures,
+      alerts: allAlerts
+    };
   } catch (error: any) {
     console.error("💥 Error fetching departures:", error);
-    console.log("🔄 Returning empty array due to error");
-    return [];
+    console.log("🔄 Returning empty data due to error");
+    return {
+      departures: [],
+      alerts: []
+    };
   }
 };

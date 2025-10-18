@@ -6,6 +6,7 @@ import { RouteInfo } from "@/components/RouteInfo";
 import { Settings } from "@/components/Settings";
 import { WeatherHeader } from "@/components/WeatherHeader";
 import { DailyRobot } from "@/components/DailyRobot";
+import { AlertBanner } from "@/components/AlertBanner";
 
 const Index = () => {
   const stations = [
@@ -89,14 +90,15 @@ const Index = () => {
     const defaultSettings = {
       showRightPanel: true,
       isFullscreen: false,
-      zoomLevel: 1.0,
+      zoomLevel: 3.2,
       splitView: true,
-      textSize: 2.1,
+      textSize: 1.4,
       logoSize: 1.0,
       showWeatherInHeader: false,
       vozovnaOnlyMode: false,
       showTimesInMinutes: false,
-      vozovnaUnifiedHeader: false
+      vozovnaUnifiedHeader: false,
+      testAlert: false
     };
     
     if (saved) {
@@ -107,7 +109,7 @@ const Index = () => {
           ...parsedSettings,
           textSize: typeof parsedSettings.textSize === 'number' && !isNaN(parsedSettings.textSize)
             ? parsedSettings.textSize
-            : 2.1,
+            : 1.4,
           logoSize: typeof parsedSettings.logoSize === 'number' && !isNaN(parsedSettings.logoSize)
             ? parsedSettings.logoSize
             : 1.0
@@ -129,6 +131,7 @@ const Index = () => {
     localStorage.setItem('tram-display-settings', JSON.stringify(settings));
   }, [settings]);
 
+
   const handleLogoClick = () => {
     setLogoClickCount(prev => prev + 1);
     
@@ -149,15 +152,17 @@ const Index = () => {
   const handleSettingChange = (key: string, value: any) => {
     setSettings(prev => {
       const newSettings = { ...prev, [key]: value };
-      
+
       if (key === 'textSize') {
-        newSettings.textSize = typeof value === 'number' && !isNaN(value) ? value : 2.1;
+        newSettings.textSize = typeof value === 'number' && !isNaN(value) ? value : 1.4;
       }
 
       if (key === 'logoSize') {
         newSettings.logoSize = typeof value === 'number' && !isNaN(value) ? value : 1.0;
       }
-      
+
+      console.log(`🔧 Setting changed: ${key} = ${value}`, newSettings);
+
       return newSettings;
     });
   };
@@ -194,9 +199,9 @@ const Index = () => {
   const calculateStationIndex = (time: Date) => {
     const totalSeconds = time.getHours() * 3600 + time.getMinutes() * 60 + time.getSeconds();
     const cyclePosition = totalSeconds % 60;
-    
+
     console.log('🕐 Total seconds from start of day:', totalSeconds, 'Cycle position:', cyclePosition);
-    
+
     if (cyclePosition < 15) {
       return 0;
     } else if (cyclePosition < 30) {
@@ -208,18 +213,19 @@ const Index = () => {
     }
   };
 
+
   useEffect(() => {
     const initializeTime = async () => {
       console.log('🚀 Initializing world time...');
       const serverTime = await fetchWorldTime();
       setWorldTime(serverTime);
       setCurrentTime(serverTime);
-      
+
       const stationIndex = calculateStationIndex(serverTime);
       console.log('🎯 Initial station index:', stationIndex);
       setCurrentStationIndex(stationIndex);
     };
-    
+
     initializeTime();
   }, []);
 
@@ -245,7 +251,7 @@ const Index = () => {
         setTimeout(() => {
           setIsTransitioning(false);
           console.log('✅ Station transition completed');
-        }, 800);
+        }, 100);
       }
     };
 
@@ -258,6 +264,7 @@ const Index = () => {
       const newWorldTime = await fetchWorldTime();
       setWorldTime(newWorldTime);
     }, 300000);
+
     
     return () => {
       clearInterval(timer);
@@ -372,28 +379,34 @@ const Index = () => {
               alt="Logo školy"
               className={`object-contain ${
                 settings.isFullscreen
-                  ? 'w-16 h-16 sm:w-24 md:w-32 lg:w-48 xl:w-[512px] sm:h-16 md:h-24 lg:h-32 xl:h-48 2xl:h-[512px]'
-                  : 'w-12 h-12 sm:w-16 md:w-20 lg:w-24 xl:w-32 2xl:w-96 sm:h-12 md:h-16 lg:h-20 xl:h-24 2xl:h-32 3xl:h-96'
+                  ? 'w-32 h-32 sm:w-48 md:w-64 lg:w-80 xl:w-96 sm:h-32 md:h-48 lg:h-64 xl:h-80 2xl:h-96'
+                  : 'w-24 h-24 sm:w-32 md:w-40 lg:w-48 xl:w-64 sm:h-24 md:h-32 lg:h-40 xl:h-48 2xl:h-64'
               }`}
               style={getLogoStyle()}
             />
           </div>
           <div className="flex-1 text-center sm:hidden">
-            <h1 className={`font-bold leading-tight ${
-              settings.isFullscreen ? 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-8xl' : 'text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl 2xl:text-7xl'
-            }`}>
+            <h1 className={`font-bold leading-tight`} style={{
+              fontSize: settings.isFullscreen ? 'clamp(1.5rem, 4vw, 6rem)' : 'clamp(1.2rem, 3vw, 4rem)'
+            }}>
               Vozovna Motol
             </h1>
           </div>
         </div>
 
         <div className="hidden sm:block flex-1 text-center">
-          <h1 className={`font-bold leading-tight ${settings.isFullscreen ? 'text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-8xl' : 'text-2xl md:text-3xl lg:text-4xl xl:text-5xl 2xl:text-7xl'}`}>
+          <h1 className={`font-bold leading-tight`} style={{
+            fontSize: settings.isFullscreen ? 'clamp(1.8rem, 5vw, 7rem)' : 'clamp(1.5rem, 4vw, 5rem)'
+          }}>
             Vozovna Motol
           </h1>
           <div className="flex items-center justify-center gap-4 mt-2">
-            <i className={`fa-solid fa-person-walking text-blue-100 animate-pulse ${settings.isFullscreen ? 'text-lg sm:text-xl md:text-2xl lg:text-3xl' : 'text-base sm:text-lg md:text-xl lg:text-2xl'}`}></i>
-            <div className={`text-blue-100 ${settings.isFullscreen ? 'text-lg sm:text-xl md:text-2xl lg:text-3xl' : 'text-base sm:text-lg md:text-xl lg:text-2xl'}`}>
+            <i className={`fa-solid fa-person-walking text-blue-100 animate-pulse`} style={{
+              fontSize: settings.isFullscreen ? 'clamp(2.25rem, 6vw, 7.5rem)' : 'clamp(1.8rem, 4.5vw, 6rem)'
+            }}></i>
+            <div className={`text-blue-100`} style={{
+              fontSize: settings.isFullscreen ? 'clamp(2.25rem, 6vw, 7.5rem)' : 'clamp(1.8rem, 4.5vw, 6rem)'
+            }}>
               <span className="font-semibold">Motol</span> • 6 min • 400m
             </div>
           </div>
@@ -401,19 +414,19 @@ const Index = () => {
 
         <div className="flex flex-col items-end gap-1 sm:gap-2 md:gap-4 lg:gap-6 w-full sm:w-auto">
           {settings.showWeatherInHeader && (
-            <div className={`${settings.isFullscreen ? 'text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl' : 'text-base sm:text-xl md:text-2xl lg:text-3xl xl:text-5xl'}`}>
+            <div className={`${settings.isFullscreen ? 'text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-8xl' : 'text-xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-7xl'}`}>
               <WeatherHeader lat={50.0755} lon={14.4378} />
             </div>
           )}
           <div className="text-right">
-            <div className={`font-bold ${
-              settings.isFullscreen ? 'text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl 2xl:text-8xl' : 'text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-5xl 2xl:text-7xl'
-            }`}>
+            <div className={`font-bold`} style={{
+              fontSize: settings.isFullscreen ? 'clamp(3rem, 8vw, 8rem)' : 'clamp(2.5rem, 6vw, 6rem)'
+            }}>
               {currentTime.toLocaleTimeString('cs-CZ')}
             </div>
-            <div className={`text-blue-100 mt-1 sm:mt-2 ${
-              settings.isFullscreen ? 'text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl 2xl:text-4xl' : 'text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl 2xl:text-3xl'
-            }`}>
+            <div className={`text-blue-100 mt-1 sm:mt-2`} style={{
+              fontSize: settings.isFullscreen ? 'clamp(1.2rem, 3vw, 3rem)' : 'clamp(1rem, 2.5vw, 2.5rem)'
+            }}>
               {currentTime.toLocaleDateString('cs-CZ', {
                 weekday: 'long',
                 year: 'numeric',
@@ -426,12 +439,12 @@ const Index = () => {
 
         {/* Mobile walking info */}
         <div className="sm:hidden flex items-center justify-center gap-1 mt-1 w-full">
-          <i className={`fa-solid fa-person-walking text-blue-100 animate-pulse ${
-            settings.isFullscreen ? 'text-base sm:text-lg md:text-xl' : 'text-sm sm:text-base md:text-lg'
-          }`}></i>
-          <div className={`text-blue-100 ${
-            settings.isFullscreen ? 'text-base sm:text-lg md:text-xl' : 'text-sm sm:text-base md:text-lg'
-          }`}>
+          <i className={`fa-solid fa-person-walking text-blue-100 animate-pulse`} style={{
+            fontSize: settings.isFullscreen ? 'clamp(3rem, 9vw, 6rem)' : 'clamp(2.25rem, 6vw, 4.5rem)'
+          }}></i>
+          <div className={`text-blue-100`} style={{
+            fontSize: settings.isFullscreen ? 'clamp(3rem, 9vw, 6rem)' : 'clamp(2.25rem, 6vw, 4.5rem)'
+          }}>
             <span className="font-semibold">Motol</span> • 6 min • 400m
           </div>
         </div>
@@ -463,8 +476,8 @@ const Index = () => {
                   alt="Logo školy"
                   className={`object-contain ${
                     settings.isFullscreen
-                      ? 'w-24 h-24 sm:w-[512px] sm:h-[512px]'
-                      : 'w-20 h-20 sm:w-96 sm:h-96'
+                      ? 'w-32 h-32 sm:w-[512px] sm:h-[512px]'
+                      : 'w-24 h-24 sm:w-96 sm:h-96'
                   }`}
                   style={getLogoStyle()}
                 />
@@ -473,7 +486,7 @@ const Index = () => {
 
             <div className="flex-1 text-center">
               <h1 className={`font-bold leading-tight ${
-                settings.isFullscreen ? 'text-2xl sm:text-7xl' : 'text-xl sm:text-6xl'
+                settings.isFullscreen ? 'text-4xl sm:text-9xl' : 'text-xl sm:text-6xl'
               }`}>
                 Vozovna Motol
               </h1>
@@ -490,18 +503,18 @@ const Index = () => {
                   className={`object-contain ${
                     settings.vozovnaOnlyMode && settings.splitView
                       ? settings.isFullscreen
-                        ? 'w-32 h-32 sm:w-40 md:w-48 lg:w-56 xl:w-64 2xl:w-[512px] sm:h-32 md:h-40 lg:h-48 xl:h-56 2xl:h-64 3xl:h-[512px]'
-                        : 'w-24 h-24 sm:w-28 md:w-32 lg:w-36 xl:w-40 2xl:w-96 sm:h-24 md:h-28 lg:h-32 xl:h-36 2xl:h-40 3xl:h-96'
+                        ? 'w-40 h-40 sm:w-56 md:w-64 lg:w-80 xl:w-96 2xl:w-[512px] sm:h-40 md:h-56 lg:h-64 xl:h-80 2xl:h-96 3xl:h-[512px]'
+                        : 'w-32 h-32 sm:w-40 md:w-48 lg:w-56 xl:w-64 2xl:w-96 sm:h-32 md:h-40 lg:h-48 xl:h-56 2xl:h-64 3xl:h-96'
                       : settings.isFullscreen
-                      ? 'w-20 h-20 sm:w-24 md:w-28 lg:w-32 xl:w-56 2xl:h-56 sm:h-20 md:h-24 lg:h-28 xl:h-32 2xl:h-56'
-                      : 'w-16 h-16 sm:w-20 md:w-24 lg:w-28 xl:w-48 2xl:h-48 sm:h-16 md:h-20 lg:h-24 xl:h-28 2xl:h-48'
+                      ? 'w-28 h-28 sm:w-32 md:w-40 lg:w-48 xl:w-80 2xl:h-80 sm:h-28 md:h-32 lg:h-40 xl:h-48 2xl:h-80'
+                      : 'w-24 h-24 sm:w-28 md:w-32 lg:w-40 xl:w-64 2xl:h-64 sm:h-24 md:h-28 lg:h-32 xl:h-40 2xl:h-64'
                   }`}
                 />
               </div>
               <div className="flex-1 text-center sm:text-left">
-                <h1 className={`font-bold leading-tight ${
+                <h1 className={`font-bold leading-tight transition-all duration-500 ease-in-out hover:scale-105 ${
                   settings.isFullscreen ? 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-8xl' : 'text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl 2xl:text-7xl'
-                }`}>
+                }`} key={`station-${currentStationIndex}`}>
                   {React.isValidElement(station.displayName) ?
                     station.displayName :
                     (station.textName || station.displayName)
@@ -518,16 +531,16 @@ const Index = () => {
                   <WeatherHeader lat={50.0755} lon={14.4378} />
                 </div>
               )}
-              <div className="flex items-center gap-2 sm:gap-4 text-center">
+              <div className="flex items-center justify-center gap-2 sm:gap-4 text-center">
                 <i className={`fa-solid fa-person-walking text-blue-100 animate-pulse ${
-                  settings.isFullscreen ? 'text-lg sm:text-5xl' : 'text-base sm:text-4xl'
+                  settings.isFullscreen ? 'text-3xl sm:text-[7.5rem]' : 'text-3xl sm:text-[9rem]'
                 }`}></i>
                 <div>
                   <div className={`font-semibold ${
-                    settings.isFullscreen ? 'text-lg sm:text-4xl' : 'text-base sm:text-3xl'
+                    settings.isFullscreen ? 'text-3xl sm:text-6xl' : 'text-xl sm:text-5xl'
                   }`}>Motol</div>
                   <div className={`text-blue-100 ${
-                    settings.isFullscreen ? 'text-base sm:text-3xl' : 'text-sm sm:text-2xl'
+                    settings.isFullscreen ? 'text-xl sm:text-5xl' : 'text-base sm:text-3xl'
                   }`}>6 min • 400m</div>
                 </div>
               </div>
@@ -557,7 +570,7 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-2 sm:gap-0">
             <div className="flex-1 text-center order-2 sm:order-1">
               <h1 className={`font-bold leading-tight ${
-                settings.isFullscreen ? 'text-2xl sm:text-7xl' : 'text-xl sm:text-6xl'
+                settings.isFullscreen ? 'text-4xl sm:text-9xl' : 'text-xl sm:text-6xl'
               }`}>
                 Vozovna Motol
               </h1>
@@ -573,12 +586,12 @@ const Index = () => {
               )}
               <div className="text-center sm:text-right">
                 <div className={`font-bold ${
-                  settings.isFullscreen ? 'text-3xl sm:text-8xl' : 'text-2xl sm:text-7xl'
+                  settings.isFullscreen ? 'text-5xl sm:text-[8rem]' : 'text-4xl sm:text-6xl'
                 }`}>
                   {currentTime.toLocaleTimeString('cs-CZ')}
                 </div>
                 <div className={`text-blue-100 mt-1 sm:mt-2 ${
-                  settings.isFullscreen ? 'text-base sm:text-4xl' : 'text-sm sm:text-3xl'
+                  settings.isFullscreen ? 'text-xl sm:text-4xl' : 'text-lg sm:text-3xl'
                 }`}>
                   {currentTime.toLocaleDateString('cs-CZ', {
                     weekday: 'long',
@@ -594,9 +607,9 @@ const Index = () => {
           // Normal split view layout
           <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-2 sm:gap-0">
             <div className="flex-1 text-center order-2 sm:order-1">
-              <h1 className={`font-bold leading-tight ${
+              <h1 className={`font-bold leading-tight transition-all duration-500 ease-in-out hover:scale-105 ${
                 settings.isFullscreen ? 'text-lg sm:text-7xl' : 'text-base sm:text-6xl'
-              }`}>
+              }`} key={`single-station-${currentStationIndex}`}>
                 {React.isValidElement(station.displayName) ?
                   station.displayName :
                   (station.textName || station.displayName)
@@ -614,12 +627,12 @@ const Index = () => {
               )}
               <div className="text-center sm:text-right">
                 <div className={`font-bold ${
-                  settings.isFullscreen ? 'text-3xl sm:text-8xl' : 'text-2xl sm:text-7xl'
+                  settings.isFullscreen ? 'text-5xl sm:text-[8rem]' : 'text-4xl sm:text-6xl'
                 }`}>
                   {currentTime.toLocaleTimeString('cs-CZ')}
                 </div>
                 <div className={`text-blue-100 mt-1 sm:mt-2 ${
-                  settings.isFullscreen ? 'text-base sm:text-4xl' : 'text-sm sm:text-3xl'
+                  settings.isFullscreen ? 'text-xl sm:text-4xl' : 'text-lg sm:text-3xl'
                 }`}>
                   {currentTime.toLocaleDateString('cs-CZ', {
                     weekday: 'long',
@@ -670,7 +683,7 @@ const Index = () => {
                     key={`vozovna1-${Array.isArray(currentVozovnaStation1.id) ? currentVozovnaStation1.id.join(',') : currentVozovnaStation1.id}`}
                     stationId={currentVozovnaStation1.id}
                     textSize={effectiveTextSize}
-                    maxItems={5}
+                    maxItems={8}
                     customTitle={currentVozovnaStation1.direction}
                     showTimesInMinutes={settings.showTimesInMinutes}
                   />
@@ -686,7 +699,7 @@ const Index = () => {
                     key={`vozovna2-${Array.isArray(currentVozovnaStation2.id) ? currentVozovnaStation2.id.join(',') : currentVozovnaStation2.id}`}
                     stationId={currentVozovnaStation2.id}
                     textSize={effectiveTextSize}
-                    maxItems={5}
+                    maxItems={8}
                     customTitle={currentVozovnaStation2.direction}
                     showTimesInMinutes={settings.showTimesInMinutes}
                   />
@@ -728,7 +741,7 @@ const Index = () => {
                   key={`vozovna1-${Array.isArray(currentVozovnaStation1.id) ? currentVozovnaStation1.id.join(',') : currentVozovnaStation1.id}`}
                   stationId={currentVozovnaStation1.id}
                   textSize={effectiveTextSize}
-                  maxItems={5}
+                  maxItems={8}
                   customTitle={currentVozovnaStation1.direction}
                   showTimesInMinutes={settings.showTimesInMinutes}
                 />
@@ -747,7 +760,7 @@ const Index = () => {
                   key={`vozovna2-${Array.isArray(currentVozovnaStation2.id) ? currentVozovnaStation2.id.join(',') : currentVozovnaStation2.id}`}
                   stationId={currentVozovnaStation2.id}
                   textSize={effectiveTextSize}
-                  maxItems={5}
+                  maxItems={8}
                   customTitle={currentVozovnaStation2.direction}
                   showTimesInMinutes={settings.showTimesInMinutes}
                 />
@@ -796,8 +809,31 @@ const Index = () => {
           }}
         >
           <div className="absolute inset-0 bg-blue-900/80"></div>
-          <div className="px-1 sm:px-4 lg:px-6 py-1 sm:py-2 lg:py-4 relative z-10 h-full flex items-center">
-            <div className="grid grid-cols-1 lg:grid-cols-2 w-full h-full gap-4">
+
+          {/* Absolutely centered walking info */}
+          <div className="absolute inset-0 flex items-center justify-center z-15">
+            <div
+              className="flex items-center gap-4 text-center"
+              style={{
+                animation: 'float 3s ease-in-out infinite'
+              }}
+            >
+              <i className={`fa-solid fa-person-walking text-blue-100 ${
+                settings.isFullscreen ? 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl' : 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl'
+              }`} style={{animation: 'walking 1.8s ease-in-out infinite'}}></i>
+              <div>
+                <div className={`font-semibold text-white ${
+                  settings.isFullscreen ? 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl' : 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl'
+                }`} style={{animation: 'glow 4s ease-in-out infinite'}}>Motol</div>
+                <div className={`text-blue-100 ${
+                  settings.isFullscreen ? 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl' : 'text-xl sm:text-2xl md:text-3xl lg:text-4xl'
+                }`}>6 min • 400m</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="px-1 sm:px-4 lg:px-6 py-1 sm:py-2 lg:py-4 relative z-10 h-full flex flex-col">
+            <div className="grid grid-cols-1 lg:grid-cols-2 w-full flex-1 gap-4">
               {/* Left station */}
               <div className="flex flex-col sm:flex-row items-center justify-between h-full">
                 <div className="flex items-center gap-1 sm:gap-4 lg:gap-6">
@@ -807,16 +843,16 @@ const Index = () => {
                       alt="Logo školy"
                       className={`object-contain ${
                         settings.isFullscreen
-                          ? 'w-20 h-20 sm:w-24 md:w-28 lg:w-32 xl:w-56 2xl:h-56 sm:h-20 md:h-24 lg:h-28 xl:h-32 2xl:h-56'
-                          : 'w-16 h-16 sm:w-20 md:w-24 lg:w-28 xl:w-48 2xl:h-48 sm:h-16 md:h-20 lg:h-24 xl:h-28 2xl:h-48'
+                          ? 'w-28 h-28 sm:w-32 md:w-40 lg:w-48 xl:w-80 2xl:h-80 sm:h-28 md:h-32 lg:h-40 xl:h-48 2xl:h-80'
+                          : 'w-24 h-24 sm:w-28 md:w-32 lg:w-40 xl:w-64 2xl:h-64 sm:h-24 md:h-28 lg:h-32 xl:h-40 2xl:h-64'
                       }`}
                       style={getLogoStyle()}
                     />
                   </div>
                   <div className="flex-1 text-center lg:text-left">
-                    <h1 className={`font-bold leading-tight ${
+                    <h1 className={`font-bold leading-tight transition-all duration-500 ease-in-out hover:scale-105 ${
                       settings.isFullscreen ? 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-8xl' : 'text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl 2xl:text-7xl'
-                    }`}>
+                    }`} key={`motol-${currentStationIndex}`}>
                       {React.isValidElement(currentMotolStation.displayName) ?
                         currentMotolStation.displayName :
                         (currentMotolStation.textName || currentMotolStation.displayName)
@@ -824,27 +860,14 @@ const Index = () => {
                     </h1>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 sm:gap-4 text-center">
-                  <i className={`fa-solid fa-person-walking text-blue-100 animate-pulse ${
-                    settings.isFullscreen ? 'text-lg sm:text-xl md:text-2xl lg:text-3xl' : 'text-base sm:text-lg md:text-xl lg:text-2xl'
-                  }`}></i>
-                  <div>
-                    <div className={`font-semibold ${
-                      settings.isFullscreen ? 'text-lg sm:text-xl md:text-2xl lg:text-3xl' : 'text-base sm:text-lg md:text-xl lg:text-2xl'
-                    }`}>Motol</div>
-                    <div className={`text-blue-100 ${
-                      settings.isFullscreen ? 'text-lg sm:text-xl md:text-2xl lg:text-3xl' : 'text-base sm:text-lg md:text-xl lg:text-2xl'
-                    }`}>6 min • 400m</div>
-                  </div>
-                </div>
               </div>
 
               {/* Right station */}
               <div className="flex flex-col sm:flex-row items-center justify-between h-full">
                 <div className="flex-1 text-center order-2 lg:order-1">
-                  <h1 className={`font-bold leading-tight ${
+                  <h1 className={`font-bold leading-tight transition-all duration-500 ease-in-out hover:scale-105 ${
                     settings.isFullscreen ? 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-8xl' : 'text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl 2xl:text-7xl'
-                  }`}>
+                  }`} key={`vozovna-${currentStationIndex}`}>
                     {React.isValidElement(currentVozovnaStation.displayName) ?
                       currentVozovnaStation.displayName :
                       (currentVozovnaStation.textName || currentVozovnaStation.displayName)
@@ -854,19 +877,19 @@ const Index = () => {
                 <div className="flex flex-col items-center lg:items-end gap-1 sm:gap-2 md:gap-4 lg:gap-6 order-1 lg:order-2">
                   {settings.showWeatherInHeader && (
                     <div className={`${
-                      settings.isFullscreen ? 'text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl' : 'text-base sm:text-xl md:text-2xl lg:text-3xl xl:text-5xl'
+                      settings.isFullscreen ? 'text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl' : 'text-xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl'
                     }`}>
                       <WeatherHeader lat={50.0755} lon={14.4378} />
                     </div>
                   )}
                   <div className="text-center lg:text-right">
                     <div className={`font-bold ${
-                      settings.isFullscreen ? 'text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl 2xl:text-8xl' : 'text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-5xl 2xl:text-7xl'
+                      settings.isFullscreen ? 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl' : 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl'
                     }`}>
                       {currentTime.toLocaleTimeString('cs-CZ')}
                     </div>
                     <div className={`text-blue-100 mt-1 sm:mt-2 ${
-                      settings.isFullscreen ? 'text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl 2xl:text-4xl' : 'text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl 2xl:text-3xl'
+                      settings.isFullscreen ? 'text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl 2xl:text-5xl' : 'text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl 2xl:text-4xl'
                     }`}>
                       {currentTime.toLocaleDateString('cs-CZ', {
                         weekday: 'long',
@@ -893,7 +916,7 @@ const Index = () => {
                 key={`motol-${Array.isArray(currentMotolStation.id) ? currentMotolStation.id.join(',') : currentMotolStation.id}-${currentStationIndex}`}
                 stationId={currentMotolStation.id}
                 textSize={effectiveTextSize}
-                maxItems={5}
+                maxItems={8}
                 showTimesInMinutes={settings.showTimesInMinutes}
               />
             </div>
@@ -908,7 +931,7 @@ const Index = () => {
                 key={`vozovna-${Array.isArray(currentVozovnaStation.id) ? currentVozovnaStation.id.join(',') : currentVozovnaStation.id}-${currentStationIndex}`}
                 stationId={currentVozovnaStation.id}
                 textSize={effectiveTextSize}
-                maxItems={5}
+                maxItems={8}
                 showTimesInMinutes={settings.showTimesInMinutes}
               />
             </div>
@@ -923,8 +946,6 @@ const Index = () => {
         />
 
         <DailyRobot textSize={effectiveTextSize} />
-
-        <DailyRobot textSize={getEffectiveTextSize()} />
       </div>
     );
   }
@@ -943,6 +964,20 @@ const Index = () => {
         height: `${100 / settings.zoomLevel}%`
       }}
     >
+      {/* Global Alert Banner - Fixed position at top */}
+      {console.log('🚨 Alert banner render check:', { testAlert: settings.testAlert, settings }) || settings.testAlert && (
+        <div className="fixed top-0 left-0 right-0 z-[9999]">
+          <AlertBanner
+            alerts={[
+              { text: "🚨 TESTOVACÍ ALERT: Tramvaj střet s vozidlem na Andělu - očekávejte zpoždění! 🚨", priority: 1 },
+              { text: "🔧 TESTOVACÍ ALERT: Výluka na lince 9 - náhradní autobusová doprava mezi Smíchovem a Národním divadlem 🔧", priority: 2 },
+              { text: "⚠️ TESTOVACÍ ALERT: Zpožděný provoz tramvají kvůli technické závadě 🔧", priority: 3 }
+            ]}
+            textSize={effectiveTextSize}
+          />
+        </div>
+      )}
+
       <div
         className="text-white shadow-lg relative"
         style={{
@@ -963,16 +998,16 @@ const Index = () => {
                 alt="Logo školy"
                 className={`object-contain ${
                   settings.isFullscreen
-                    ? 'w-20 h-20 sm:w-80 sm:h-80'
-                    : 'w-16 h-16 sm:w-72 sm:h-72'
+                    ? 'w-28 h-28 sm:w-96 sm:h-96'
+                    : 'w-24 h-24 sm:w-80 sm:h-80'
                 }`}
                 style={getLogoStyle()}
               />
             </div>
             <div className="flex-1 text-center sm:text-left">
-              <h1 className={`font-bold leading-tight ${
+              <h1 className={`font-bold leading-tight transition-all duration-500 ease-in-out hover:scale-105 ${
                 settings.isFullscreen ? 'text-lg sm:text-7xl' : 'text-base sm:text-6xl'
-              }`}>
+              }`} key={`split-station-${currentStationIndex}`}>
                 {React.isValidElement(currentStation.displayName) ?
                     currentStation.displayName :
                     (currentStation.textName || currentStation.displayName)
@@ -981,18 +1016,18 @@ const Index = () => {
             </div>
           </div>
 
-          <div className="hidden sm:flex items-center gap-4 text-center">
+          <div className="hidden sm:flex items-center justify-center gap-4 text-center">
             <i className={`fa-solid fa-person-walking text-blue-100 animate-pulse ${
-              settings.isFullscreen ? 'text-5xl' : 'text-4xl'
+              settings.isFullscreen ? 'text-[10.5rem]' : 'text-[9rem]'
             }`}></i>
             <div>
               <div className={`font-semibold ${
-                settings.isFullscreen ? 'text-4xl' : 'text-3xl'
+                settings.isFullscreen ? 'text-[9rem]' : 'text-[7.5rem]'
               }`}>
                 Motol
               </div>
               <div className={`text-blue-100 ${
-                settings.isFullscreen ? 'text-3xl' : 'text-2xl'
+                settings.isFullscreen ? 'text-[7.5rem]' : 'text-6xl'
               }`}>6 min • 400m</div>
             </div>
           </div>
@@ -1000,12 +1035,12 @@ const Index = () => {
           <div className="flex flex-col items-center sm:items-end gap-2 sm:gap-4 w-full sm:w-auto">
             <div className="text-center sm:text-right">
               <div className={`font-bold ${
-                settings.isFullscreen ? 'text-3xl sm:text-8xl' : 'text-2xl sm:text-7xl'
+                settings.isFullscreen ? 'text-5xl sm:text-[12rem]' : 'text-4xl sm:text-9xl'
               }`}>
                 {currentTime.toLocaleTimeString('cs-CZ')}
               </div>
               <div className={`text-blue-100 mt-1 sm:mt-2 ${
-                settings.isFullscreen ? 'text-base sm:text-4xl' : 'text-sm sm:text-3xl'
+                settings.isFullscreen ? 'text-xl sm:text-6xl' : 'text-lg sm:text-5xl'
               }`}>
                 {currentTime.toLocaleDateString('cs-CZ', {
                   weekday: 'long',
@@ -1020,10 +1055,10 @@ const Index = () => {
           {/* Mobile walking info */}
           <div className="sm:hidden flex items-center justify-center gap-1 mt-1 w-full">
             <i className={`fa-solid fa-person-walking text-blue-100 animate-pulse ${
-              settings.isFullscreen ? 'text-xl' : 'text-lg'
+              settings.isFullscreen ? 'text-3xl' : 'text-3xl'
             }`}></i>
             <div className={`text-blue-100 ${
-              settings.isFullscreen ? 'text-xl' : 'text-lg'
+              settings.isFullscreen ? 'text-3xl' : 'text-3xl'
             }`}>
               <span className="font-semibold">Motol</span> • 6 min • 400m
             </div>
@@ -1041,7 +1076,7 @@ const Index = () => {
               key={`${Array.isArray(currentStation.id) ? currentStation.id.join(',') : currentStation.id}-${currentStationIndex}`}
               stationId={currentStation.id}
               textSize={effectiveTextSize}
-              maxItems={5}
+              maxItems={8}
               showTimesInMinutes={settings.showTimesInMinutes}
             />
           </div>

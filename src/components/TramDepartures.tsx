@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getDepartures, setThirdApiKey } from "@/utils/pidApi";
 import type { Departure } from "@/types/pid";
+import { TransitionGroup, CSSTransition } from "react-transition-group";
 
 interface TramDeparturesProps {
   stationId: string | string[];
@@ -16,6 +17,8 @@ interface TramDeparturesProps {
 export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, customTitle, showTimesInMinutes = false }: TramDeparturesProps) => {
   const [departures, setDepartures] = useState<Departure[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [nextDepartures, setNextDepartures] = useState<Departure[]>([]);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [error, setError] = useState<string | null>(null);
   const [retryDelay, setRetryDelay] = useState(60000);
@@ -29,21 +32,23 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
       setIsRateLimited(false);
       
       console.log(`🔄 Fetching departures for station: ${Array.isArray(stationId) ? stationId.join(',') : stationId} (retry: ${isRetry})`);
-      
-      const data = await getDepartures(stationId);
-      
-      if (data.length === 0 && retryCount < 3) {
+
+      const result = await getDepartures(stationId);
+      const { departures: departuresData } = result;
+
+      if (departuresData.length === 0 && retryCount < 3) {
         console.log(`⚠️ No data received, scheduling retry ${retryCount + 1}/3`);
         setRetryCount(prev => prev + 1);
         setTimeout(() => fetchDepartures(true), 5000);
         return;
       }
-      
-      setDepartures(data);
+
+      setDepartures(departuresData);
       setLastUpdate(new Date());
       setRetryDelay(60000);
       setRetryCount(0);
-      console.log(`✅ Successfully loaded ${data.length} departures`);
+      setIsUpdating(false);
+      console.log(`✅ Successfully loaded ${departuresData.length} departures`);
     } catch (error: any) {
       console.error("Error fetching departures:", error);
       
@@ -64,6 +69,7 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
       }
     } finally {
       setLoading(false);
+      setIsUpdating(false);
     }
   };
 
@@ -75,10 +81,29 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
 
     if (stationChanged) {
       console.log(`🔄 Station changed from ${JSON.stringify(previousStationId)} to ${JSON.stringify(stationId)}`);
-      setLoading(true);
+      setIsUpdating(true);
       setRetryCount(0);
       setPreviousStationId(stationId);
-      fetchDepartures();
+
+      // Preload data first
+      const preloadData = async () => {
+        try {
+          const result = await getDepartures(stationId);
+          setNextDepartures(result.departures);
+
+          // Small delay to ensure smooth transition
+          setTimeout(() => {
+            setDepartures(result.departures);
+            setLastUpdate(new Date());
+            setIsUpdating(false);
+          }, 100);
+        } catch (error) {
+          // If preload fails, fall back to normal fetch
+          fetchDepartures();
+        }
+      };
+
+      preloadData();
     }
   }, [stationId]);
 
@@ -143,6 +168,11 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
       case 2: return "bg-purple-100 text-purple-800";
       default: return "bg-red-100 text-red-800";
     }
+  };
+
+  const hasAirConditioning = (departure: Departure) => {
+    // Stejně jako low_floor - používá departure.air_conditioning
+    return departure.air_conditioning || false;
   };
 
   const getDirectionDisplay = (departure: Departure) => {
@@ -251,21 +281,7 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
     }
   };
 
-  if (loading) {
-    return (
-      <Card className="shadow-lg bg-white/90 backdrop-blur-sm h-full border-2 border-gray-300">
-        <CardContent className="p-4 h-full flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-gray-700 mb-2 text-xl" style={{ fontSize: `${1.5 * textSize}rem` }}>Načítám odjezdy...</p>
-            {retryCount > 0 && (
-              <p className="text-gray-600 text-base" style={{ fontSize: `${1 * textSize}rem` }}>Pokus {retryCount}/3</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Removed loading state to prevent layout disruption
 
   if (error) {
     return (
@@ -296,8 +312,11 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
 
   return (
     <Card className="shadow-lg bg-white/90 backdrop-blur-sm h-full border-2 border-gray-300 flex flex-col">
-      <CardContent className="flex-1 p-2 overflow-hidden flex flex-col" style={{ paddingTop: `${0.5 * textSize}rem` }}>
-        {limitedDepartures.length === 0 ? (
+      <CardContent
+        className={`flex-1 p-2 overflow-hidden flex flex-col transition-all duration-500 ease-in-out ${isUpdating ? 'opacity-70 scale-[0.98]' : 'opacity-100 scale-100'}`}
+        style={{ paddingTop: `${0.5 * textSize}rem` }}
+      >
+        {limitedDepartures.length === 0 && !isUpdating ? (
           <div className="text-center py-8 text-gray-600 flex-1 flex items-center justify-center">
             <div>
               <Info className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 mx-auto mb-2 sm:mb-4 text-gray-400" style={{ width: `${Math.max(3, 4 * textSize)}rem`, height: `${Math.max(3, 4 * textSize)}rem` }} />
@@ -305,18 +324,35 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
               <p style={{ fontSize: `${Math.max(1.4, 2.2 * textSize)}rem` }}>Zkontrolujte později</p>
             </div>
           </div>
-        ) : (
+        ) : limitedDepartures.length > 0 ? (
           <div className="flex-1 flex flex-col space-y-1" style={{ minHeight: 0 }}>
-            {limitedDepartures.map((departure, index) => {
+            <TransitionGroup component={null}>
+              {limitedDepartures.map((departure, index) => {
               const delay = departure.delay || 0;
               const delayInfo = getDelayBadge(delay);
               const approachingInfo = getVehicleTypeInfo(departure);
               const serviceAlerts = getServiceAlerts(departure);
               const timeToArrival = departure.arrival_timestamp - Math.floor(Date.now() / 1000);
+
+              // Debug log pro klimatizaci a aktuální zastávku
+              if (index === 0) {
+                console.log('🚌 Departure data - stejně jako low_floor:', {
+                  route: departure.route_short_name,
+                  air_conditioning: departure.air_conditioning,
+                  current_stop: departure.current_stop,
+                  wheelchair_accessible: departure.wheelchair_accessible,
+                  low_floor: departure.low_floor,
+                  headsign: departure.headsign
+                });
+              }
               
               return (
-                <div
-                  key={index}
+                <CSSTransition
+                  key={`${departure.route_short_name}-${departure.departure_timestamp}-${index}`}
+                  timeout={300}
+                  classNames="departure"
+                >
+                  <div
                   className="flex flex-col lg:flex-row items-start lg:items-center justify-between rounded-lg border border-gray-100 hover:shadow-md transition-all duration-200 bg-white relative flex-1 gap-1 sm:gap-2 lg:gap-0"
                   style={{
                     padding: `${Math.max(0.3, 0.6 * textSize)}rem`,
@@ -327,11 +363,19 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
                   <div className="flex items-center gap-1 sm:gap-2 w-full lg:w-auto" style={{ gap: `${Math.max(0.2, 0.4 * textSize)}rem` }}>
                     <div className={`rounded-lg flex items-center justify-center ${getRouteColor(departure.route_type)}`}
                          style={{
-                           width: `${Math.max(2.0, 3.0 * textSize)}rem`,
-                           height: `${Math.max(2.0, 3.0 * textSize)}rem`,
-                           minWidth: `${Math.max(2.0, 3.0 * textSize)}rem`
+                           width: departure.route_short_name.length > 2 ?
+                             `${Math.max(2.8, 4.2 * textSize)}rem` :
+                             `${Math.max(2.4, 3.6 * textSize)}rem`,
+                           height: `${Math.max(2.4, 3.6 * textSize)}rem`,
+                           minWidth: departure.route_short_name.length > 2 ?
+                             `${Math.max(2.8, 4.2 * textSize)}rem` :
+                             `${Math.max(2.4, 3.6 * textSize)}rem`
                          }}>
-                      <span className="font-bold" style={{ fontSize: `${Math.max(1.2, 2.4 * textSize)}rem` }}>
+                      <span className="font-bold" style={{
+                        fontSize: departure.route_short_name.length > 2 ?
+                          `${Math.max(1.0, 1.8 * textSize)}rem` :
+                          `${Math.max(1.2, 2.4 * textSize)}rem`
+                      }}>
                         {departure.route_short_name}
                       </span>
                     </div>
@@ -339,43 +383,18 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
                     <div className="flex-1">
                       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-1" style={{ marginBottom: `${0.1 * textSize}rem` }}>
                         <div className="flex items-center gap-1 flex-wrap" style={{ gap: `${0.4 * textSize}rem` }}>
-                          <span className="font-semibold text-gray-800" style={{ fontSize: `${Math.max(1.2, 2.2 * textSize)}rem` }}>
+                          <span className="font-bold text-gray-900" style={{ fontSize: `${Math.max(1.6, 2.8 * textSize)}rem` }}>
                             {getDirectionDisplay(departure)}
                           </span>
                           {departure.wheelchair_accessible && (
-                            <i className="fas fa-wheelchair text-blue-600" style={{ fontSize: `${Math.max(0.7, 1.2 * textSize)}rem` }}></i>
-                          )}
-                          {departure.air_conditioning && (
-                            <div className="flex items-center" title="Klimatizace">
-                              <Snowflake className="text-cyan-600" style={{ width: `${Math.max(1.2, 1.8 * textSize)}rem`, height: `${Math.max(1.2, 1.8 * textSize)}rem` }} />
-                            </div>
-                          )}
-                          {departure.wifi && (
-                            <div className="flex items-center" title="WiFi">
-                              <Wifi className="text-blue-600" style={{ width: `${Math.max(1.2, 1.8 * textSize)}rem`, height: `${Math.max(1.2, 1.8 * textSize)}rem` }} />
-                            </div>
+                            <i className="fas fa-wheelchair text-blue-600" style={{ fontSize: `${Math.max(0.9, 1.4 * textSize)}rem` }}></i>
                           )}
                           {departure.low_floor && (
-                            <div className="flex items-center" title="Nízká podlaha">
-                              <Accessibility className="text-green-600" style={{ width: `${Math.max(1.2, 1.8 * textSize)}rem`, height: `${Math.max(1.2, 1.8 * textSize)}rem` }} />
-                            </div>
+                            <span className="text-green-600 font-bold text-sm bg-green-100 px-1 rounded" style={{ fontSize: `${Math.max(0.7, 1.2 * textSize)}rem` }}>NP</span>
                           )}
-                          {departure.bike_rack && (
-                            <div className="flex items-center" title="Stojan na kola">
-                              <Bike className="text-orange-600" style={{ width: `${Math.max(1.2, 1.8 * textSize)}rem`, height: `${Math.max(1.2, 1.8 * textSize)}rem` }} />
-                            </div>
+                          {hasAirConditioning(departure) && (
+                            <i className="fas fa-snowflake text-blue-500" style={{ fontSize: `${Math.max(0.9, 1.4 * textSize)}rem` }} title="Klimatizace"></i>
                           )}
-                          {departure.usb_charging && (
-                            <div className="flex items-center" title="USB nabíjení">
-                              <Zap className="text-yellow-600" style={{ width: `${Math.max(1.2, 1.8 * textSize)}rem`, height: `${Math.max(1.2, 1.8 * textSize)}rem` }} />
-                            </div>
-                          )}
-
-                          {serviceAlerts.map((alert, alertIndex) => (
-                            <div key={alertIndex} className="flex items-center" title={alert.text}>
-                              {alert.icon}
-                            </div>
-                          ))}
                         </div>
                       </div>
 
@@ -387,84 +406,14 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
                           <Clock className="w-3 h-3 sm:w-4 sm:h-4" style={{ width: `${Math.max(0.6, 1.2 * textSize)}rem`, height: `${Math.max(0.6, 1.2 * textSize)}rem` }} />
                           {formatTime(timeToArrival)}
                         </div>
+                        {departure.current_stop && (
+                          <div className="flex items-center gap-1" style={{ gap: `${0.3 * textSize}rem` }}>
+                            <MapPin className="w-3 h-3 sm:w-4 sm:h-4" style={{ width: `${Math.max(0.6, 1.2 * textSize)}rem`, height: `${Math.max(0.6, 1.2 * textSize)}rem` }} />
+                            <span className="max-w-full" title={departure.current_stop}>{departure.current_stop}</span>
+                          </div>
+                        )}
                       </div>
 
-                      {/* Zobrazí informace o vozidle pouze pokud jsou k dispozici */}
-                      {(departure.vehicle_number || departure.vehicle_model || departure.vehicle_age || departure.current_stop || departure.vehicle_type) && (
-                        <div className="text-gray-500" style={{
-                          fontSize: `${Math.max(0.7, 1.0 * textSize)}rem`
-                        }}>
-                          <div className="space-y-1" style={{ gap: `${Math.max(0.2, 0.3 * textSize)}rem` }}>
-
-                          {/* Číslo a typ vozidla */}
-                          <div className="flex flex-wrap gap-3" style={{ gap: `${Math.max(0.4, 0.6 * textSize)}rem` }}>
-                            {departure.vehicle_number && (
-                              <div className="flex items-center gap-1" style={{ gap: `${0.2 * textSize}rem` }}>
-                                <Car className="w-3 h-3 text-blue-600" style={{ width: `${Math.max(0.7, 1.0 * textSize)}rem`, height: `${Math.max(0.7, 1.0 * textSize)}rem` }} />
-                                <span className="text-gray-600">Voz. č.:</span>
-                                <span className="font-bold text-blue-700">{formatVehicleNumber(departure.vehicle_number, departure.route_short_name, departure.trip_number)}</span>
-                              </div>
-                            )}
-                            {departure.vehicle_operator && (
-                              <div className="flex items-center gap-1" style={{ gap: `${0.2 * textSize}rem` }}>
-                                <span className="text-gray-600">Operátor:</span>
-                                <span className="font-bold text-blue-600">{departure.vehicle_operator}</span>
-                              </div>
-                            )}
-                            {departure.vehicle_type && (
-                              <div className="flex items-center gap-1" style={{ gap: `${0.2 * textSize}rem` }}>
-                                <span className="text-gray-600">Typ:</span>
-                                <span className="font-bold text-green-700">{departure.vehicle_type}</span>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Stáří a pozice */}
-                          <div className="flex flex-wrap gap-3" style={{ gap: `${Math.max(0.4, 0.6 * textSize)}rem` }}>
-                            {departure.vehicle_age && (
-                              <div className="flex items-center gap-1" style={{ gap: `${0.2 * textSize}rem` }}>
-                                <Calendar className="w-3 h-3 text-orange-600" style={{ width: `${Math.max(0.7, 1.0 * textSize)}rem`, height: `${Math.max(0.7, 1.0 * textSize)}rem` }} />
-                                <span className="text-gray-600">Stáří:</span>
-                                <span className="font-medium">{departure.vehicle_age} let</span>
-                              </div>
-                            )}
-                            {departure.current_stop && (
-                              <div className="flex items-center gap-1" style={{ gap: `${0.2 * textSize}rem` }}>
-                                <MapPin className="w-3 h-3 text-red-600" style={{ width: `${Math.max(0.7, 1.0 * textSize)}rem`, height: `${Math.max(0.7, 1.0 * textSize)}rem` }} />
-                                <span className="text-gray-600">Aktuálně:</span>
-                                <span className="font-medium text-red-700">{departure.current_stop}</span>
-                              </div>
-                            )}
-                          </div>
-
-                            {/* Výrobce/provozovatel */}
-                            {departure.vehicle_type && (
-                              <div className="flex items-center gap-1" style={{ gap: `${0.2 * textSize}rem` }}>
-                                <span className="text-gray-600">Výz. obch.:</span>
-                                <span className="font-medium">{departure.vehicle_type}</span>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Technické údaje - vehicle info a ostatní data */}
-                          {(departure.vehicle_operator || departure.vehicle_type || departure.vehicle_registration_number) && (
-                            <div className="mt-2 pt-2 border-t border-gray-200">
-                              <div className="text-xs font-semibold text-blue-600 mb-1">🎓 Technické údaje</div>
-                              <div className="flex flex-wrap gap-2 text-xs" style={{ gap: `${Math.max(0.3, 0.4 * textSize)}rem`, fontSize: `${Math.max(0.6, 0.8 * textSize)}rem` }}>
-                                {departure.vehicle_operator && (
-                                  <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded">Operátor: {departure.vehicle_operator}</span>
-                                )}
-                                {departure.vehicle_type && (
-                                  <span className="bg-green-50 text-green-700 px-2 py-1 rounded">Typ: {departure.vehicle_type}</span>
-                                )}
-                                {departure.vehicle_registration_number && (
-                                  <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded">Reg. č.: {departure.vehicle_registration_number}</span>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
 
                       {serviceAlerts.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1" style={{ 
@@ -505,7 +454,7 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
                   </div>
 
                   <div className="text-center lg:text-right space-y-1 flex-shrink-0 relative w-full lg:w-auto" style={{ gap: `${Math.max(0.2, 0.3 * textSize)}rem` }}>
-                    <div className="font-bold text-gray-800" style={{ fontSize: `${Math.max(1.4, 2.8 * textSize)}rem` }}>
+                    <div className="font-black text-gray-900" style={{ fontSize: `${Math.max(2.2, 4.0 * textSize)}rem` }}>
                       {formatDisplayTime(departure)}
                     </div>
 
@@ -517,14 +466,22 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
                       {delayInfo.text}
                     </Badge>
                   </div>
-                </div>
+                  </div>
+                </CSSTransition>
               );
             })}
-            
+            </TransitionGroup>
+
             {/* Add empty flex items to fill remaining space when there are fewer departures */}
             {Array.from({ length: Math.max(0, 5 - limitedDepartures.length) }).map((_, index) => (
               <div key={`empty-${index}`} className="flex-1" style={{ minHeight: `${Math.max(3, 4 * textSize)}rem` }} />
             ))}
+          </div>
+        ) : (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center text-gray-500" style={{ fontSize: `${Math.max(1.2, 1.8 * textSize)}rem` }}>
+              Načítám odjezdy...
+            </div>
           </div>
         )}
       </CardContent>

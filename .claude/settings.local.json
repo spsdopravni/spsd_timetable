@@ -3,7 +3,12 @@
     "allow": [
       "Bash(npm run dev:*)",
       "WebSearch",
-      "WebFetch(domain:api.golemio.cz)"
+      "WebFetch(domain:api.golemio.cz)",
+      "Bash(curl:*)",
+      "WebFetch(domain:golemioapi.docs.apiary.io)",
+      "Bash(git checkout:*)",
+      "Bash(npm install:*)",
+      "Bash(python3:*)"
     ],
     "deny": [],
     "ask": []

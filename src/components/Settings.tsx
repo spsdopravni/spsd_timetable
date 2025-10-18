@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { X, Plus, Minus, Monitor, Maximize, LayoutGrid, Eye, EyeOff, Type, Split, Clock, Columns, Image } from 'lucide-react';
+import { X, Plus, Minus, Monitor, Maximize, LayoutGrid, Eye, EyeOff, Type, Split, Clock, Columns, Image, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +19,7 @@ interface SettingsProps {
     vozovnaOnlyMode: boolean;
     showTimesInMinutes: boolean;
     vozovnaUnifiedHeader: boolean;
+    testAlert: boolean;
   };
   onSettingChange: (key: string, value: any) => void;
 }
@@ -316,6 +317,22 @@ export const Settings = ({ isOpen, onClose, settings, onSettingChange }: Setting
             </div>
           )}
 
+          {/* Test Alert */}
+          <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-200">
+            <div>
+              <h3 className="text-lg font-semibold">Test Alert Banner</h3>
+              <p className="text-sm text-gray-600">Zobrazit testovací alert banner pro otestování funkcí</p>
+            </div>
+            <Button
+              variant={settings.testAlert ? "default" : "outline"}
+              onClick={() => onSettingChange('testAlert', !settings.testAlert)}
+              className="flex items-center gap-2"
+            >
+              <AlertTriangle className="w-4 h-4" />
+              {settings.testAlert ? 'Aktivní' : 'Aktivovat'}
+            </Button>
+          </div>
+
           {/* Reset */}
           <div className="pt-4 border-t">
             <Button
@@ -330,6 +347,7 @@ export const Settings = ({ isOpen, onClose, settings, onSettingChange }: Setting
                 onSettingChange('vozovnaOnlyMode', false);
                 onSettingChange('showTimesInMinutes', false);
                 onSettingChange('vozovnaUnifiedHeader', false);
+                onSettingChange('testAlert', false);
                 if (document.fullscreenElement) {
                   document.exitFullscreen();
                 }
