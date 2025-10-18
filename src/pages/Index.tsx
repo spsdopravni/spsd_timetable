@@ -5,6 +5,7 @@ import { WeatherWidget } from "@/components/WeatherWidget";
 import { RouteInfo } from "@/components/RouteInfo";
 import { Settings } from "@/components/Settings";
 import { WeatherHeader } from "@/components/WeatherHeader";
+import { DailyRobot } from "@/components/DailyRobot";
 
 const Index = () => {
   const stations = [
@@ -33,13 +34,13 @@ const Index = () => {
       name: (
         <div className="flex items-center gap-2">
           Motol (Směr Zličín 
-          <img src="/pictures/3d61981b-bfa0-4df6-9951-b52e55947255.png" alt="Metro B" className="w-8 h-8" />)
+          <span className="inline-flex items-center justify-center w-8 h-8 bg-yellow-500 text-white font-bold text-sm rounded" title="Metro B">B</span>)
         </div>
       ),
       displayName: (
         <div className="flex items-center gap-2">
           Motol (Směr Zličín 
-          <img src="/pictures/3d61981b-bfa0-4df6-9951-b52e55947255.png" alt="Metro B" className="w-8 h-8" />)
+          <span className="inline-flex items-center justify-center w-8 h-8 bg-yellow-500 text-white font-bold text-sm rounded" title="Metro B">B</span>)
         </div>
       ),
       textName: "Motol (Směr Zličín Metro B)",
@@ -51,13 +52,13 @@ const Index = () => {
       name: (
         <div className="flex items-center gap-2">
           Motol (Směr Nemocnice Motol 
-          <img src="/pictures/56467aa3-5959-4c85-a8f1-70e58d7414c6.png" alt="Metro A" className="w-8 h-8" />)
+          <span className="inline-flex items-center justify-center w-8 h-8 bg-green-600 text-white font-bold text-sm rounded" title="Metro A">A</span>)
         </div>
       ),
       displayName: (
         <div className="flex items-center gap-2">
           Motol (Směr Nemocnice Motol 
-          <img src="/pictures/56467aa3-5959-4c85-a8f1-70e58d7414c6.png" alt="Metro A" className="w-8 h-8" />)
+          <span className="inline-flex items-center justify-center w-8 h-8 bg-green-600 text-white font-bold text-sm rounded" title="Metro A">A</span>)
         </div>
       ),
       textName: "Motol (Směr Nemocnice Motol Metro A)",
@@ -79,6 +80,7 @@ const Index = () => {
       zoomLevel: 1.0,
       splitView: true,
       textSize: 2.1,
+      logoSize: 1.0,
       showWeatherInHeader: false,
       vozovnaOnlyMode: false,
       showTimesInMinutes: false,
@@ -91,9 +93,12 @@ const Index = () => {
         return {
           ...defaultSettings,
           ...parsedSettings,
-          textSize: typeof parsedSettings.textSize === 'number' && !isNaN(parsedSettings.textSize) 
-            ? parsedSettings.textSize 
-            : 2.1
+          textSize: typeof parsedSettings.textSize === 'number' && !isNaN(parsedSettings.textSize)
+            ? parsedSettings.textSize
+            : 2.1,
+          logoSize: typeof parsedSettings.logoSize === 'number' && !isNaN(parsedSettings.logoSize)
+            ? parsedSettings.logoSize
+            : 1.0
         };
       } catch (error) {
         console.error('Error parsing settings from localStorage:', error);
@@ -135,6 +140,10 @@ const Index = () => {
       
       if (key === 'textSize') {
         newSettings.textSize = typeof value === 'number' && !isNaN(value) ? value : 2.1;
+      }
+
+      if (key === 'logoSize') {
+        newSettings.logoSize = typeof value === 'number' && !isNaN(value) ? value : 1.0;
       }
       
       return newSettings;
@@ -286,6 +295,34 @@ const Index = () => {
     return settings.textSize;
   };
 
+  const getLogoClasses = (baseSize: string) => {
+    const multiplier = settings.logoSize;
+    const sizes = {
+      'w-12 h-12': `w-${Math.round(12 * multiplier)} h-${Math.round(12 * multiplier)}`,
+      'w-16 h-16': `w-${Math.round(16 * multiplier)} h-${Math.round(16 * multiplier)}`,
+      'w-20 h-20': `w-${Math.round(20 * multiplier)} h-${Math.round(20 * multiplier)}`,
+      'w-24 h-24': `w-${Math.round(24 * multiplier)} h-${Math.round(24 * multiplier)}`,
+      'w-32 h-32': `w-${Math.round(32 * multiplier)} h-${Math.round(32 * multiplier)}`,
+    };
+
+    // Pokud multiplier je větší než 1, použijeme inline style
+    if (multiplier !== 1.0) {
+      return baseSize;
+    }
+
+    return sizes[baseSize] || baseSize;
+  };
+
+  const getLogoStyle = () => {
+    if (settings.logoSize !== 1.0) {
+      return {
+        transform: `scale(${settings.logoSize})`,
+        transformOrigin: 'center'
+      };
+    }
+    return {};
+  };
+
   const renderUnifiedHeader = () => (
     <div
       className="text-white shadow-lg relative col-span-2"
@@ -310,6 +347,7 @@ const Index = () => {
                   ? 'w-16 h-16 sm:w-24 md:w-32 lg:w-48 xl:w-[512px] sm:h-16 md:h-24 lg:h-32 xl:h-48 2xl:h-[512px]'
                   : 'w-12 h-12 sm:w-16 md:w-20 lg:w-24 xl:w-32 2xl:w-96 sm:h-12 md:h-16 lg:h-20 xl:h-24 2xl:h-32 3xl:h-96'
               }`}
+              style={getLogoStyle()}
             />
           </div>
           <div className="flex-1 text-center sm:hidden">
@@ -400,6 +438,7 @@ const Index = () => {
                       ? 'w-24 h-24 sm:w-[512px] sm:h-[512px]'
                       : 'w-20 h-20 sm:w-96 sm:h-96'
                   }`}
+                  style={getLogoStyle()}
                 />
               </div>
             </div>
@@ -633,6 +672,8 @@ const Index = () => {
               settings={settings}
               onSettingChange={handleSettingChange}
             />
+
+            <DailyRobot textSize={effectiveTextSize} />
           </div>
         );
       }
@@ -741,6 +782,7 @@ const Index = () => {
                           ? 'w-20 h-20 sm:w-24 md:w-28 lg:w-32 xl:w-56 2xl:h-56 sm:h-20 md:h-24 lg:h-28 xl:h-32 2xl:h-56'
                           : 'w-16 h-16 sm:w-20 md:w-24 lg:w-28 xl:w-48 2xl:h-48 sm:h-16 md:h-20 lg:h-24 xl:h-28 2xl:h-48'
                       }`}
+                      style={getLogoStyle()}
                     />
                   </div>
                   <div className="flex-1 text-center lg:text-left">
@@ -851,6 +893,10 @@ const Index = () => {
           settings={settings}
           onSettingChange={handleSettingChange}
         />
+
+        <DailyRobot textSize={effectiveTextSize} />
+
+        <DailyRobot textSize={getEffectiveTextSize()} />
       </div>
     );
   }
@@ -892,6 +938,7 @@ const Index = () => {
                     ? 'w-20 h-20 sm:w-80 sm:h-80'
                     : 'w-16 h-16 sm:w-72 sm:h-72'
                 }`}
+                style={getLogoStyle()}
               />
             </div>
             <div className="flex-1 text-center sm:text-left">

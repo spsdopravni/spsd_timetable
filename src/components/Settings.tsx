@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { X, Plus, Minus, Monitor, Maximize, LayoutGrid, Eye, EyeOff, Type, Split, Clock, Columns } from 'lucide-react';
+import { X, Plus, Minus, Monitor, Maximize, LayoutGrid, Eye, EyeOff, Type, Split, Clock, Columns, Image } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,7 @@ interface SettingsProps {
     zoomLevel: number;
     splitView: boolean;
     textSize: number;
+    logoSize: number;
     showWeatherInHeader: boolean;
     vozovnaOnlyMode: boolean;
     showTimesInMinutes: boolean;
@@ -43,6 +44,16 @@ export const Settings = ({ isOpen, onClose, settings, onSettingChange }: Setting
   const handleTextSizeDecrease = () => {
     const newSize = Math.max(settings.textSize - 0.21, 1.05);
     onSettingChange('textSize', newSize);
+  };
+
+  const handleLogoSizeIncrease = () => {
+    const newSize = Math.min(settings.logoSize + 0.1, 3.0);
+    onSettingChange('logoSize', newSize);
+  };
+
+  const handleLogoSizeDecrease = () => {
+    const newSize = Math.max(settings.logoSize - 0.1, 0.3);
+    onSettingChange('logoSize', newSize);
   };
 
   const toggleFullscreen = () => {
@@ -208,6 +219,46 @@ export const Settings = ({ isOpen, onClose, settings, onSettingChange }: Setting
                 className="flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
+                Zvětšit
+              </Button>
+            </div>
+          </div>
+
+          {/* Velikost loga */}
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold">Velikost loga školy</h3>
+                <p className="text-sm text-gray-600">Upravit velikost loga školy v headerech</p>
+              </div>
+              <Badge variant="secondary" className="text-lg px-3 py-1">
+                {Math.round(settings.logoSize * 100)}%
+              </Badge>
+            </div>
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={handleLogoSizeDecrease}
+                disabled={settings.logoSize <= 0.3}
+                className="flex items-center gap-2"
+              >
+                <Minus className="w-4 h-4" />
+                Zmenšit
+              </Button>
+              <div className="flex-1 text-center">
+                <div className="text-sm text-gray-600">
+                  Rozsah: 30% - 300%
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={handleLogoSizeIncrease}
+                disabled={settings.logoSize >= 3.0}
+                className="flex items-center gap-2"
+              >
+                <Image className="w-4 h-4" />
                 Zvětšit
               </Button>
             </div>

@@ -32,23 +32,35 @@ export const WeatherHeader = ({ lat, lon }: WeatherHeaderProps) => {
     return <div className="text-lg">Načítám počasí...</div>;
   }
 
-  const getWeatherEmoji = (description: string, isDay: boolean) => {
+  const getWeatherIcon = (description: string, isDay: boolean) => {
     const desc = description.toLowerCase();
-    if (desc.includes('clear') || desc.includes('sunny')) return isDay ? '☀️' : '🌙';
-    if (desc.includes('cloud')) return '☁️';
-    if (desc.includes('rain')) return '🌧️';
-    if (desc.includes('snow')) return '❄️';
-    if (desc.includes('storm')) return '⛈️';
-    if (desc.includes('fog') || desc.includes('mist')) return '🌫️';
-    return isDay ? '☀️' : '🌙';
+    if (desc.includes('clear') || desc.includes('sunny')) return isDay ? 'fas fa-sun' : 'fas fa-moon';
+    if (desc.includes('cloud')) return 'fas fa-cloud';
+    if (desc.includes('rain')) return 'fas fa-cloud-rain';
+    if (desc.includes('snow')) return 'fas fa-snowflake';
+    if (desc.includes('storm')) return 'fas fa-bolt';
+    if (desc.includes('fog') || desc.includes('mist')) return 'fas fa-smog';
+    return isDay ? 'fas fa-sun' : 'fas fa-moon';
+  };
+
+  const getWeatherColor = (description: string, isDay: boolean) => {
+    const desc = description.toLowerCase();
+    if (desc.includes('clear') || desc.includes('sunny')) return isDay ? 'text-yellow-500' : 'text-blue-300';
+    if (desc.includes('cloud')) return 'text-gray-400';
+    if (desc.includes('rain')) return 'text-blue-500';
+    if (desc.includes('snow')) return 'text-blue-200';
+    if (desc.includes('storm')) return 'text-purple-500';
+    if (desc.includes('fog') || desc.includes('mist')) return 'text-gray-300';
+    return isDay ? 'text-yellow-500' : 'text-blue-300';
   };
 
   const isDay = new Date().getHours() >= 6 && new Date().getHours() < 20;
-  const emoji = getWeatherEmoji(weather.weather[0].description, isDay);
+  const iconClass = getWeatherIcon(weather.weather[0].description, isDay);
+  const iconColor = getWeatherColor(weather.weather[0].description, isDay);
 
   return (
     <div className="flex items-center gap-4">
-      <span className="text-6xl">{emoji}</span>
+      <i className={`${iconClass} ${iconColor} text-6xl`}></i>
       <span className="font-semibold">{Math.round(weather.main.temp)}°C</span>
     </div>
   );
