@@ -281,11 +281,19 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
         const apiKey = getApiKeyForStation(stationId);
         console.log(`🔑 Using API key ${apiKey === API_KEY_1 ? '1' : '2'} for station ${stationId}`);
         
-        const url = `${API_BASE}/v2/pid/departureboards/?ids=${stationId}&limit=20&minutesBefore=0&minutesAfter=30`;
-        console.log(`🔄 Trying API URL for station ${stationId}:`, url);
-        
-        const response = await fetch(url, { headers });
-        
+        // Zkusíme nejnovější verzi departures API
+        let url = `${API_BASE}/v4/pid/departureboards/?ids=${stationId}&limit=20&minutesBefore=0&minutesAfter=30`;
+        console.log(`🔄 Trying v4 API URL for station ${stationId}:`, url);
+
+        let response = await fetch(url, { headers });
+
+        // Pokud v4 neexistuje, zkusíme v2
+        if (response.status === 404) {
+          console.log(`⚠️ v4 API neexistuje, zkouším v2 pro station ${stationId}`);
+          url = `${API_BASE}/v2/pid/departureboards/?ids=${stationId}&limit=20&minutesBefore=0&minutesAfter=30`;
+          response = await fetch(url, { headers });
+        }
+
         if (response.status === 429) {
           console.log(`⚠️ Rate limit hit for station ${stationId} with API key ${apiKey === API_KEY_1 ? '1' : '2'}`);
           continue; // Pokračujeme s dalšími stanicemi
@@ -295,7 +303,7 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
           console.log(`🔑 Unauthorized for station ${stationId} - API key is missing or invalid`);
           continue; // Pokračujeme s dalšími stanicemi
         }
-        
+
         if (response.ok) {
           const data = await response.json();
           console.log(`✅ API response for station ${stationId}:`, data);
