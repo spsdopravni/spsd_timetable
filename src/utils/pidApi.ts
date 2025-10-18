@@ -315,16 +315,13 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
         const pickupType = dep.pickup_type; // Typ nástupu (0=pravidelný, 1=žádný, 2=na znamení, 3=koordinovat s řidičem)
         const dropOffType = dep.drop_off_type; // Typ výstupu
 
-        // Log all available data for debugging
-        if (dep.vehicle) {
-          console.log(`🚌 Full vehicle data for ${vehicleNumber}:`, dep.vehicle);
-        }
-        if (dep.vehicle_position) {
-          console.log(`📍 Vehicle position data:`, dep.vehicle_position);
-        }
-        if (dep.trip) {
-          console.log(`🚇 Trip data:`, dep.trip);
-        }
+        // Log all available data for debugging - ukažme celou strukturu
+        console.log(`🔍 KOMPLETNÍ DATA PRO DEBUGGING:`, dep);
+        console.log(`🚌 Vehicle:`, dep.vehicle);
+        console.log(`📍 Vehicle position:`, dep.vehicle_position);
+        console.log(`🚇 Trip:`, dep.trip);
+        console.log(`🛤️ Route:`, dep.route);
+        console.log(`🏁 Stop:`, dep.stop);
 
         let tripId = dep.trip?.id;
         let tripNumber = undefined;
