@@ -729,6 +729,10 @@ export const DailyRobot = ({ textSize = 1.0 }: DailyRobotProps) => {
           {/* Robot */}
           <motion.div
             className="fixed z-50"
+            style={{
+              bottom: '20px',
+              right: '0px'
+            }}
             animate={{
               x: robotPhase === 'movingLeft' ? 'calc(-100vw + 50px)' :
                  robotPhase === 'atLeft' ? 'calc(-100vw + 50px)' :
@@ -747,10 +751,6 @@ export const DailyRobot = ({ textSize = 1.0 }: DailyRobotProps) => {
                        robotPhase === 'movingRight' ? 4 :
                        robotPhase === 'movingAway' ? 3 : 1,
               ease: [0.15, 0.25, 0.35, 0.85]
-            }}
-            style={{
-              bottom: '20px',
-              right: '0px'
             }}
           >
             <motion.img

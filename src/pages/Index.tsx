@@ -512,7 +512,7 @@ const Index = () => {
                 />
               </div>
               <div className="flex-1 text-center sm:text-left">
-                <h1 className="font-bold leading-tight transition-all duration-500 ease-in-out hover:scale-105 text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl" key={`station-${currentStationIndex}`}>
+                <h1 className="font-bold leading-tight transition-all duration-500 ease-in-out hover:scale-105 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl" key={`station-${currentStationIndex}`}>
                   {React.isValidElement(station.displayName) ?
                     station.displayName :
                     (station.textName || station.displayName)
@@ -605,7 +605,7 @@ const Index = () => {
           // Normal split view layout
           <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-2 sm:gap-0">
             <div className="flex-1 text-center order-2 sm:order-1">
-              <h1 className="font-bold leading-tight transition-all duration-500 ease-in-out hover:scale-105 text-lg sm:text-5xl" key={`single-station-${currentStationIndex}`}>
+              <h1 className="font-bold leading-tight transition-all duration-500 ease-in-out hover:scale-105 text-xl sm:text-6xl" key={`single-station-${currentStationIndex}`}>
                 {React.isValidElement(station.displayName) ?
                   station.displayName :
                   (station.textName || station.displayName)
@@ -846,7 +846,7 @@ const Index = () => {
                     />
                   </div>
                   <div className="flex-1 text-center lg:text-left">
-                    <h1 className="font-bold leading-tight transition-all duration-500 ease-in-out hover:scale-105 text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl" key={`motol-${currentStationIndex}`}>
+                    <h1 className="font-bold leading-tight transition-all duration-500 ease-in-out hover:scale-105 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl" key={`motol-${currentStationIndex}`}>
                       {React.isValidElement(currentMotolStation.displayName) ?
                         currentMotolStation.displayName :
                         (currentMotolStation.textName || currentMotolStation.displayName)
@@ -859,7 +859,7 @@ const Index = () => {
               {/* Right station */}
               <div className="flex flex-col sm:flex-row items-center justify-between h-full">
                 <div className="flex-1 text-center order-2 lg:order-1">
-                  <h1 className="font-bold leading-tight transition-all duration-500 ease-in-out hover:scale-105 text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl" key={`vozovna-${currentStationIndex}`}>
+                  <h1 className="font-bold leading-tight transition-all duration-500 ease-in-out hover:scale-105 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl" key={`vozovna-${currentStationIndex}`}>
                     {React.isValidElement(currentVozovnaStation.displayName) ?
                       currentVozovnaStation.displayName :
                       (currentVozovnaStation.textName || currentVozovnaStation.displayName)
@@ -997,7 +997,7 @@ const Index = () => {
               />
             </div>
             <div className="flex-1 text-center sm:text-left">
-              <h1 className="font-bold leading-tight transition-all duration-500 ease-in-out hover:scale-105 text-lg sm:text-5xl" key={`split-station-${currentStationIndex}`}>
+              <h1 className="font-bold leading-tight transition-all duration-500 ease-in-out hover:scale-105 text-xl sm:text-6xl" key={`split-station-${currentStationIndex}`}>
                 {React.isValidElement(currentStation.displayName) ?
                     currentStation.displayName :
                     (currentStation.textName || currentStation.displayName)
