@@ -59,10 +59,10 @@ const enrichDepartureData = async (departure: any): Promise<any> => {
   }
 
   try {
-    // Zkusíme načíst trip details - možná jiný endpoint
-    console.log(`🔍 Trying trip enrichment for: ${departure.trip_id}`);
+    // Zkusíme načíst trip details ze správného GTFS endpointu
+    console.log(`🔍 Trying GTFS trip enrichment for: ${departure.trip_id}`);
     const tripResponse = await fetch(
-      `${API_BASE}/v2/pid/trips/${departure.trip_id}`,
+      `${API_BASE}/v2/gtfs/trips/${departure.trip_id}`,
       { headers: getHeadersForExtendedData() }
     );
 
