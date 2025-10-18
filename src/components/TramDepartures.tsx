@@ -68,9 +68,8 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
   };
 
   useEffect(() => {
-    // Přidáme globální funkci pro nastavení třetího API klíče
+    // Přidáme globální funkci pro nastavení třetího API klíče (pokud není nastaven)
     (window as any).setThirdApiKey = setThirdApiKey;
-    console.log("🔧 Pro nastavení třetího API klíče použij: window.setThirdApiKey('your-key')");
 
     const stationChanged = JSON.stringify(previousStationId) !== JSON.stringify(stationId);
 

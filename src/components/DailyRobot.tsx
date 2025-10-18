@@ -132,38 +132,18 @@ export const DailyRobot = ({ textSize = 1.0 }: DailyRobotProps) => {
       <div className={`flex-shrink-0 transition-all duration-700 ${
         isVisible ? 'animate-bounce scale-100' : 'scale-0 rotate-180'
       }`}>
-        <img
-          src="/pictures/robot.png" // Zde bude váš robot obrázek
-          alt="Robot pomocník"
-          className="w-16 h-16 object-contain"
-          style={{
-            width: `${Math.max(4, 6 * textSize)}rem`,
-            height: `${Math.max(4, 6 * textSize)}rem`,
-            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))'
-          }}
-          onError={(e) => {
-            // Fallback if robot image doesn't exist
-            const target = e.target as HTMLImageElement;
-            target.style.display = 'none';
-            const parent = target.parentElement;
-            if (parent) {
-              parent.innerHTML = `
-                <div style="
-                  width: ${Math.max(4, 6 * textSize)}rem;
-                  height: ${Math.max(4, 6 * textSize)}rem;
-                  background: linear-gradient(45deg, #3b82f6, #1d4ed8);
-                  border-radius: 50%;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-                ">
-                  <i class="fas fa-robot" style="font-size: ${Math.max(1.5, 2.5 * textSize)}rem; color: #3b82f6;"></i>
-                </div>
-              `;
-            }
-          }}
-        />
+        <div style={{
+          width: `${Math.max(4, 6 * textSize)}rem`,
+          height: `${Math.max(4, 6 * textSize)}rem`,
+          background: 'linear-gradient(45deg, #3b82f6, #1d4ed8)',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+        }}>
+          <i className="fas fa-robot" style={{ fontSize: `${Math.max(1.5, 2.5 * textSize)}rem`, color: 'white' }}></i>
+        </div>
       </div>
     </div>
   );

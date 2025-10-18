@@ -54,7 +54,7 @@ const getHeadersForExtendedData = () => ({
 
 // Funkce pro obohacení dat o rozšířené údaje z dalších endpointů
 const enrichDepartureData = async (departure: any): Promise<any> => {
-  if (!API_KEY_3 || !departure.trip_id) {
+  if (!API_KEY_3 || API_KEY_3.trim() === '' || !departure.trip_id) {
     return departure; // Bez třetího klíče nemůžeme načíst rozšířené údaje
   }
 
@@ -477,13 +477,15 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
     console.log("🏁 Final processed departures (sorted by time):", processedDepartures);
 
     // Obohacení dat o rozšířené údaje pokud je dostupný třetí API klíč
-    if (API_KEY_3) {
+    if (API_KEY_3 && API_KEY_3.trim() !== '') {
       console.log("🔄 Obohacuji data o rozšířené údaje...");
       const enrichedDepartures = await Promise.all(
         processedDepartures.map(dep => enrichDepartureData(dep))
       );
       console.log("✨ Obohacená data:", enrichedDepartures);
       return enrichedDepartures;
+    } else {
+      console.log("📊 Základní data hotova. Pro rozšířené údaje nastav třetí API klíč.");
     }
 
     return processedDepartures;
