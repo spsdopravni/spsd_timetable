@@ -267,6 +267,7 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
         const vehicleNumber = dep.vehicle?.vehicle_registration_number || dep.vehicle?.registration_number;
         const vehicleOperator = dep.vehicle?.operator;
         const vehicleType = dep.vehicle?.vehicle_type;
+        const vehicleModel = dep.vehicle?.sub_type || dep.vehicle?.model || dep.vehicle?.vehicle_type?.short_name;
         const vehicleAge = dep.vehicle?.production_year ? new Date().getFullYear() - dep.vehicle?.production_year : undefined;
 
         // Rozšířené informace o vozidle
