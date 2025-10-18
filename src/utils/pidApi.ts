@@ -27,11 +27,17 @@ export const setThirdApiKey = (key: string) => {
 };
 
 const getApiKeyForStation = (stationId: string): string => {
+  // Používáme jen API_KEY_1 a API_KEY_2 pro departures, ne třetí klíč!
   const key = STATION_API_MAPPING[stationId] || API_KEY_1;
   // Pokud je klíč prázdný, vraťme placeholder - API nebude fungovat
   if (!key || key.trim() === '') {
     console.warn('⚠️ API klíč není nastaven! Prosím nastavte API_KEY_1 a API_KEY_2 v pidApi.ts');
     return 'MISSING_API_KEY';
+  }
+  // NIKDY nepoužívej API_KEY_3 pro departures!
+  if (key === API_KEY_3) {
+    console.log('⚠️ API_KEY_3 nemá oprávnění k departures, používám API_KEY_1');
+    return API_KEY_1;
   }
   return key;
 };
@@ -74,6 +80,8 @@ const enrichDepartureData = async (departure: any): Promise<any> => {
         route_color: tripData.route?.color,
         route_text_color: tripData.route?.text_color
       };
+    } else {
+      console.log(`⚠️ Trip endpoint ${tripResponse.status}: ${tripResponse.statusText} pro ${departure.trip_id}`);
     }
   } catch (error) {
     console.log(`⚠️ Nepodařilo se načíst rozšířené údaje pro trip ${departure.trip_id}`);
@@ -368,10 +376,9 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
           console.log(`🚌 Vozidlo ${dep.vehicle_number} - dostupné údaje:`, Object.keys(dep).filter(key => dep[key] !== undefined && dep[key] !== null));
         }
 
-        // Zkusme jiný endpoint pro vehicle positions
+        // Info o dostupnosti rozšířených údajů
         if (dep.vehicle_number && !dep.block_id) {
-          console.log(`⚠️ CHYBÍ ROZŠÍŘENÉ ÚDAJE! Možná potřebujeme jiný endpoint nebo API klíč.`);
-          console.log(`🔍 Doporučuji zkusit: /v2/pid/vehicles/positions nebo /v2/pid/gtfs/trips`);
+          console.log(`📊 Základní údaje načteny. Rozšířené údaje se načtou přes třetí API klíč.`);
         }
 
         let tripId = dep.trip?.id;
