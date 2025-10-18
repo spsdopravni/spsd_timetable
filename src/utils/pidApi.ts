@@ -59,42 +59,55 @@ const enrichDepartureData = async (departure: any): Promise<any> => {
   }
 
   try {
-    // Zkusíme načíst vehicle position data
-    console.log(`🔍 Trying vehicle position enrichment for vehicle: ${departure.vehicle_number}, trip: ${departure.trip_id}`);
+    // Zkusíme načíst vehicle position data - nejprve obecný endpoint
+    console.log(`🔍 Trying vehicle position enrichment for trip: ${departure.trip_id}`);
     const vehicleResponse = await fetch(
-      `${API_BASE}/v2/public/vehiclepositions/${departure.vehicle_number}`,
+      `${API_BASE}/v2/public/vehiclepositions`,
       { headers: getHeadersForExtendedData() }
     );
 
     if (vehicleResponse.ok) {
-      const vehicleData = await vehicleResponse.json();
-      console.log(`🚌 Načetena vehicle data pro ${departure.vehicle_number}:`, vehicleData);
+      const allVehicles = await vehicleResponse.json();
+      console.log(`🚌 Načetena všechna vehicle data:`, allVehicles);
 
-      // Přidáme rozšířené údaje z vehicle position API
-      return {
-        ...departure,
-        // GTFS údaje
-        shape_id: vehicleData.shape_id,
-        shape_dist_traveled: vehicleData.shape_dist_traveled,
-        bearing: vehicleData.bearing,
-        state_position: vehicleData.state_position,
-        last_stop_sequence: vehicleData.last_stop_sequence,
+      // Hledáme vozidlo podle trip_id nebo vehicle_number
+      const vehicleData = allVehicles.features?.find((vehicle: any) =>
+        vehicle.properties?.gtfs_trip_id === departure.trip_id ||
+        vehicle.properties?.vehicle_descriptor?.vehicle_registration_number === departure.vehicle_number
+      );
 
-        // Vehicle descriptor údaje
-        vehicle_operator: vehicleData.vehicle_descriptor?.operator || departure.vehicle_operator,
-        vehicle_type: vehicleData.vehicle_descriptor?.vehicle_type || departure.vehicle_type,
-        vehicle_registration_number: vehicleData.vehicle_descriptor?.vehicle_registration_number || departure.vehicle_number,
-        is_wheelchair_accessible: vehicleData.vehicle_descriptor?.is_wheelchair_accessible,
-        is_air_conditioned: vehicleData.vehicle_descriptor?.is_air_conditioned,
-        has_usb_chargers: vehicleData.vehicle_descriptor?.has_usb_chargers,
+      if (vehicleData) {
+        console.log(`✅ Nalezeno vozidlo pro trip ${departure.trip_id}:`, vehicleData);
+        const props = vehicleData.properties;
 
-        // GPS údaje
-        current_latitude: vehicleData.geometry?.coordinates?.[1],
-        current_longitude: vehicleData.geometry?.coordinates?.[0],
+        // Přidáme rozšířené údaje z vehicle position API
+        return {
+          ...departure,
+          // GTFS údaje
+          shape_id: props.shape_id,
+          shape_dist_traveled: props.shape_dist_traveled,
+          bearing: props.bearing,
+          state_position: props.state_position,
+          last_stop_sequence: props.last_stop_sequence,
 
-        // Real-time údaje
-        real_time_delay: vehicleData.delay
-      };
+          // Vehicle descriptor údaje
+          vehicle_operator: props.vehicle_descriptor?.operator || departure.vehicle_operator,
+          vehicle_type: props.vehicle_descriptor?.vehicle_type || departure.vehicle_type,
+          vehicle_registration_number: props.vehicle_descriptor?.vehicle_registration_number || departure.vehicle_number,
+          is_wheelchair_accessible: props.vehicle_descriptor?.is_wheelchair_accessible,
+          is_air_conditioned: props.vehicle_descriptor?.is_air_conditioned,
+          has_usb_chargers: props.vehicle_descriptor?.has_usb_chargers,
+
+          // GPS údaje
+          current_latitude: vehicleData.geometry?.coordinates?.[1],
+          current_longitude: vehicleData.geometry?.coordinates?.[0],
+
+          // Real-time údaje
+          real_time_delay: props.delay
+        };
+      } else {
+        console.log(`⚠️ Vozidlo pro trip ${departure.trip_id} nenalezeno v vehicle positions`);
+      }
     } else {
       console.log(`⚠️ Vehicle position endpoint ${vehicleResponse.status}: ${vehicleResponse.statusText} pro vehicle ${departure.vehicle_number}`);
       if (vehicleResponse.status === 404) {

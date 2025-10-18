@@ -447,7 +447,7 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
                           </div>
 
                           {/* Technické údaje - vehicle info a ostatní data */}
-                          {(departure.vehicle_operator || departure.vehicle_type || departure.vehicle_registration_number || departure.route_type || departure.shape_id || departure.bearing !== undefined) && (
+                          {(departure.vehicle_operator || departure.vehicle_type || departure.vehicle_registration_number) && (
                             <div className="mt-2 pt-2 border-t border-gray-200">
                               <div className="text-xs font-semibold text-blue-600 mb-1">🎓 Technické údaje</div>
                               <div className="flex flex-wrap gap-2 text-xs" style={{ gap: `${Math.max(0.3, 0.4 * textSize)}rem`, fontSize: `${Math.max(0.6, 0.8 * textSize)}rem` }}>
@@ -455,27 +455,10 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
                                   <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded">Operátor: {departure.vehicle_operator}</span>
                                 )}
                                 {departure.vehicle_type && (
-                                  <span className="bg-green-50 text-green-700 px-2 py-1 rounded">Typ vozidla: {departure.vehicle_type}</span>
+                                  <span className="bg-green-50 text-green-700 px-2 py-1 rounded">Typ: {departure.vehicle_type}</span>
                                 )}
                                 {departure.vehicle_registration_number && (
                                   <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded">Reg. č.: {departure.vehicle_registration_number}</span>
-                                )}
-                                {departure.route_type !== undefined && (
-                                  <span className="bg-gray-50 text-gray-700 px-2 py-1 rounded">
-                                    Doprava: {departure.route_type === 0 ? 'Tramvaj' : departure.route_type === 1 ? 'Metro' : departure.route_type === 3 ? 'Autobus' : `Type ${departure.route_type}`}
-                                  </span>
-                                )}
-                                {departure.shape_id && (
-                                  <span className="bg-orange-50 text-orange-700 px-2 py-1 rounded">Shape: {departure.shape_id}</span>
-                                )}
-                                {departure.bearing !== undefined && (
-                                  <span className="bg-yellow-50 text-yellow-700 px-2 py-1 rounded">Směr: {departure.bearing}°</span>
-                                )}
-                                {departure.state_position && (
-                                  <span className="bg-cyan-50 text-cyan-700 px-2 py-1 rounded">Pozice: {departure.state_position}</span>
-                                )}
-                                {departure.real_time_delay !== undefined && departure.real_time_delay > 0 && (
-                                  <span className="bg-red-50 text-red-700 px-2 py-1 rounded">RT zpoždění: {Math.round(departure.real_time_delay/60)} min</span>
                                 )}
                               </div>
                             </div>
