@@ -299,21 +299,21 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
         const lastUpdate = vehiclePosition?.last_position_at;
         const currentSpeed = vehiclePosition?.speed;
 
-        // Zajímavé údaje pro dopravní školu
-        const stopSequence = dep.stop_sequence; // Pořadí zastávky na trase
-        const distanceTraveled = dep.shape_dist_traveled; // Ujetá vzdálenost na trase
-        const blockId = dep.trip?.block_id; // ID bloku - skupina jízd stejného vozidla
-        const serviceId = dep.trip?.service_id; // ID služby - provozní den
-        const wheelchairAccessible = dep.trip?.wheelchair_accessible; // Bezbariérovost spoje
-        const bikesAllowed = dep.trip?.bikes_allowed; // Povolení kol
-        const routeLongName = dep.route?.long_name; // Dlouhý název linky
-        const routeColor = dep.route?.color; // Barva linky
-        const routeTextColor = dep.route?.text_color; // Barva textu linky
-        const agencyName = dep.route?.agency?.name; // Název dopravce
-        const agencyUrl = dep.route?.agency?.url; // Web dopravce
-        const stopHeadsign = dep.stop_headsign; // Směrová tabule pro tuto zastávku
-        const pickupType = dep.pickup_type; // Typ nástupu (0=pravidelný, 1=žádný, 2=na znamení, 3=koordinovat s řidičem)
-        const dropOffType = dep.drop_off_type; // Typ výstupu
+        // Zajímavé údaje pro dopravní školu - používáme správné field names
+        const stopSequence = dep.stop_sequence;
+        const distanceTraveled = dep.shape_dist_traveled;
+        const blockId = dep.block_id; // Přímý přístup místo dep.trip?.block_id
+        const serviceId = dep.service_id; // Přímý přístup
+        const wheelchairAccessible = dep.wheelchair_accessible;
+        const bikesAllowed = dep.bikes_allowed;
+        const routeLongName = dep.route_long_name; // Přímý field
+        const routeColor = dep.route_color;
+        const routeTextColor = dep.route_text_color;
+        const agencyName = dep.agency_name; // Přímý field
+        const agencyUrl = dep.agency_url;
+        const stopHeadsign = dep.stop_headsign;
+        const pickupType = dep.pickup_type;
+        const dropOffType = dep.drop_off_type;
 
         // Log all available data for debugging - ukažme celou strukturu
         console.log(`🔍 KOMPLETNÍ DATA PRO DEBUGGING:`, dep);

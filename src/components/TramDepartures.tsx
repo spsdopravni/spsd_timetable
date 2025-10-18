@@ -443,33 +443,21 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
                             )}
                           </div>
 
-                          {/* Technické údaje pro dopravní školu - zobrazuj jen dostupné údaje */}
-                          {(departure.block_id || departure.stop_sequence || departure.distance_traveled || departure.agency_name || departure.service_id || departure.trip_id) && (
+                          {/* Technické údaje - jen dostupné z API */}
+                          {(departure.trip_id || departure.route_type || departure.platform_code) && (
                             <div className="mt-2 pt-2 border-t border-gray-200">
                               <div className="text-xs font-semibold text-blue-600 mb-1">🎓 Technické údaje</div>
                               <div className="flex flex-wrap gap-2 text-xs" style={{ gap: `${Math.max(0.3, 0.4 * textSize)}rem`, fontSize: `${Math.max(0.6, 0.8 * textSize)}rem` }}>
-                                {departure.block_id && (
-                                  <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded">Blok: {departure.block_id}</span>
-                                )}
-                                {departure.stop_sequence && (
-                                  <span className="bg-green-50 text-green-700 px-2 py-1 rounded">Zastávka: {departure.stop_sequence}</span>
-                                )}
-                                {departure.distance_traveled && (
-                                  <span className="bg-orange-50 text-orange-700 px-2 py-1 rounded">Ujetá vzdálenost: {Math.round(departure.distance_traveled)}m</span>
-                                )}
-                                {departure.agency_name && (
-                                  <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded">Dopravce: {departure.agency_name}</span>
-                                )}
-                                {departure.service_id && (
-                                  <span className="bg-gray-50 text-gray-700 px-2 py-1 rounded">Služba: {departure.service_id}</span>
-                                )}
-                                {departure.pickup_type !== undefined && (
-                                  <span className="bg-yellow-50 text-yellow-700 px-2 py-1 rounded">
-                                    Nástup: {departure.pickup_type === 0 ? 'pravidelný' : departure.pickup_type === 1 ? 'žádný' : departure.pickup_type === 2 ? 'na znamení' : 'koordinovat'}
-                                  </span>
-                                )}
                                 {departure.trip_id && (
                                   <span className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded">Trip ID: {departure.trip_id}</span>
+                                )}
+                                {departure.route_type !== undefined && (
+                                  <span className="bg-green-50 text-green-700 px-2 py-1 rounded">
+                                    Typ: {departure.route_type === 0 ? 'Tramvaj' : departure.route_type === 1 ? 'Metro' : departure.route_type === 3 ? 'Autobus' : `Type ${departure.route_type}`}
+                                  </span>
+                                )}
+                                {departure.platform_code && (
+                                  <span className="bg-yellow-50 text-yellow-700 px-2 py-1 rounded">Nástupiště: {departure.platform_code}</span>
                                 )}
                               </div>
                             </div>
