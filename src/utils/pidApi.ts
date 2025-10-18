@@ -52,45 +52,58 @@ const getHeadersForExtendedData = () => ({
   "Content-Type": "application/json"
 });
 
-// Funkce pro obohacení dat o rozšířené údaje z dalších endpointů
+// Funkce pro obohacení dat o rozšířené údaje z vehicle positions endpointu
 const enrichDepartureData = async (departure: any): Promise<any> => {
-  if (!API_KEY_3 || API_KEY_3.trim() === '' || !departure.trip_id) {
-    return departure; // Bez třetího klíče nemůžeme načíst rozšířené údaje
+  if (!API_KEY_3 || API_KEY_3.trim() === '' || !departure.trip_id || !departure.vehicle_number) {
+    return departure; // Bez třetího klíče nebo vehicle_number nemůžeme načíst rozšířené údaje
   }
 
   try {
-    // Zkusíme načíst trip details ze správného GTFS endpointu
-    console.log(`🔍 Trying GTFS trip enrichment for: ${departure.trip_id}`);
-    const tripResponse = await fetch(
-      `${API_BASE}/v2/gtfs/trips/${departure.trip_id}`,
+    // Zkusíme načíst vehicle position data
+    console.log(`🔍 Trying vehicle position enrichment for vehicle: ${departure.vehicle_number}, trip: ${departure.trip_id}`);
+    const vehicleResponse = await fetch(
+      `${API_BASE}/v2/public/vehiclepositions/${departure.vehicle_number}`,
       { headers: getHeadersForExtendedData() }
     );
 
-    if (tripResponse.ok) {
-      const tripData = await tripResponse.json();
-      console.log(`🚇 Načetena trip data pro ${departure.trip_id}:`, tripData);
+    if (vehicleResponse.ok) {
+      const vehicleData = await vehicleResponse.json();
+      console.log(`🚌 Načetena vehicle data pro ${departure.vehicle_number}:`, vehicleData);
 
-      // Přidáme rozšířené údaje
+      // Přidáme rozšířené údaje z vehicle position API
       return {
         ...departure,
-        block_id: tripData.block_id,
-        service_id: tripData.service_id,
-        shape_id: tripData.shape_id,
-        agency_name: tripData.route?.agency?.name,
-        route_long_name: tripData.route?.long_name,
-        route_color: tripData.route?.color,
-        route_text_color: tripData.route?.text_color
+        // GTFS údaje
+        shape_id: vehicleData.shape_id,
+        shape_dist_traveled: vehicleData.shape_dist_traveled,
+        bearing: vehicleData.bearing,
+        state_position: vehicleData.state_position,
+        last_stop_sequence: vehicleData.last_stop_sequence,
+
+        // Vehicle descriptor údaje
+        vehicle_operator: vehicleData.vehicle_descriptor?.operator || departure.vehicle_operator,
+        vehicle_type: vehicleData.vehicle_descriptor?.vehicle_type || departure.vehicle_type,
+        vehicle_registration_number: vehicleData.vehicle_descriptor?.vehicle_registration_number || departure.vehicle_number,
+        is_wheelchair_accessible: vehicleData.vehicle_descriptor?.is_wheelchair_accessible,
+        is_air_conditioned: vehicleData.vehicle_descriptor?.is_air_conditioned,
+        has_usb_chargers: vehicleData.vehicle_descriptor?.has_usb_chargers,
+
+        // GPS údaje
+        current_latitude: vehicleData.geometry?.coordinates?.[1],
+        current_longitude: vehicleData.geometry?.coordinates?.[0],
+
+        // Real-time údaje
+        real_time_delay: vehicleData.delay
       };
     } else {
-      console.log(`⚠️ Trip endpoint ${tripResponse.status}: ${tripResponse.statusText} pro ${departure.trip_id}`);
-      // Pokud endpoint neexistuje, vrátíme původní data
-      if (tripResponse.status === 404) {
-        console.log(`🚫 Endpoint /trips/ neexistuje, vypínám enrichment`);
+      console.log(`⚠️ Vehicle position endpoint ${vehicleResponse.status}: ${vehicleResponse.statusText} pro vehicle ${departure.vehicle_number}`);
+      if (vehicleResponse.status === 404) {
+        console.log(`🚫 Endpoint /vehiclepositions/ neexistuje nebo vozidlo není nalezeno`);
         return departure;
       }
     }
   } catch (error) {
-    console.log(`⚠️ Nepodařilo se načíst rozšířené údaje pro trip ${departure.trip_id}`);
+    console.log(`⚠️ Nepodařilo se načíst vehicle position data pro vehicle ${departure.vehicle_number}`);
   }
 
   return departure;

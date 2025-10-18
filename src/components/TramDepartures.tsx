@@ -462,6 +462,18 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
                                 {departure.platform_code && (
                                   <span className="bg-yellow-50 text-yellow-700 px-2 py-1 rounded">Nástupiště: {departure.platform_code}</span>
                                 )}
+                                {departure.shape_id && (
+                                  <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded">Shape: {departure.shape_id}</span>
+                                )}
+                                {departure.bearing !== undefined && (
+                                  <span className="bg-orange-50 text-orange-700 px-2 py-1 rounded">Směr: {departure.bearing}°</span>
+                                )}
+                                {departure.state_position && (
+                                  <span className="bg-cyan-50 text-cyan-700 px-2 py-1 rounded">Pozice: {departure.state_position}</span>
+                                )}
+                                {departure.real_time_delay !== undefined && departure.real_time_delay > 0 && (
+                                  <span className="bg-red-50 text-red-700 px-2 py-1 rounded">Real-time zpoždění: {Math.round(departure.real_time_delay/60)} min</span>
+                                )}
                               </div>
                             </div>
                           )}

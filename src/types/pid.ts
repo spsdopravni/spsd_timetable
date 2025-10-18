@@ -58,6 +58,15 @@ export interface Departure {
   stop_headsign?: string;
   pickup_type?: number;
   drop_off_type?: number;
+  shape_id?: string;
+  bearing?: number;
+  state_position?: string;
+  last_stop_sequence?: number;
+  vehicle_registration_number?: string;
+  is_wheelchair_accessible?: boolean;
+  is_air_conditioned?: boolean;
+  has_usb_chargers?: boolean;
+  real_time_delay?: number;
 }
 
 export interface StopTime {
