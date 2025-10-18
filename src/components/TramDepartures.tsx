@@ -96,11 +96,11 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
     return `${minutes} min`;
   };
 
-  const formatVehicleNumber = (vehicleNumber: string, routeNumber: string, tripId: string) => {
-    // Formát: #9418 na 9/18 (vozidlo na lince/trip_id)
-    if (vehicleNumber && routeNumber && tripId) {
-      // Použijeme trip_id jako číslo spoje
-      return `#${vehicleNumber} na ${routeNumber}/${tripId}`;
+  const formatVehicleNumber = (vehicleNumber: string, routeNumber: string, tripNumber: string) => {
+    // Formát: #9418 na 9/18 (vozidlo na lince/číslo spoje)
+    if (vehicleNumber && routeNumber && tripNumber) {
+      // Použijeme extrahované číslo spoje z GTFS trip_id
+      return `#${vehicleNumber} na ${routeNumber}/${tripNumber}`;
     }
     return `#${vehicleNumber}`;
   };
@@ -386,14 +386,16 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
                         </div>
                       </div>
 
-                      <div className="text-gray-500" style={{
-                        fontSize: `${Math.max(0.7, 1.0 * textSize)}rem`
-                      }}>
-                        <div className="space-y-1" style={{ gap: `${Math.max(0.2, 0.3 * textSize)}rem` }}>
-                          {/* Informace o vozidle header */}
-                          <div className="text-xs font-semibold text-gray-600 border-b border-gray-200 pb-1" style={{ fontSize: `${Math.max(0.6, 0.9 * textSize)}rem` }}>
-                            📝 Informace o vozidle
-                          </div>
+                      {/* Zobrazí informace o vozidle pouze pokud jsou k dispozici */}
+                      {(departure.vehicle_number || departure.vehicle_model || departure.vehicle_age || departure.current_stop || departure.vehicle_type) && (
+                        <div className="text-gray-500" style={{
+                          fontSize: `${Math.max(0.7, 1.0 * textSize)}rem`
+                        }}>
+                          <div className="space-y-1" style={{ gap: `${Math.max(0.2, 0.3 * textSize)}rem` }}>
+                            {/* Informace o vozidle header */}
+                            <div className="text-xs font-semibold text-gray-600 border-b border-gray-200 pb-1" style={{ fontSize: `${Math.max(0.6, 0.9 * textSize)}rem` }}>
+                              📝 Informace o vozidle
+                            </div>
 
                           {/* Číslo a typ vozidla */}
                           <div className="flex flex-wrap gap-3" style={{ gap: `${Math.max(0.4, 0.6 * textSize)}rem` }}>
@@ -401,13 +403,19 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
                               <div className="flex items-center gap-1" style={{ gap: `${0.2 * textSize}rem` }}>
                                 <Car className="w-3 h-3 text-blue-600" style={{ width: `${Math.max(0.7, 1.0 * textSize)}rem`, height: `${Math.max(0.7, 1.0 * textSize)}rem` }} />
                                 <span className="text-gray-600">Voz. č.:</span>
-                                <span className="font-bold text-blue-700">{formatVehicleNumber(departure.vehicle_number, departure.route_short_name, departure.trip_id)}</span>
+                                <span className="font-bold text-blue-700">{formatVehicleNumber(departure.vehicle_number, departure.route_short_name, departure.trip_number)}</span>
                               </div>
                             )}
-                            {departure.vehicle_model && (
+                            {departure.vehicle_operator && (
+                              <div className="flex items-center gap-1" style={{ gap: `${0.2 * textSize}rem` }}>
+                                <span className="text-gray-600">Operátor:</span>
+                                <span className="font-bold text-blue-600">{departure.vehicle_operator}</span>
+                              </div>
+                            )}
+                            {departure.vehicle_type && (
                               <div className="flex items-center gap-1" style={{ gap: `${0.2 * textSize}rem` }}>
                                 <span className="text-gray-600">Typ:</span>
-                                <span className="font-bold text-green-700">{departure.vehicle_model}</span>
+                                <span className="font-bold text-green-700">{departure.vehicle_type}</span>
                               </div>
                             )}
                           </div>
@@ -430,15 +438,16 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
                             )}
                           </div>
 
-                          {/* Výrobce/provozovatel */}
-                          {departure.vehicle_type && (
-                            <div className="flex items-center gap-1" style={{ gap: `${0.2 * textSize}rem` }}>
-                              <span className="text-gray-600">Výz. obch.:</span>
-                              <span className="font-medium">{departure.vehicle_type}</span>
-                            </div>
-                          )}
+                            {/* Výrobce/provozovatel */}
+                            {departure.vehicle_type && (
+                              <div className="flex items-center gap-1" style={{ gap: `${0.2 * textSize}rem` }}>
+                                <span className="text-gray-600">Výz. obch.:</span>
+                                <span className="font-medium">{departure.vehicle_type}</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
+                      )}
 
                       {serviceAlerts.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1" style={{ 

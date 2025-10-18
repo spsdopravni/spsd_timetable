@@ -164,13 +164,29 @@ const Index = () => {
 
   const fetchWorldTime = async (): Promise<Date> => {
     try {
-      const response = await fetch('https://worldtimeapi.org/api/timezone/Europe/Prague');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const response = await fetch('https://worldtimeapi.org/api/timezone/Europe/Prague', {
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`API responded with status: ${response.status}`);
+      }
+
       const data = await response.json();
       const serverTime = new Date(data.datetime);
       console.log('✅ World time fetched:', serverTime.toLocaleTimeString());
       return serverTime;
     } catch (error) {
-      console.warn('⚠️ Failed to fetch world time, using local time:', error);
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.log('⚠️ World time API timeout, using local time');
+      } else {
+        console.log('⚠️ Using local time (world time API unavailable)');
+      }
       return new Date();
     }
   };

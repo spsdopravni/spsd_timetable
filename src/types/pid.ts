@@ -21,6 +21,7 @@ export interface Departure {
   route_type: number;
   headsign: string;
   trip_id?: string;
+  trip_number?: string;
   stop_sequence?: number;
   wheelchair_accessible?: boolean;
   last_position_age?: number;
@@ -28,6 +29,7 @@ export interface Departure {
   route_id?: string;
   agency_name?: string;
   vehicle_number?: string;
+  vehicle_operator?: string;
   vehicle_type?: string;
   air_conditioning?: boolean;
   current_stop?: string;

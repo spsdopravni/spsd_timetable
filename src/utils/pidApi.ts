@@ -263,9 +263,10 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
           delay = dep.delay.seconds;
         }
 
-        const vehicleNumber = dep.vehicle?.registration_number;
-        const vehicleType = dep.vehicle?.type || dep.vehicle?.manufacturer;
-        const vehicleModel = dep.vehicle?.sub_type || dep.vehicle?.model || dep.vehicle?.vehicle_type?.short_name;
+        // Správné field names podle API dokumentace
+        const vehicleNumber = dep.vehicle?.vehicle_registration_number || dep.vehicle?.registration_number;
+        const vehicleOperator = dep.vehicle?.operator;
+        const vehicleType = dep.vehicle?.vehicle_type;
         const vehicleAge = dep.vehicle?.production_year ? new Date().getFullYear() - dep.vehicle?.production_year : undefined;
 
         // Rozšířené informace o vozidle
@@ -277,16 +278,16 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
           length: dep.vehicle?.length
         };
 
-        // Features detection
+        // Features detection podle API dokumentace
+        const airConditioning = dep.vehicle?.is_air_conditioned;
+        const usbCharging = dep.vehicle?.has_usb_chargers;
+        const boardingWheelchair = dep.vehicle?.is_wheelchair_accessible;
+
+        // Fallback na starší field names pokud nejsou k dispozici nové
         const features = dep.vehicle?.features || [];
-        const airConditioning = features.includes('air_conditioning') ||
-                               features.includes('klimatizace') ||
-                               dep.trip?.is_air_conditioned;
         const wifi = features.includes('wifi') || features.includes('wi-fi');
         const lowFloor = features.includes('low_floor') || features.includes('nizka_podlaha') || dep.trip?.is_low_floor;
         const bikeRack = features.includes('bike_rack') || features.includes('kola');
-        const usbCharging = features.includes('usb') || features.includes('usb_charging') || features.includes('nabijeni');
-        const boardingWheelchair = features.includes('boarding_wheelchair') || dep.trip?.is_wheelchair_boarding;
 
         const currentStop = dep.last_stop?.name;
 
@@ -300,10 +301,25 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
         }
 
         let tripId = dep.trip?.id;
-        if (tripId && tripId.includes('_')) {
-          const parts = tripId.split('_');
-          if (parts.length >= 2) {
-            tripId = parts[parts.length - 1] || parts[parts.length - 2];
+        let tripNumber = undefined;
+
+        if (tripId) {
+          if (tripId.includes('_')) {
+            // GTFS format like "115_107_180501"
+            const parts = tripId.split('_');
+            if (parts.length >= 3) {
+              // Last part contains trip sequence, extract meaningful number
+              const lastPart = parts[parts.length - 1];
+              // Try to extract trip number from the sequence (e.g., "180501" -> "18")
+              if (lastPart.length >= 2) {
+                tripNumber = lastPart.substring(0, 2);
+              }
+            } else if (parts.length >= 2) {
+              tripNumber = parts[parts.length - 1];
+            }
+          } else {
+            // Simple numeric trip_id
+            tripNumber = tripId;
           }
         }
         
@@ -318,10 +334,12 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
           route_type: dep.route?.type || 0,
           headsign: dep.trip?.headsign || 'Neznámý směr',
           trip_id: tripId,
+          trip_number: tripNumber,
           wheelchair_accessible: dep.trip?.is_wheelchair_accessible || false,
           last_position_age: 0,
           alert_hash: dep.trip?.is_canceled ? 'canceled' : undefined,
           vehicle_number: vehicleNumber,
+          vehicle_operator: vehicleOperator,
           vehicle_type: vehicleType,
           vehicle_model: vehicleModel,
           vehicle_age: vehicleAge,
