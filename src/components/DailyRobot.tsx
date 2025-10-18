@@ -730,12 +730,12 @@ export const DailyRobot = ({ textSize = 1.0 }: DailyRobotProps) => {
           <motion.div
             className="fixed z-50"
             animate={{
-              x: robotPhase === 'movingLeft' ? 'calc(-75vw + 100px)' :
-                 robotPhase === 'atLeft' ? 'calc(-75vw + 100px)' :
-                 robotPhase === 'movingRight' ? 'calc(-40vw + 100px)' :
-                 robotPhase === 'atRight' ? 'calc(-40vw + 100px)' :
-                 robotPhase === 'movingAway' ? 'calc(20vw)' :
-                 '50px',
+              x: robotPhase === 'movingLeft' ? 'calc(-100vw + 50px)' :
+                 robotPhase === 'atLeft' ? 'calc(-100vw + 50px)' :
+                 robotPhase === 'movingRight' ? 'calc(-30vw + 100px)' :
+                 robotPhase === 'atRight' ? 'calc(-30vw + 100px)' :
+                 robotPhase === 'movingAway' ? 'calc(100vw)' :
+                 'calc(100vw + 50px)',
               opacity: robotPhase === 'hidden' ? 0 : 1,
               scale: robotPhase === 'hidden' ? 0.8 : 1,
               rotate: robotPhase === 'movingLeft' ? -2 :
