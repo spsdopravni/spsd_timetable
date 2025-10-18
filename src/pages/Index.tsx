@@ -512,9 +512,7 @@ const Index = () => {
                 />
               </div>
               <div className="flex-1 text-center sm:text-left">
-                <h1 className={`font-bold leading-tight transition-all duration-500 ease-in-out hover:scale-105 ${
-                  settings.isFullscreen ? 'text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl' : 'text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl'
-                }`} key={`station-${currentStationIndex}`}>
+                <h1 className="font-bold leading-tight transition-all duration-500 ease-in-out hover:scale-105 text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl" key={`station-${currentStationIndex}`}>
                   {React.isValidElement(station.displayName) ?
                     station.displayName :
                     (station.textName || station.displayName)
@@ -607,9 +605,7 @@ const Index = () => {
           // Normal split view layout
           <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-2 sm:gap-0">
             <div className="flex-1 text-center order-2 sm:order-1">
-              <h1 className={`font-bold leading-tight transition-all duration-500 ease-in-out hover:scale-105 ${
-                settings.isFullscreen ? 'text-3xl sm:text-8xl' : 'text-xl sm:text-7xl'
-              }`} key={`single-station-${currentStationIndex}`}>
+              <h1 className="font-bold leading-tight transition-all duration-500 ease-in-out hover:scale-105 text-lg sm:text-5xl" key={`single-station-${currentStationIndex}`}>
                 {React.isValidElement(station.displayName) ?
                   station.displayName :
                   (station.textName || station.displayName)
@@ -850,9 +846,7 @@ const Index = () => {
                     />
                   </div>
                   <div className="flex-1 text-center lg:text-left">
-                    <h1 className={`font-bold leading-tight transition-all duration-500 ease-in-out hover:scale-105 ${
-                      settings.isFullscreen ? 'text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl' : 'text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl'
-                    }`} key={`motol-${currentStationIndex}`}>
+                    <h1 className="font-bold leading-tight transition-all duration-500 ease-in-out hover:scale-105 text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl" key={`motol-${currentStationIndex}`}>
                       {React.isValidElement(currentMotolStation.displayName) ?
                         currentMotolStation.displayName :
                         (currentMotolStation.textName || currentMotolStation.displayName)
@@ -865,9 +859,7 @@ const Index = () => {
               {/* Right station */}
               <div className="flex flex-col sm:flex-row items-center justify-between h-full">
                 <div className="flex-1 text-center order-2 lg:order-1">
-                  <h1 className={`font-bold leading-tight transition-all duration-500 ease-in-out hover:scale-105 ${
-                    settings.isFullscreen ? 'text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl' : 'text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl'
-                  }`} key={`vozovna-${currentStationIndex}`}>
+                  <h1 className="font-bold leading-tight transition-all duration-500 ease-in-out hover:scale-105 text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl" key={`vozovna-${currentStationIndex}`}>
                     {React.isValidElement(currentVozovnaStation.displayName) ?
                       currentVozovnaStation.displayName :
                       (currentVozovnaStation.textName || currentVozovnaStation.displayName)
@@ -1005,9 +997,7 @@ const Index = () => {
               />
             </div>
             <div className="flex-1 text-center sm:text-left">
-              <h1 className={`font-bold leading-tight transition-all duration-500 ease-in-out hover:scale-105 ${
-                settings.isFullscreen ? 'text-3xl sm:text-8xl' : 'text-xl sm:text-7xl'
-              }`} key={`split-station-${currentStationIndex}`}>
+              <h1 className="font-bold leading-tight transition-all duration-500 ease-in-out hover:scale-105 text-lg sm:text-5xl" key={`split-station-${currentStationIndex}`}>
                 {React.isValidElement(currentStation.displayName) ?
                     currentStation.displayName :
                     (currentStation.textName || currentStation.displayName)
