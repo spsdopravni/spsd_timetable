@@ -55,6 +55,9 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
         setError("Příliš mnoho požadavků - čekám déle...");
         setIsRateLimited(true);
         setRetryDelay(prev => Math.min(prev * 2, 300000));
+      } else if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+        setError("Chyba autentifikace - zkontrolujte API klíče");
+        setRetryDelay(300000); // 5 minut
       } else {
         setError("Chyba při načítání odjezdů");
         setRetryDelay(120000);

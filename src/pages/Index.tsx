@@ -34,13 +34,19 @@ const Index = () => {
       name: (
         <div className="flex items-center gap-2">
           Motol (Směr Zličín 
-          <span className="inline-flex items-center justify-center w-8 h-8 bg-yellow-500 text-white font-bold text-sm rounded" title="Metro B">B</span>)
+          <img src="/pictures/metroB.png" alt="Metro B" className="w-8 h-8" onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.outerHTML = '<span class="inline-flex items-center justify-center w-8 h-8 bg-yellow-500 text-white font-bold text-sm rounded" title="Metro B">B</span>';
+          }} />)
         </div>
       ),
       displayName: (
         <div className="flex items-center gap-2">
           Motol (Směr Zličín 
-          <span className="inline-flex items-center justify-center w-8 h-8 bg-yellow-500 text-white font-bold text-sm rounded" title="Metro B">B</span>)
+          <img src="/pictures/metroB.png" alt="Metro B" className="w-8 h-8" onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.outerHTML = '<span class="inline-flex items-center justify-center w-8 h-8 bg-yellow-500 text-white font-bold text-sm rounded" title="Metro B">B</span>';
+          }} />)
         </div>
       ),
       textName: "Motol (Směr Zličín Metro B)",
@@ -52,13 +58,19 @@ const Index = () => {
       name: (
         <div className="flex items-center gap-2">
           Motol (Směr Nemocnice Motol 
-          <span className="inline-flex items-center justify-center w-8 h-8 bg-green-600 text-white font-bold text-sm rounded" title="Metro A">A</span>)
+          <img src="/pictures/metroA.png" alt="Metro A" className="w-8 h-8" onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.outerHTML = '<span class="inline-flex items-center justify-center w-8 h-8 bg-green-600 text-white font-bold text-sm rounded" title="Metro A">A</span>';
+          }} />)
         </div>
       ),
       displayName: (
         <div className="flex items-center gap-2">
           Motol (Směr Nemocnice Motol 
-          <span className="inline-flex items-center justify-center w-8 h-8 bg-green-600 text-white font-bold text-sm rounded" title="Metro A">A</span>)
+          <img src="/pictures/metroA.png" alt="Metro A" className="w-8 h-8" onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.outerHTML = '<span class="inline-flex items-center justify-center w-8 h-8 bg-green-600 text-white font-bold text-sm rounded" title="Metro A">A</span>';
+          }} />)
         </div>
       ),
       textName: "Motol (Směr Nemocnice Motol Metro A)",

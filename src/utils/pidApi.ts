@@ -3,8 +3,8 @@ import type { Station, Departure } from "@/types/pid";
 const API_BASE = "https://api.golemio.cz";
 
 // Dva API klíče pro rozdělení zátěže
-const API_KEY_1 = "";
-const API_KEY_2 = "";
+const API_KEY_1 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzcwNCwiaWF0IjoxNzYwNzkxMjUwLCJleHAiOjExNzYwNzkxMjUwLCJpc3MiOiJnb2xlbWlvIiwianRpIjoiM2Y4MWJiMjItM2YxNC00ODgxLThlMDYtYjQ1YmRlOTYzZjk3In0.BR0653y2bfG0zxdkOYvDgvywRR9Z9nXB4NlatJXR38A";
+const API_KEY_2 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzcwNywiaWF0IjoxNzYwNzkxMjc4LCJleHAiOjExNzYwNzkxMjc4LCJpc3MiOiJnb2xlbWlvIiwianRpIjoiN2U2ZTViOWMtYjkyOS00NzZlLTk0MmItYTY4NzdkM2M2MjNjIn0._K4k4Mrfy1_cWiy3Za_DRrCOX4gfbrz8p0rVZypVFq8";
 
 // Mapování stanic na API klíče
 const STATION_API_MAPPING: {[key: string]: string} = {
@@ -20,7 +20,13 @@ const STATION_API_MAPPING: {[key: string]: string} = {
 };
 
 const getApiKeyForStation = (stationId: string): string => {
-  return STATION_API_MAPPING[stationId] || API_KEY_1;
+  const key = STATION_API_MAPPING[stationId] || API_KEY_1;
+  // Pokud je klíč prázdný, vraťme placeholder - API nebude fungovat
+  if (!key || key.trim() === '') {
+    console.warn('⚠️ API klíč není nastaven! Prosím nastavte API_KEY_1 a API_KEY_2 v pidApi.ts');
+    return 'MISSING_API_KEY';
+  }
+  return key;
 };
 
 const getHeadersForStation = (stationId: string) => ({
@@ -194,6 +200,11 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
         
         if (response.status === 429) {
           console.log(`⚠️ Rate limit hit for station ${stationId} with API key ${apiKey === API_KEY_1 ? '1' : '2'}`);
+          continue; // Pokračujeme s dalšími stanicemi
+        }
+
+        if (response.status === 401) {
+          console.log(`🔑 Unauthorized for station ${stationId} - API key is missing or invalid`);
           continue; // Pokračujeme s dalšími stanicemi
         }
         

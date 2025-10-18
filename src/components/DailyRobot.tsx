@@ -77,30 +77,49 @@ export const DailyRobot = ({ textSize = 1.0 }: DailyRobotProps) => {
     return () => clearInterval(interval);
   }, []);
 
-  // Automatické skrytí po 10 sekundách, zobrazení na 50 sekund
+  // Automatické skrytí po 8 sekundách, zobrazení každou minutu
   useEffect(() => {
+    // První zobrazení po 2 sekundách
+    const initialTimer = setTimeout(() => {
+      setIsVisible(true);
+
+      const hideTimer = setTimeout(() => {
+        setIsVisible(false);
+      }, 8000); // Skrýt po 8 sekundách
+
+      return () => clearTimeout(hideTimer);
+    }, 2000);
+
+    // Pak každou minutu
     const showTimer = setInterval(() => {
       setIsVisible(true);
 
       const hideTimer = setTimeout(() => {
         setIsVisible(false);
-      }, 10000); // Skrýt po 10 sekundách
+      }, 8000); // Skrýt po 8 sekundách
 
       return () => clearTimeout(hideTimer);
     }, 60000); // Zobrazit každou minutu
 
-    return () => clearInterval(showTimer);
+    return () => {
+      clearTimeout(initialTimer);
+      clearInterval(showTimer);
+    };
   }, []);
 
   if (!isVisible) return null;
 
   return (
     <div
-      className="fixed bottom-4 right-4 z-50 flex items-end gap-3 max-w-md"
+      className={`fixed bottom-4 right-4 z-50 flex items-end gap-3 max-w-md transition-all duration-1000 ease-out ${
+        isVisible ? 'transform translate-x-0 translate-y-0 opacity-100' : 'transform translate-x-full translate-y-full opacity-0'
+      }`}
       style={{ fontSize: `${Math.max(0.8, 1.2 * textSize)}rem` }}
     >
       {/* Bubble s textem */}
-      <div className="bg-white/95 backdrop-blur-sm border-2 border-blue-300 rounded-2xl p-3 shadow-xl relative animate-pulse">
+      <div className={`bg-white/95 backdrop-blur-sm border-2 border-blue-300 rounded-2xl p-3 shadow-xl relative transition-all duration-500 ${
+        isVisible ? 'animate-pulse scale-100' : 'scale-0'
+      }`}>
         {/* Šipka */}
         <div className="absolute bottom-2 right-[-8px] w-0 h-0 border-l-8 border-l-blue-300 border-t-8 border-t-transparent border-b-8 border-b-transparent"></div>
 
@@ -110,7 +129,9 @@ export const DailyRobot = ({ textSize = 1.0 }: DailyRobotProps) => {
       </div>
 
       {/* Robot obrázek */}
-      <div className="flex-shrink-0 animate-bounce">
+      <div className={`flex-shrink-0 transition-all duration-700 ${
+        isVisible ? 'animate-bounce scale-100' : 'scale-0 rotate-180'
+      }`}>
         <img
           src="/pictures/robot.png" // Zde bude váš robot obrázek
           alt="Robot pomocník"
