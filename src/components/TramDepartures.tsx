@@ -96,6 +96,15 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
     return `${minutes} min`;
   };
 
+  const formatVehicleNumber = (vehicleNumber: string, routeNumber: string, tripId: string) => {
+    // Formát: #9418 na 9/18 (vozidlo na lince/trip_id)
+    if (vehicleNumber && routeNumber && tripId) {
+      // Použijeme trip_id jako číslo spoje
+      return `#${vehicleNumber} na ${routeNumber}/${tripId}`;
+    }
+    return `#${vehicleNumber}`;
+  };
+
   const getDelayBadge = (delay: number) => {
     if (delay <= 0) return { text: "Včas", color: "bg-green-100 text-green-800" };
     if (delay <= 60) return { text: `+${Math.floor(delay / 60)} min`, color: "bg-yellow-100 text-yellow-800" };
@@ -145,13 +154,14 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
     const isShortened = headsign.includes('jen do') || headsign.includes('pouze do');
     const isToDepot = headsign.includes('vozovna') && !headsign.includes('ústředn');
 
-    if (departure.air_conditioning) {
-      alerts.push({
-        icon: <Snowflake className="w-5 h-5 text-cyan-600" style={{ width: `${1.5 * textSize}rem`, height: `${1.5 * textSize}rem` }} />,
-        text: "Klimatizace",
-        color: "bg-cyan-100 text-cyan-800"
-      });
-    }
+    // Klimatizace se zobrazuje jako ikona vedle názvu, takže ji nepotřebujeme v alerts
+    // if (departure.air_conditioning) {
+    //   alerts.push({
+    //     icon: <Snowflake className="w-5 h-5 text-cyan-600" style={{ width: `${1.5 * textSize}rem`, height: `${1.5 * textSize}rem` }} />,
+    //     text: "Klimatizace",
+    //     color: "bg-cyan-100 text-cyan-800"
+    //   });
+    // }
 
     if (departure.wifi) {
       alerts.push({
@@ -377,28 +387,54 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
                       </div>
 
                       <div className="text-gray-500" style={{
-                        fontSize: `${Math.max(0.8, 1.2 * textSize)}rem`
+                        fontSize: `${Math.max(0.7, 1.0 * textSize)}rem`
                       }}>
-                        <div className="flex items-center gap-1 sm:gap-2 flex-wrap" style={{ gap: `${Math.max(0.3, 0.4 * textSize)}rem` }}>
-                          {departure.vehicle_number && (
-                            <div className="flex items-center gap-1" style={{ gap: `${0.3 * textSize}rem` }}>
-                              <Car className="w-3 h-3 sm:w-4 sm:h-4" style={{ width: `${Math.max(0.8, 1.2 * textSize)}rem`, height: `${Math.max(0.8, 1.2 * textSize)}rem` }} />
-                              <span>#{departure.vehicle_number}</span>
-                              {departure.vehicle_model && (
-                                <span className="text-gray-400">({departure.vehicle_model})</span>
-                              )}
-                            </div>
-                          )}
-                          {departure.vehicle_age && (
-                            <div className="flex items-center gap-1" style={{ gap: `${0.3 * textSize}rem` }}>
-                              <Calendar className="w-3 h-3 sm:w-4 sm:h-4" style={{ width: `${Math.max(0.8, 1.2 * textSize)}rem`, height: `${Math.max(0.8, 1.2 * textSize)}rem` }} />
-                              <span>{departure.vehicle_age} let</span>
-                            </div>
-                          )}
-                          {departure.current_stop && (
-                            <div className="flex items-center gap-1" style={{ gap: `${0.3 * textSize}rem` }}>
-                              <MapPin className="w-3 h-3 sm:w-4 sm:h-4" style={{ width: `${Math.max(0.8, 1.2 * textSize)}rem`, height: `${Math.max(0.8, 1.2 * textSize)}rem` }} />
-                              <span>{departure.current_stop}</span>
+                        <div className="space-y-1" style={{ gap: `${Math.max(0.2, 0.3 * textSize)}rem` }}>
+                          {/* Informace o vozidle header */}
+                          <div className="text-xs font-semibold text-gray-600 border-b border-gray-200 pb-1" style={{ fontSize: `${Math.max(0.6, 0.9 * textSize)}rem` }}>
+                            📝 Informace o vozidle
+                          </div>
+
+                          {/* Číslo a typ vozidla */}
+                          <div className="flex flex-wrap gap-3" style={{ gap: `${Math.max(0.4, 0.6 * textSize)}rem` }}>
+                            {departure.vehicle_number && (
+                              <div className="flex items-center gap-1" style={{ gap: `${0.2 * textSize}rem` }}>
+                                <Car className="w-3 h-3 text-blue-600" style={{ width: `${Math.max(0.7, 1.0 * textSize)}rem`, height: `${Math.max(0.7, 1.0 * textSize)}rem` }} />
+                                <span className="text-gray-600">Voz. č.:</span>
+                                <span className="font-bold text-blue-700">{formatVehicleNumber(departure.vehicle_number, departure.route_short_name, departure.trip_id)}</span>
+                              </div>
+                            )}
+                            {departure.vehicle_model && (
+                              <div className="flex items-center gap-1" style={{ gap: `${0.2 * textSize}rem` }}>
+                                <span className="text-gray-600">Typ:</span>
+                                <span className="font-bold text-green-700">{departure.vehicle_model}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Stáří a pozice */}
+                          <div className="flex flex-wrap gap-3" style={{ gap: `${Math.max(0.4, 0.6 * textSize)}rem` }}>
+                            {departure.vehicle_age && (
+                              <div className="flex items-center gap-1" style={{ gap: `${0.2 * textSize}rem` }}>
+                                <Calendar className="w-3 h-3 text-orange-600" style={{ width: `${Math.max(0.7, 1.0 * textSize)}rem`, height: `${Math.max(0.7, 1.0 * textSize)}rem` }} />
+                                <span className="text-gray-600">Stáří:</span>
+                                <span className="font-medium">{departure.vehicle_age} let</span>
+                              </div>
+                            )}
+                            {departure.current_stop && (
+                              <div className="flex items-center gap-1" style={{ gap: `${0.2 * textSize}rem` }}>
+                                <MapPin className="w-3 h-3 text-red-600" style={{ width: `${Math.max(0.7, 1.0 * textSize)}rem`, height: `${Math.max(0.7, 1.0 * textSize)}rem` }} />
+                                <span className="text-gray-600">Aktuálně:</span>
+                                <span className="font-medium text-red-700">{departure.current_stop}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Výrobce/provozovatel */}
+                          {departure.vehicle_type && (
+                            <div className="flex items-center gap-1" style={{ gap: `${0.2 * textSize}rem` }}>
+                              <span className="text-gray-600">Výz. obch.:</span>
+                              <span className="font-medium">{departure.vehicle_type}</span>
                             </div>
                           )}
                         </div>

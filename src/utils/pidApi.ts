@@ -264,9 +264,18 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
         }
 
         const vehicleNumber = dep.vehicle?.registration_number;
-        const vehicleType = dep.vehicle?.type;
-        const vehicleModel = dep.vehicle?.sub_type || dep.vehicle?.model;
+        const vehicleType = dep.vehicle?.type || dep.vehicle?.manufacturer;
+        const vehicleModel = dep.vehicle?.sub_type || dep.vehicle?.model || dep.vehicle?.vehicle_type?.short_name;
         const vehicleAge = dep.vehicle?.production_year ? new Date().getFullYear() - dep.vehicle?.production_year : undefined;
+
+        // Rozšířené informace o vozidle
+        const vehicleInfo = {
+          manufacturer: dep.vehicle?.manufacturer,
+          model_year: dep.vehicle?.production_year,
+          capacity: dep.vehicle?.capacity,
+          doors: dep.vehicle?.doors,
+          length: dep.vehicle?.length
+        };
 
         // Features detection
         const features = dep.vehicle?.features || [];
@@ -287,6 +296,7 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
         }
         if (dep.vehicle) {
           console.log(`🔧 Full vehicle data for ${vehicleNumber}:`, dep.vehicle);
+          console.log(`📊 Vehicle info extracted:`, vehicleInfo);
         }
 
         let tripId = dep.trip?.id;
