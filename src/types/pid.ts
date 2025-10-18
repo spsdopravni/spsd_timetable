@@ -14,59 +14,78 @@ export interface Station {
 }
 
 export interface Departure {
+  // Základní údaje o odjezdu
   arrival_timestamp: number;
   departure_timestamp: number;
   delay?: number;
+
+  // Informace o trase
   route_short_name: string;
   route_type: number;
+  route_id?: string;
+  route_long_name?: string;
+  route_color?: string;
+  route_text_color?: string;
   headsign: string;
+
+  // Trip informace
   trip_id?: string;
   trip_number?: string;
+
+  // Zastávka
   stop_sequence?: number;
-  wheelchair_accessible?: boolean;
-  last_position_age?: number;
-  alert_hash?: string;
-  route_id?: string;
-  agency_name?: string;
+  platform_code?: string;
+  current_stop?: string;
+  stop_headsign?: string;
+  pickup_type?: number;
+  drop_off_type?: number;
+
+  // Vozidlo - základní
   vehicle_number?: string;
   vehicle_operator?: string;
   vehicle_type?: string;
+  vehicle_model?: string;
+  vehicle_age?: number;
+  vehicle_registration_number?: string;
+
+  // Vozidlo - features
+  wheelchair_accessible?: boolean;
   air_conditioning?: boolean;
-  current_stop?: string;
-  platform_code?: string;
   wifi?: boolean;
   low_floor?: boolean;
   bike_rack?: boolean;
   usb_charging?: boolean;
   boarding_wheelchair?: boolean;
-  vehicle_age?: number;
-  vehicle_model?: string;
-  current_latitude?: number;
-  current_longitude?: number;
-  last_position_update?: string;
-  current_speed?: number;
-  stop_sequence?: number;
-  distance_traveled?: number;
-  block_id?: string;
-  service_id?: string;
-  bikes_allowed?: boolean;
-  route_long_name?: string;
-  route_color?: string;
-  route_text_color?: string;
-  agency_name?: string;
-  agency_url?: string;
-  stop_headsign?: string;
-  pickup_type?: number;
-  drop_off_type?: number;
-  shape_id?: string;
-  bearing?: number;
-  state_position?: string;
-  last_stop_sequence?: number;
-  vehicle_registration_number?: string;
   is_wheelchair_accessible?: boolean;
   is_air_conditioned?: boolean;
   has_usb_chargers?: boolean;
+
+  // Pozice a navigace
+  current_latitude?: number;
+  current_longitude?: number;
+  bearing?: number;
+  state_position?: string;
+  shape_id?: string;
+  distance_traveled?: number;
+  last_stop_sequence?: number;
+
+  // Real-time údaje
+  last_position_age?: number;
+  last_position_update?: string;
+  current_speed?: number;
   real_time_delay?: number;
+
+  // GTFS údaje
+  block_id?: string;
+  service_id?: string;
+  bikes_allowed?: boolean;
+
+  // Dopravce
+  agency_name?: string;
+  agency_url?: string;
+
+  // Výstrahy
+  alert_hash?: string;
 }
 
 export interface StopTime {
