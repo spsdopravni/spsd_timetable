@@ -46,7 +46,6 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
       setRetryCount(0);
       setIsUpdating(false);
     } catch (error: any) {
-      console.error("Error fetching departures:", error);
       
       if (error.message === 'RATE_LIMIT' || error.message === 'RATE_LIMIT_PROTECTION') {
         setError("API limit dosažen - čekám déle...");

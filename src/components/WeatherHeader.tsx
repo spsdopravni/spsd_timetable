@@ -17,7 +17,6 @@ export const WeatherHeader = ({ lat, lon }: WeatherHeaderProps) => {
         const data = await getWeather(lat, lon);
         setWeather(data);
       } catch (error) {
-        console.error('Weather fetch error:', error);
       } finally {
         setLoading(false);
       }

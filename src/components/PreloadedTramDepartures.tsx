@@ -60,7 +60,6 @@ export const PreloadedTramDepartures = ({
       setLastUpdate(new Date());
       setLoading(false);
     } catch (error: any) {
-      console.error("Error fetching departures:", error);
       setError(error.message || 'Chyba při načítání odjezdů');
       setLoading(false);
     }

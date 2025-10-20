@@ -30,7 +30,6 @@ const getApiKeyForStation = (stationId: string): string => {
   const key = STATION_API_MAPPING[stationId] || API_KEY_1;
   // Pokud je klíč prázdný, vraťme placeholder - API nebude fungovat
   if (!key || key.trim() === '') {
-    console.warn('⚠️ API klíč není nastaven! Prosím nastavte API_KEY_1 a API_KEY_2 v pidApi.ts');
     return 'MISSING_API_KEY';
   }
   // NIKDY nepoužívej API_KEY_3 pro departures!
@@ -62,7 +61,6 @@ export const searchStations = async (query: string): Promise<Station[]> => {
     );
     
     if (!response.ok) {
-      console.error(`API Error: ${response.status} - ${response.statusText}`);
       return [];
     }
     
@@ -70,7 +68,6 @@ export const searchStations = async (query: string): Promise<Station[]> => {
     
     return data.stops || [];
   } catch (error) {
-    console.error("Error searching stations:", error);
     return [];
   }
 };
@@ -100,7 +97,6 @@ export const getStationRoutes = async (stationId: string): Promise<any[]> => {
     
     return [];
   } catch (error) {
-    console.error("Error fetching station routes:", error);
     return [];
   }
 };
@@ -135,7 +131,6 @@ export const getTransferOptions = async (stationName: string): Promise<string[]>
     
     return transfers;
   } catch (error) {
-    console.error(`Error fetching transfers for ${stationName}:`, error);
     return [];
   }
 };
@@ -175,7 +170,6 @@ export const getRouteTransfers = async (routeId: string): Promise<{[key: string]
     
     return {};
   } catch (error) {
-    console.error("Error fetching route transfers:", error);
     return {};
   }
 };
@@ -430,7 +424,6 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
       alerts: allAlerts
     };
   } catch (error: any) {
-    console.error("💥 Error fetching departures:", error);
     return {
       departures: [],
       alerts: []

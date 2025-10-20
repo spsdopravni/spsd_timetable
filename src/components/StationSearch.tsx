@@ -30,7 +30,6 @@ export const StationSearch = ({ onStationSelect, setLoading }: StationSearchProp
           ));
           setShowResults(true);
         } catch (error) {
-          console.error("Error searching stations:", error);
           setStations([]);
         }
         setSearching(false);

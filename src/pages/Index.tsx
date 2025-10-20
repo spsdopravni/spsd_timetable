@@ -116,7 +116,6 @@ const Index = () => {
           showTimesInMinutes: true // Vždycky zapnutý odpočet
         };
       } catch (error) {
-        console.error('Error parsing settings from localStorage:', error);
         return defaultSettings;
       }
     }

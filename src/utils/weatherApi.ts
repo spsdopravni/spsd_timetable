@@ -30,7 +30,6 @@ const parseTimeString = (timeStr: string, date: string): number => {
       return Math.floor(dateTime.getTime() / 1000);
     }
   } catch (error) {
-    console.error('Error parsing time:', timeStr, error);
     // Fallback na aktuální čas
     return Math.floor(Date.now() / 1000);
   }
@@ -108,7 +107,6 @@ export const getWeather = async (lat: number, lon: number): Promise<WeatherData>
     
     return mapWeatherApiToOpenWeather(data);
   } catch (error) {
-    console.error("Error fetching weather:", error);
     
     // Fallback na mock data při chybě
     const mockWeather: WeatherData = {

@@ -22,7 +22,6 @@ export const WeatherWidget = ({ lat, lon, stationName }: WeatherWidgetProps) => 
         setWeather(data);
         setLastUpdate(new Date());
       } catch (error) {
-        console.error("Error fetching weather:", error);
       } finally {
         setLoading(false);
       }
