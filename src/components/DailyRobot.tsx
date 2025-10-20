@@ -737,8 +737,8 @@ export const DailyRobot = ({ textSize = 1.0 }: DailyRobotProps) => {
             animate={{
               x: robotPhase === 'movingLeft' ? 'calc(-100vw + 50px)' :
                  robotPhase === 'atLeft' ? 'calc(-100vw + 50px)' :
-                 robotPhase === 'movingRight' ? 'calc(-30vw + 100px)' :
-                 robotPhase === 'atRight' ? 'calc(-30vw + 100px)' :
+                 robotPhase === 'movingRight' ? 'calc(-70vw + 50px)' :
+                 robotPhase === 'atRight' ? 'calc(-70vw + 50px)' :
                  robotPhase === 'movingAway' ? 'calc(100vw)' :
                  'calc(100vw + 50px)',
               opacity: robotPhase === 'hidden' ? 0 : 1,

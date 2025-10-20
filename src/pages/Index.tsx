@@ -34,19 +34,19 @@ const Index = () => {
       id: ["U394Z3P", "U394Z3"],
       name: (
         <div className="flex items-center gap-2">
-          Motol (Směr Zličín 
-          <img src="/pictures/metroB.png" alt="Metro B" className="w-8 h-8" onError={(e) => {
+          Motol (Směr Zličín
+          <img src="/pictures/metroB.png" alt="Metro B" className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20" onError={(e) => {
             const target = e.target as HTMLImageElement;
-            target.outerHTML = '<span class="inline-flex items-center justify-center w-8 h-8 bg-yellow-500 text-white font-bold text-sm rounded" title="Metro B">B</span>';
+            target.outerHTML = '<span class="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20 bg-yellow-500 text-white font-bold text-xl sm:text-2xl md:text-3xl rounded" title="Metro B">B</span>';
           }} />)
         </div>
       ),
       displayName: (
         <div className="flex items-center gap-2">
-          Motol (Směr Zličín 
-          <img src="/pictures/metroB.png" alt="Metro B" className="w-8 h-8" onError={(e) => {
+          Motol (Směr Zličín
+          <img src="/pictures/metroB.png" alt="Metro B" className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20" onError={(e) => {
             const target = e.target as HTMLImageElement;
-            target.outerHTML = '<span class="inline-flex items-center justify-center w-8 h-8 bg-yellow-500 text-white font-bold text-sm rounded" title="Metro B">B</span>';
+            target.outerHTML = '<span class="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20 bg-yellow-500 text-white font-bold text-xl sm:text-2xl md:text-3xl rounded" title="Metro B">B</span>';
           }} />)
         </div>
       ),
@@ -58,19 +58,19 @@ const Index = () => {
       id: ["U394Z4P", "U394Z4"],
       name: (
         <div className="flex items-center gap-2">
-          Motol (Směr Nemocnice Motol 
-          <img src="/pictures/metroA.png" alt="Metro A" className="w-8 h-8" onError={(e) => {
+          Motol (Směr Nemocnice Motol
+          <img src="/pictures/metroA.png" alt="Metro A" className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20" onError={(e) => {
             const target = e.target as HTMLImageElement;
-            target.outerHTML = '<span class="inline-flex items-center justify-center w-8 h-8 bg-green-600 text-white font-bold text-sm rounded" title="Metro A">A</span>';
+            target.outerHTML = '<span class="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20 bg-green-600 text-white font-bold text-xl sm:text-2xl md:text-3xl rounded" title="Metro A">A</span>';
           }} />)
         </div>
       ),
       displayName: (
         <div className="flex items-center gap-2">
-          Motol (Směr Nemocnice Motol 
-          <img src="/pictures/metroA.png" alt="Metro A" className="w-8 h-8" onError={(e) => {
+          Motol (Směr Nemocnice Motol
+          <img src="/pictures/metroA.png" alt="Metro A" className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20" onError={(e) => {
             const target = e.target as HTMLImageElement;
-            target.outerHTML = '<span class="inline-flex items-center justify-center w-8 h-8 bg-green-600 text-white font-bold text-sm rounded" title="Metro A">A</span>';
+            target.outerHTML = '<span class="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20 bg-green-600 text-white font-bold text-xl sm:text-2xl md:text-3xl rounded" title="Metro A">A</span>';
           }} />)
         </div>
       ),
@@ -198,18 +198,16 @@ const Index = () => {
 
   const calculateStationIndex = (time: Date) => {
     const totalSeconds = time.getHours() * 3600 + time.getMinutes() * 60 + time.getSeconds();
-    const cyclePosition = totalSeconds % 60;
+    const cyclePosition = totalSeconds % 20; // 20 sekundový cyklus (10s + 10s)
 
     console.log('🕐 Total seconds from start of day:', totalSeconds, 'Cycle position:', cyclePosition);
 
-    if (cyclePosition < 15) {
+    // 0 = Vozovna Motol (0-10 sekund)
+    // 1 = Motol (10-20 sekund)
+    if (cyclePosition < 10) {
       return 0;
-    } else if (cyclePosition < 30) {
-      return 1;
-    } else if (cyclePosition < 45) {
-      return 2;
     } else {
-      return 3;
+      return 1;
     }
   };
 
@@ -285,43 +283,6 @@ const Index = () => {
   const currentStation = stations[currentStationIndex];
   console.log('📍 Current station:', currentStation?.textName || currentStation?.displayName, 'Index:', currentStationIndex);
 
-  const getCurrentMotolStation = () => {
-    const stationIndex = currentStationIndex;
-    console.log('🏠 Getting Motol station for index:', stationIndex);
-    
-    if (stationIndex === 2) {
-      console.log('🎯 Selected Motol station (2):', motolStations[0]?.textName);
-      return motolStations[0];
-    } else if (stationIndex === 3) {
-      console.log('🎯 Selected Motol station (3):', motolStations[1]?.textName);
-      return motolStations[1];
-    } else if (stationIndex === 0) {
-      console.log('🎯 Selected Motol station (0) - using Zličín:', motolStations[0]?.textName);
-      return motolStations[0];
-    } else {
-      console.log('🎯 Selected Motol station (1) - using Nemocnice:', motolStations[1]?.textName);
-      return motolStations[1];
-    }
-  };
-
-  const getCurrentVozovnaStation = () => {
-    const stationIndex = currentStationIndex;
-    console.log('🚗 Getting Vozovna station for index:', stationIndex);
-    
-    if (stationIndex === 0) {
-      console.log('🎯 Selected Vozovna station (0):', vozovnaStations[0]?.textName);
-      return vozovnaStations[0];
-    } else if (stationIndex === 1) {
-      console.log('🎯 Selected Vozovna station (1):', vozovnaStations[1]?.textName);
-      return vozovnaStations[1];
-    } else if (stationIndex === 2) {
-      console.log('🎯 Selected Vozovna station (2) - using Centrum:', vozovnaStations[0]?.textName);
-      return vozovnaStations[0];
-    } else {
-      console.log('🎯 Selected Vozovna station (3) - using Řepy:', vozovnaStations[1]?.textName);
-      return vozovnaStations[1];
-    }
-  };
 
   const getEffectiveTextSize = () => {
     if (settings.isFullscreen) {
@@ -401,8 +362,9 @@ const Index = () => {
             Vozovna Motol
           </h1>
           <div className="flex items-center justify-center gap-4 mt-2">
-            <i className={`fa-solid fa-person-walking text-blue-100 animate-pulse`} style={{
-              fontSize: settings.isFullscreen ? 'clamp(2.25rem, 6vw, 7.5rem)' : 'clamp(1.8rem, 4.5vw, 6rem)'
+            <i className={`fa-solid fa-person-walking text-blue-100`} style={{
+              fontSize: settings.isFullscreen ? 'clamp(2.25rem, 6vw, 7.5rem)' : 'clamp(1.8rem, 4.5vw, 6rem)',
+              animation: 'walking-bounce 1.5s ease-in-out infinite, icon-glow-pulse 2s ease-in-out infinite'
             }}></i>
             <div className={`text-blue-100`} style={{
               fontSize: settings.isFullscreen ? 'clamp(2.25rem, 6vw, 7.5rem)' : 'clamp(1.8rem, 4.5vw, 6rem)'
@@ -439,8 +401,9 @@ const Index = () => {
 
         {/* Mobile walking info */}
         <div className="sm:hidden flex items-center justify-center gap-1 mt-1 w-full">
-          <i className={`fa-solid fa-person-walking text-blue-100 animate-pulse`} style={{
-            fontSize: settings.isFullscreen ? 'clamp(3rem, 9vw, 6rem)' : 'clamp(2.25rem, 6vw, 4.5rem)'
+          <i className={`fa-solid fa-person-walking text-blue-100`} style={{
+            fontSize: settings.isFullscreen ? 'clamp(3rem, 9vw, 6rem)' : 'clamp(2.25rem, 6vw, 4.5rem)',
+            animation: 'walking-bounce 1.5s ease-in-out infinite, icon-glow-pulse 2s ease-in-out infinite'
           }}></i>
           <div className={`text-blue-100`} style={{
             fontSize: settings.isFullscreen ? 'clamp(3rem, 9vw, 6rem)' : 'clamp(2.25rem, 6vw, 4.5rem)'
@@ -530,9 +493,11 @@ const Index = () => {
                 </div>
               )}
               <div className="flex items-center justify-center gap-2 sm:gap-4 text-center">
-                <i className={`fa-solid fa-person-walking text-blue-100 animate-pulse ${
+                <i className={`fa-solid fa-person-walking text-blue-100 ${
                   settings.isFullscreen ? 'text-3xl sm:text-[7.5rem]' : 'text-3xl sm:text-[9rem]'
-                }`}></i>
+                }`} style={{
+                  animation: 'walking-bounce 1.5s ease-in-out infinite, icon-glow-pulse 2s ease-in-out infinite'
+                }}></i>
                 <div>
                   <div className={`font-semibold ${
                     settings.isFullscreen ? 'text-3xl sm:text-6xl' : 'text-xl sm:text-5xl'
@@ -774,13 +739,18 @@ const Index = () => {
       );
     }
     
-    // Normal split view mode (Motol + Vozovna)
-    const currentMotolStation = getCurrentMotolStation();
-    const currentVozovnaStation = getCurrentVozovnaStation();
-    
+    // Normal split view mode - vždy jedna zastávka, obě směry
+    // currentStationIndex 0 = Vozovna Motol (Řepy + Centrum)
+    // currentStationIndex 1 = Motol (Zličín + Nemocnice)
+
+    const leftStation = currentStationIndex === 0 ? vozovnaStations[1] : motolStations[0]; // Řepy nebo Zličín
+    const rightStation = currentStationIndex === 0 ? vozovnaStations[0] : motolStations[1]; // Centrum nebo Nemocnice
+    const mainStationName = currentStationIndex === 0 ? "Vozovna Motol" : "Motol";
+
     console.log('🔄 Split view rendering - Current index:', currentStationIndex);
-    console.log('🏠 Current Motol station:', currentMotolStation?.textName);
-    console.log('🚗 Current Vozovna station:', currentVozovnaStation?.textName);
+    console.log('🏠 Main station:', mainStationName);
+    console.log('⬅️ Left station:', leftStation?.textName);
+    console.log('➡️ Right station:', rightStation?.textName);
     console.log('🎭 Is transitioning:', isTransitioning);
     
     return (
@@ -801,95 +771,85 @@ const Index = () => {
             backgroundSize: 'auto',
             backgroundPosition: 'center',
             backgroundRepeat: 'repeat',
-            height: settings.isFullscreen ? '330px' : '275px'
+            height: settings.isFullscreen ? '450px' : '380px'
           }}
         >
           <div className="absolute inset-0 bg-blue-900/80"></div>
 
-          {/* Absolutely centered walking info */}
-          <div className="absolute inset-0 flex items-center justify-center z-15">
-            <div
-              className="flex items-center gap-4 text-center"
-              style={{
-                animation: 'float 3s ease-in-out infinite'
-              }}
-            >
-              <i className={`fa-solid fa-person-walking text-blue-100 ${
-                settings.isFullscreen ? 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl' : 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl'
-              }`} style={{animation: 'walking 1.8s ease-in-out infinite'}}></i>
-              <div>
-                <div className={`font-semibold text-white ${
-                  settings.isFullscreen ? 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl' : 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl'
-                }`} style={{animation: 'glow 4s ease-in-out infinite'}}>Motol</div>
-                <div className={`text-blue-100 ${
-                  settings.isFullscreen ? 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl' : 'text-xl sm:text-2xl md:text-3xl lg:text-4xl'
-                }`}>6 min • 400m</div>
-              </div>
-            </div>
-          </div>
+          <div className="px-1 sm:px-4 lg:px-6 py-2 sm:py-4 lg:py-6 relative z-10 h-full flex items-center">
+            <div className="grid grid-cols-1 lg:grid-cols-3 w-full gap-4 items-center">
+              {/* Left side - Logo + Walking Info */}
+              <div className="flex items-center gap-2 sm:gap-4 lg:gap-6 justify-start">
+                <div className="flex-shrink-0 cursor-pointer" onClick={handleLogoClick}>
+                  <img
+                    src="/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png"
+                    alt="Logo školy"
+                    className={`object-contain ${
+                      settings.isFullscreen
+                        ? 'w-56 h-56 sm:w-64 md:w-80 lg:w-96 xl:w-[28rem] sm:h-56 md:h-64 lg:h-80 xl:h-96'
+                        : 'w-48 h-48 sm:w-56 md:w-64 lg:w-80 xl:w-96 sm:h-48 md:h-56 lg:h-64 xl:h-80'
+                    }`}
+                    style={getLogoStyle()}
+                  />
+                </div>
 
-          <div className="px-1 sm:px-4 lg:px-6 py-1 sm:py-2 lg:py-4 relative z-10 h-full flex flex-col">
-            <div className="grid grid-cols-1 lg:grid-cols-2 w-full flex-1 gap-4">
-              {/* Left station */}
-              <div className="flex flex-col sm:flex-row items-center justify-between h-full">
-                <div className="flex items-center gap-1 sm:gap-4 lg:gap-6">
-                  <div className="flex-shrink-0 cursor-pointer" onClick={handleLogoClick}>
-                    <img
-                      src="/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png"
-                      alt="Logo školy"
-                      className={`object-contain ${
-                        settings.isFullscreen
-                          ? 'w-28 h-28 sm:w-32 md:w-40 lg:w-48 xl:w-80 2xl:h-80 sm:h-28 md:h-32 lg:h-40 xl:h-48 2xl:h-80'
-                          : 'w-24 h-24 sm:w-28 md:w-32 lg:w-40 xl:w-64 2xl:h-64 sm:h-24 md:h-28 lg:h-32 xl:h-40 2xl:h-64'
-                      }`}
-                      style={getLogoStyle()}
-                    />
-                  </div>
-                  <div className="flex-1 text-center lg:text-left">
-                    <h1 className="font-bold leading-tight transition-all duration-500 ease-in-out hover:scale-105 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl" key={`motol-${currentStationIndex}`}>
-                      {React.isValidElement(currentMotolStation.displayName) ?
-                        currentMotolStation.displayName :
-                        (currentMotolStation.textName || currentMotolStation.displayName)
-                      }
-                    </h1>
+                {/* Walking info - vždy viditelné */}
+                <div className="flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-5">
+                  <i className={`fa-solid fa-person-walking text-blue-100 ${
+                    settings.isFullscreen ? 'text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl' : 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl'
+                  }`} style={{animation: 'walking-bounce 1.5s ease-in-out infinite, icon-glow-pulse 2s ease-in-out infinite'}}></i>
+                  <div>
+                    <div className={`font-semibold text-white ${
+                      settings.isFullscreen ? 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl' : 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl'
+                    }`}>Motol</div>
+                    <div className={`text-blue-100 font-semibold ${
+                      settings.isFullscreen ? 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl' : 'text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl'
+                    }`}>6 min • 400m</div>
                   </div>
                 </div>
               </div>
 
-              {/* Right station */}
-              <div className="flex flex-col sm:flex-row items-center justify-between h-full">
-                <div className="flex-1 text-center order-2 lg:order-1">
-                  <h1 className="font-bold leading-tight transition-all duration-500 ease-in-out hover:scale-105 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl" key={`vozovna-${currentStationIndex}`}>
-                    {React.isValidElement(currentVozovnaStation.displayName) ?
-                      currentVozovnaStation.displayName :
-                      (currentVozovnaStation.textName || currentVozovnaStation.displayName)
-                    }
-                  </h1>
-                </div>
-                <div className="flex flex-col items-center lg:items-end gap-1 sm:gap-2 md:gap-4 lg:gap-6 order-1 lg:order-2">
-                  {settings.showWeatherInHeader && (
-                    <div className={`${
-                      settings.isFullscreen ? 'text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl' : 'text-xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl'
-                    }`}>
-                      <WeatherHeader lat={50.0755} lon={14.4378} />
-                    </div>
-                  )}
-                  <div className="text-center lg:text-right">
-                    <div className={`font-bold ${
-                      settings.isFullscreen ? 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl' : 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl'
-                    }`}>
-                      {currentTime.toLocaleTimeString('cs-CZ')}
-                    </div>
-                    <div className={`text-blue-100 mt-1 sm:mt-2 ${
-                      settings.isFullscreen ? 'text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl 2xl:text-5xl' : 'text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl 2xl:text-4xl'
-                    }`}>
-                      {currentTime.toLocaleDateString('cs-CZ', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </div>
+              {/* Center - VELKEJ název zastávky */}
+              <div className="text-center">
+                <h1 className={`font-bold leading-tight transition-all duration-500 ease-in-out ${
+                  settings.isFullscreen
+                    ? 'text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl'
+                    : 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl'
+                }`} key={`main-station-${currentStationIndex}`}>
+                  {mainStationName}
+                </h1>
+              </div>
+
+              {/* Right side - Time and Date */}
+              <div className="flex flex-col items-center lg:items-end gap-2 sm:gap-3 md:gap-4 lg:gap-5">
+                {settings.showWeatherInHeader && (
+                  <div className={`${
+                    settings.isFullscreen
+                      ? 'text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl'
+                      : 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl'
+                  }`}>
+                    <WeatherHeader lat={50.0755} lon={14.4378} />
+                  </div>
+                )}
+                <div className="text-center lg:text-right">
+                  <div className={`font-bold ${
+                    settings.isFullscreen
+                      ? 'text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl'
+                      : 'text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl'
+                  }`}>
+                    {currentTime.toLocaleTimeString('cs-CZ')}
+                  </div>
+                  <div className={`text-blue-100 mt-1 sm:mt-2 ${
+                    settings.isFullscreen
+                      ? 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl'
+                      : 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl'
+                  }`}>
+                    {currentTime.toLocaleDateString('cs-CZ', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
                   </div>
                 </div>
               </div>
@@ -899,14 +859,34 @@ const Index = () => {
 
         {/* Content area */}
         <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
-          <div className={`flex-1 ${settings.isFullscreen ? 'p-1' : 'p-2'} overflow-hidden`}>
+          {/* Left panel - Směr Řepy nebo Směr Zličín */}
+          <div className={`flex-1 ${settings.isFullscreen ? 'p-1' : 'p-2'} overflow-hidden flex flex-col`}>
+            {/* Direction header - elegant style */}
+            <div className={`bg-white/95 border-l-8 sm:border-l-[12px] md:border-l-[16px] border-blue-600 text-gray-800 px-4 sm:px-6 md:px-8 py-4 sm:py-6 md:py-8 mb-2 shadow-lg`}>
+              <div className="flex items-center gap-3 sm:gap-4 md:gap-6 lg:gap-8">
+                <i className={`fas fa-arrow-right text-blue-600 ${
+                  settings.isFullscreen ? 'text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl' : 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl'
+                }`}></i>
+                <h2 className={`font-bold ${
+                  settings.isFullscreen ? 'text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl' : 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl'
+                }`} key={`left-dir-${currentStationIndex}`}>
+                  {React.isValidElement(leftStation.displayName) ? (
+                    <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
+                      {leftStation.direction}
+                      {leftStation.displayName}
+                    </div>
+                  ) : leftStation.direction}
+                </h2>
+              </div>
+            </div>
+
             <div
-              className={`h-full transition-all duration-800 ease-in-out ${isTransitioning ? 'opacity-0 transform translate-x-8' : 'opacity-100 transform translate-x-0'}`}
+              className={`flex-1 transition-all duration-800 ease-in-out ${isTransitioning ? 'opacity-0 transform translate-x-8' : 'opacity-100 transform translate-x-0'}`}
               style={{ fontSize: `${effectiveTextSize}em` }}
             >
               <TramDepartures
-                key={`motol-${Array.isArray(currentMotolStation.id) ? currentMotolStation.id.join(',') : currentMotolStation.id}-${currentStationIndex}`}
-                stationId={currentMotolStation.id}
+                key={`left-${Array.isArray(leftStation.id) ? leftStation.id.join(',') : leftStation.id}-${currentStationIndex}`}
+                stationId={leftStation.id}
                 textSize={effectiveTextSize}
                 maxItems={8}
                 showTimesInMinutes={settings.showTimesInMinutes}
@@ -914,14 +894,34 @@ const Index = () => {
             </div>
           </div>
 
-          <div className={`flex-1 ${settings.isFullscreen ? 'p-1' : 'p-2'} overflow-hidden`}>
+          {/* Right panel - Směr Centrum nebo Směr Nemocnice Motol */}
+          <div className={`flex-1 ${settings.isFullscreen ? 'p-1' : 'p-2'} overflow-hidden flex flex-col`}>
+            {/* Direction header - elegant style */}
+            <div className={`bg-white/95 border-l-8 sm:border-l-[12px] md:border-l-[16px] border-blue-600 text-gray-800 px-4 sm:px-6 md:px-8 py-4 sm:py-6 md:py-8 mb-2 shadow-lg`}>
+              <div className="flex items-center gap-3 sm:gap-4 md:gap-6 lg:gap-8">
+                <i className={`fas fa-arrow-right text-blue-600 ${
+                  settings.isFullscreen ? 'text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl' : 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl'
+                }`}></i>
+                <h2 className={`font-bold ${
+                  settings.isFullscreen ? 'text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl' : 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl'
+                }`} key={`right-dir-${currentStationIndex}`}>
+                  {React.isValidElement(rightStation.displayName) ? (
+                    <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
+                      {rightStation.direction}
+                      {rightStation.displayName}
+                    </div>
+                  ) : rightStation.direction}
+                </h2>
+              </div>
+            </div>
+
             <div
-              className={`h-full transition-all duration-800 ease-in-out ${isTransitioning ? 'opacity-0 transform translate-x-8' : 'opacity-100 transform translate-x-0'}`}
+              className={`flex-1 transition-all duration-800 ease-in-out ${isTransitioning ? 'opacity-0 transform translate-x-8' : 'opacity-100 transform translate-x-0'}`}
               style={{ fontSize: `${effectiveTextSize}em` }}
             >
               <TramDepartures
-                key={`vozovna-${Array.isArray(currentVozovnaStation.id) ? currentVozovnaStation.id.join(',') : currentVozovnaStation.id}-${currentStationIndex}`}
-                stationId={currentVozovnaStation.id}
+                key={`right-${Array.isArray(rightStation.id) ? rightStation.id.join(',') : rightStation.id}-${currentStationIndex}`}
+                stationId={rightStation.id}
                 textSize={effectiveTextSize}
                 maxItems={8}
                 showTimesInMinutes={settings.showTimesInMinutes}
@@ -1007,9 +1007,11 @@ const Index = () => {
           </div>
 
           <div className="hidden sm:flex items-center justify-center gap-4 text-center">
-            <i className={`fa-solid fa-person-walking text-blue-100 animate-pulse ${
+            <i className={`fa-solid fa-person-walking text-blue-100 ${
               settings.isFullscreen ? 'text-[10.5rem]' : 'text-[9rem]'
-            }`}></i>
+            }`} style={{
+              animation: 'walking-bounce 1.5s ease-in-out infinite, icon-glow-pulse 2s ease-in-out infinite'
+            }}></i>
             <div>
               <div className={`font-semibold ${
                 settings.isFullscreen ? 'text-[9rem]' : 'text-[7.5rem]'
@@ -1044,9 +1046,11 @@ const Index = () => {
 
           {/* Mobile walking info */}
           <div className="sm:hidden flex items-center justify-center gap-1 mt-1 w-full">
-            <i className={`fa-solid fa-person-walking text-blue-100 animate-pulse ${
+            <i className={`fa-solid fa-person-walking text-blue-100 ${
               settings.isFullscreen ? 'text-3xl' : 'text-3xl'
-            }`}></i>
+            }`} style={{
+              animation: 'walking-bounce 1.5s ease-in-out infinite, icon-glow-pulse 2s ease-in-out infinite'
+            }}></i>
             <div className={`text-blue-100 ${
               settings.isFullscreen ? 'text-3xl' : 'text-3xl'
             }`}>

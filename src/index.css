@@ -160,16 +160,51 @@
 
 @keyframes walking {
   0%, 100% {
-    transform: translateX(0px) scale(1);
+    transform: translateX(0px) rotate(0deg) scale(1);
   }
   25% {
-    transform: translateX(-5px) scale(1.1);
+    transform: translateX(-8px) rotate(-5deg) scale(1.15);
   }
   50% {
-    transform: translateX(0px) scale(1);
+    transform: translateX(0px) rotate(0deg) scale(1);
   }
   75% {
-    transform: translateX(5px) scale(0.9);
+    transform: translateX(8px) rotate(5deg) scale(0.85);
+  }
+}
+
+@keyframes walking-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes walking-bounce {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-12px) translateX(-6px) rotate(-8deg);
+  }
+  50% {
+    transform: translateY(0px) translateX(0px) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-8px) translateX(6px) rotate(8deg);
+  }
+}
+
+@keyframes icon-glow-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 5px rgba(191, 219, 254, 0.5));
+  }
+  50% {
+    filter: drop-shadow(0 0 20px rgba(191, 219, 254, 1)) drop-shadow(0 0 30px rgba(59, 130, 246, 0.8));
   }
 }
 

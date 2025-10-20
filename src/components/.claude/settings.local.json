@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/xampp/htdocs/spsd_timetable/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
