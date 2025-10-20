@@ -570,38 +570,38 @@ export const DailyRobot = ({ textSize = 1.0 }: DailyRobotProps) => {
       return `${greeting} Užijte si podzimní prázdniny! Odpočiňte si a uvidíme se po nich!`;
     }
 
-    // Pondělní vítání po víkendu
-    if (dayOfWeek === 1) {
-      return `${greeting} Doufáme, že jste si užili víkend! Vítejte zpátky v novém týdnu!`;
-    }
+    // STŘÍDÁNÍ: sudé = pozdravi, liché = fun fakty
+    if (messageCounter % 2 === 0) {
+      // POZDRAVI - různé podle situace
 
-    // Zpráva o obědě (11:00-13:00)
-    if (hour >= 11 && hour < 13) {
-      return `${greeting} Čas na oběd! Užijte si chvilku pohody a dobré jídlo!`;
-    }
+      // Pondělní vítání po víkendu
+      if (dayOfWeek === 1) {
+        return `${greeting} Doufáme, že jste si užili víkend! Vítejte zpátky v novém týdnu!`;
+      }
 
-    // Páteční víkendové přání (celý pátek)
-    if (dayOfWeek === 5) {
-      return `${greeting} Je pátek! Přejeme vám hezký víkend a odpočinek!`;
-    }
+      // Zpráva o obědě (11:00-13:00)
+      if (hour >= 11 && hour < 13) {
+        return `${greeting} Čas na oběd! Užijte si chvilku pohody a dobré jídlo!`;
+      }
 
-    // Večerní zpráva (20:00-23:59)
-    if (hour >= 20) {
-      return `${greeting} Přejeme vám hezký večer a vidíme se zítra!`;
-    }
+      // Páteční víkendové přání (celý pátek)
+      if (dayOfWeek === 5) {
+        return `${greeting} Je pátek! Přejeme vám hezký víkend a odpočinek!`;
+      }
 
-    // Rotace zpráv podle počítadla
-    const messageType = messageCounter % 5;
+      // Večerní zpráva (20:00-23:59)
+      if (hour >= 20) {
+        return `${greeting} Přejeme vám hezký večer a vidíme se zítra!`;
+      }
 
-    if (messageType === 0 || messageType === 4) {
-      // Každé 1. a 5. minutu (pozice 0,4) - standardní zpráva se svátkem
+      // Standardní zpráva se svátkem
       if (nameDay) {
         return `${greeting} Dnes je ${day} a má svátek ${nameDay}!`;
       } else {
         return `${greeting} Dnes je ${day}, přeji příjemný den!`;
       }
     } else {
-      // Každé 2., 3., 4. minutu (pozice 1,2,3) - zábavný fakt
+      // FUN FAKTY
       return getFunFacts();
     }
   };
