@@ -685,7 +685,7 @@ export const DailyRobot = ({ textSize = 1.0 }: DailyRobotProps) => {
         <>
           {/* Pozadí s textem */}
           <motion.div
-            className="fixed bottom-0 right-0 h-24 z-40 bg-gradient-to-l from-blue-900 via-blue-800 to-blue-900/95 shadow-lg"
+            className="fixed bottom-0 left-0 right-0 h-24 z-40 bg-gradient-to-l from-blue-900 via-blue-800 to-blue-900/95 shadow-lg"
             initial={{ width: 0, opacity: 0 }}
             animate={{
               width: showBackground ? '100%' : 0,
@@ -700,7 +700,7 @@ export const DailyRobot = ({ textSize = 1.0 }: DailyRobotProps) => {
 
           {/* Text vycentrovaný na celé obrazovce */}
           <motion.div
-            className="fixed bottom-0 w-full h-24 z-50 flex items-center justify-center"
+            className="fixed bottom-0 left-0 right-0 w-full h-24 z-50 flex items-center justify-center"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{
               opacity: showText ? 1 : 0,
@@ -722,9 +722,8 @@ export const DailyRobot = ({ textSize = 1.0 }: DailyRobotProps) => {
           <motion.div
             className="fixed z-[9999]"
             style={{
-              bottom: '20px',
-              right: '0px',
-              position: 'fixed'
+              bottom: '0px',
+              right: '0px'
             }}
             animate={{
               x: robotPhase === 'movingLeft' ? 'calc(-100vw + 50px)' :
@@ -753,16 +752,6 @@ export const DailyRobot = ({ textSize = 1.0 }: DailyRobotProps) => {
               style={{
                 height: `${Math.max(5, 12 * textSize)}rem`,
                 filter: 'drop-shadow(4px 4px 12px rgba(0,0,0,0.4))'
-              }}
-              animate={{
-                y: robotPhase === 'atRight' ? [0, -15, 0] : 0
-              }}
-              transition={{
-                y: {
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: 'easeInOut'
-                }
               }}
             />
           </motion.div>

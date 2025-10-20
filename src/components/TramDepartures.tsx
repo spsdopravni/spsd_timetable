@@ -304,9 +304,9 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
   const limitedDepartures = departures.slice(0, 6);
 
   return (
-    <Card className="shadow-lg bg-white/90 backdrop-blur-sm h-full border-2 border-gray-300 flex flex-col">
+    <Card className="shadow-lg bg-white/90 backdrop-blur-sm h-full border-2 border-gray-300 flex flex-col min-h-full">
       <CardContent
-        className={`flex-1 p-2 overflow-hidden flex flex-col transition-all duration-500 ease-in-out ${isUpdating ? 'opacity-70 scale-[0.98]' : 'opacity-100 scale-100'}`}
+        className={`flex-1 p-2 overflow-hidden flex flex-col transition-all duration-500 ease-in-out min-h-full ${isUpdating ? 'opacity-70 scale-[0.98]' : 'opacity-100 scale-100'}`}
         style={{ paddingTop: `${0.5 * textSize}rem` }}
       >
         {limitedDepartures.length === 0 && !isUpdating ? (

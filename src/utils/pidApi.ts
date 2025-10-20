@@ -264,6 +264,7 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
         const vehicleType = dep.vehicle?.vehicle_type;
 
         // Debug logování vehicle dat a trip_id
+        console.log({
           'dep.vehicle': dep.vehicle,
           'vehicleNumber': vehicleNumber,
           'vehicleOperator': vehicleOperator,

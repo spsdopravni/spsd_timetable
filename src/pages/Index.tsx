@@ -603,8 +603,9 @@ const Index = () => {
       if (settings.vozovnaUnifiedHeader) {
         // Unified header mode
         return (
+          <>
           <div
-            className={`bg-gradient-to-br from-blue-50 via-white to-amber-50 overflow-hidden h-screen`}
+            className={`bg-gradient-to-br from-blue-50 via-white to-amber-50 overflow-hidden h-screen relative`}
             style={{
               transform: `scale(${settings.zoomLevel})`,
               transformOrigin: 'top left',
@@ -612,12 +613,12 @@ const Index = () => {
               height: `${100 / settings.zoomLevel}%`
             }}
           >
-            <div className="grid grid-cols-1 lg:grid-cols-2 h-full">
+            <div className="grid grid-cols-1 lg:grid-cols-2 h-full min-h-screen">
               {renderUnifiedHeader()}
 
-              <div className={`${settings.isFullscreen ? 'p-1' : 'p-2'} overflow-hidden`}>
+              <div className={`${settings.isFullscreen ? 'p-1' : 'p-2'} overflow-hidden min-h-0`}>
                 <div
-                  className="h-full opacity-100 transform translate-x-0"
+                  className="h-full opacity-100 transform translate-x-0 min-h-full"
                   style={{ fontSize: `${effectiveTextSize}em` }}
                 >
                   <TramDepartures
@@ -631,9 +632,9 @@ const Index = () => {
                 </div>
               </div>
 
-              <div className={`${settings.isFullscreen ? 'p-1' : 'p-2'} overflow-hidden`}>
+              <div className={`${settings.isFullscreen ? 'p-1' : 'p-2'} overflow-hidden min-h-0`}>
                 <div
-                  className="h-full opacity-100 transform translate-x-0"
+                  className="h-full opacity-100 transform translate-x-0 min-h-full"
                   style={{ fontSize: `${effectiveTextSize}em` }}
                 >
                   <TramDepartures
@@ -654,16 +655,17 @@ const Index = () => {
               settings={settings}
               onSettingChange={handleSettingChange}
             />
-
-            <DailyRobot textSize={effectiveTextSize} />
           </div>
+          <DailyRobot textSize={effectiveTextSize} />
+        </>
         );
       }
       
       // Two headers mode (original)
       return (
+        <>
         <div
-          className={`bg-gradient-to-br from-blue-50 via-white to-amber-50 flex flex-col lg:flex-row overflow-hidden h-screen`}
+          className={`bg-gradient-to-br from-blue-50 via-white to-amber-50 flex flex-col lg:flex-row overflow-hidden h-screen relative`}
           style={{
             transform: `scale(${settings.zoomLevel})`,
             transformOrigin: 'top left',
@@ -671,11 +673,11 @@ const Index = () => {
             height: `${100 / settings.zoomLevel}%`
           }}
         >
-          <div className="flex-1 flex flex-col h-1/2 lg:h-full">
+          <div className="flex-1 flex flex-col h-1/2 lg:h-full min-h-0">
             {renderLeftHeader(currentVozovnaStation1)}
-            <div className={`flex-1 ${settings.isFullscreen ? 'p-1' : 'p-2'} overflow-hidden`}>
+            <div className={`flex-1 ${settings.isFullscreen ? 'p-1' : 'p-2'} overflow-hidden min-h-0`}>
               <div
-                className="h-full opacity-100 transform translate-x-0"
+                className="h-full opacity-100 transform translate-x-0 min-h-full"
                 style={{ fontSize: `${effectiveTextSize}em` }}
               >
                 <TramDepartures
@@ -690,11 +692,11 @@ const Index = () => {
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col h-1/2 lg:h-full">
+          <div className="flex-1 flex flex-col h-1/2 lg:h-full min-h-0">
             {renderRightHeader(currentVozovnaStation2)}
-            <div className={`flex-1 ${settings.isFullscreen ? 'p-1' : 'p-2'} overflow-hidden`}>
+            <div className={`flex-1 ${settings.isFullscreen ? 'p-1' : 'p-2'} overflow-hidden min-h-0`}>
               <div
-                className="h-full opacity-100 transform translate-x-0"
+                className="h-full opacity-100 transform translate-x-0 min-h-full"
                 style={{ fontSize: `${effectiveTextSize}em` }}
               >
                 <TramDepartures
@@ -716,6 +718,8 @@ const Index = () => {
             onSettingChange={handleSettingChange}
           />
         </div>
+        <DailyRobot textSize={effectiveTextSize} />
+        </>
       );
     }
     
@@ -728,8 +732,9 @@ const Index = () => {
     const mainStationName = currentStationIndex === 0 ? "Vozovna Motol" : "Motol";
 
     return (
+      <>
       <div
-        className={`bg-gradient-to-br from-blue-50 via-white to-amber-50 flex flex-col overflow-hidden h-screen`}
+        className={`bg-gradient-to-br from-blue-50 via-white to-amber-50 flex flex-col overflow-hidden h-screen relative`}
         style={{
           transform: `scale(${settings.zoomLevel})`,
           transformOrigin: 'top left',
@@ -832,9 +837,9 @@ const Index = () => {
         </div>
 
         {/* Content area */}
-        <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
+        <div className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0">
           {/* Left panel - Směr Řepy nebo Směr Zličín */}
-          <div className={`flex-1 ${settings.isFullscreen ? 'p-1' : 'p-2'} overflow-hidden flex flex-col`}>
+          <div className={`flex-1 ${settings.isFullscreen ? 'p-1' : 'p-2'} overflow-hidden flex flex-col min-h-0`}>
             {/* Direction header - elegant style */}
             <div className={`bg-white/95 border-l-8 sm:border-l-[12px] md:border-l-[16px] border-blue-600 text-gray-800 px-4 sm:px-6 md:px-8 py-4 sm:py-6 md:py-8 mb-2 shadow-lg`}>
               <div className="flex items-center gap-3 sm:gap-4 md:gap-6 lg:gap-8">
@@ -855,7 +860,7 @@ const Index = () => {
             </div>
 
             <div
-              className={`flex-1 transition-all duration-800 ease-in-out ${isTransitioning ? 'opacity-0 transform translate-x-8' : 'opacity-100 transform translate-x-0'}`}
+              className={`flex-1 transition-all duration-800 ease-in-out min-h-full ${isTransitioning ? 'opacity-0 transform translate-x-8' : 'opacity-100 transform translate-x-0'}`}
               style={{ fontSize: `${effectiveTextSize}em` }}
             >
               <TramDepartures
@@ -869,7 +874,7 @@ const Index = () => {
           </div>
 
           {/* Right panel - Směr Centrum nebo Směr Nemocnice Motol */}
-          <div className={`flex-1 ${settings.isFullscreen ? 'p-1' : 'p-2'} overflow-hidden flex flex-col`}>
+          <div className={`flex-1 ${settings.isFullscreen ? 'p-1' : 'p-2'} overflow-hidden flex flex-col min-h-0`}>
             {/* Direction header - elegant style */}
             <div className={`bg-white/95 border-l-8 sm:border-l-[12px] md:border-l-[16px] border-blue-600 text-gray-800 px-4 sm:px-6 md:px-8 py-4 sm:py-6 md:py-8 mb-2 shadow-lg`}>
               <div className="flex items-center gap-3 sm:gap-4 md:gap-6 lg:gap-8">
@@ -890,7 +895,7 @@ const Index = () => {
             </div>
 
             <div
-              className={`flex-1 transition-all duration-800 ease-in-out ${isTransitioning ? 'opacity-0 transform translate-x-8' : 'opacity-100 transform translate-x-0'}`}
+              className={`flex-1 transition-all duration-800 ease-in-out min-h-full ${isTransitioning ? 'opacity-0 transform translate-x-8' : 'opacity-100 transform translate-x-0'}`}
               style={{ fontSize: `${effectiveTextSize}em` }}
             >
               <TramDepartures
@@ -910,17 +915,18 @@ const Index = () => {
           settings={settings}
           onSettingChange={handleSettingChange}
         />
-
-        <DailyRobot textSize={effectiveTextSize} />
       </div>
+      <DailyRobot textSize={effectiveTextSize} />
+      </>
     );
   }
 
   const effectiveTextSize = getEffectiveTextSize();
-  
+
   return (
+    <>
     <div
-      className={`bg-gradient-to-br from-blue-50 via-white to-amber-50 flex flex-col overflow-hidden ${
+      className={`bg-gradient-to-br from-blue-50 via-white to-amber-50 flex flex-col overflow-hidden relative ${
         settings.isFullscreen ? 'h-screen' : 'min-h-screen'
       }`}
       style={{
@@ -1034,10 +1040,10 @@ const Index = () => {
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
-        <div className={`flex-1 ${settings.isFullscreen ? 'p-1' : 'p-2'} overflow-hidden`}>
+      <div className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0">
+        <div className={`flex-1 ${settings.isFullscreen ? 'p-1' : 'p-2'} overflow-hidden min-h-0`}>
           <div
-            className={`h-full transition-all duration-800 ease-in-out ${isTransitioning ? 'opacity-0 transform translate-x-8' : 'opacity-100 transform translate-x-0'}`}
+            className={`h-full transition-all duration-800 ease-in-out min-h-full ${isTransitioning ? 'opacity-0 transform translate-x-8' : 'opacity-100 transform translate-x-0'}`}
             style={{ fontSize: `${effectiveTextSize}em` }}
           >
             <TramDepartures
@@ -1077,6 +1083,8 @@ const Index = () => {
         onSettingChange={handleSettingChange}
       />
     </div>
+    <DailyRobot textSize={effectiveTextSize} />
+    </>
   );
 };
 
