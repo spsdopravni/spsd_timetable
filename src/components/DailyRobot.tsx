@@ -608,14 +608,6 @@ export const DailyRobot = ({ textSize = 1.0 }: DailyRobotProps) => {
 
   useEffect(() => {
     setCurrentMessage(generateMessage());
-
-    // Aktualizace každou minutu pro rotaci zpráv
-    const interval = setInterval(() => {
-      setMessageCounter(prev => prev + 1);
-      setCurrentMessage(generateMessage());
-    }, 60000); // 1 minuta
-
-    return () => clearInterval(interval);
   }, [messageCounter]);
 
   // Postupná animace - robot jede z prava doleva a zpět
@@ -627,7 +619,7 @@ export const DailyRobot = ({ textSize = 1.0 }: DailyRobotProps) => {
       }
 
       setIsAnimating(true);
-      setCurrentMessage(generateMessage());
+      setMessageCounter(prev => prev + 1); // Změna textu při každém zobrazení
       setIsVisible(true);
       setRobotPhase('movingLeft');
 
