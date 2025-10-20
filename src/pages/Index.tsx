@@ -96,7 +96,7 @@ const Index = () => {
       logoSize: 1.0,
       showWeatherInHeader: false,
       vozovnaOnlyMode: false,
-      showTimesInMinutes: false,
+      showTimesInMinutes: true,
       vozovnaUnifiedHeader: false,
       testAlert: false
     };
@@ -112,14 +112,15 @@ const Index = () => {
             : 1.4,
           logoSize: typeof parsedSettings.logoSize === 'number' && !isNaN(parsedSettings.logoSize)
             ? parsedSettings.logoSize
-            : 1.0
+            : 1.0,
+          showTimesInMinutes: true // Vždycky zapnutý odpočet
         };
       } catch (error) {
         console.error('Error parsing settings from localStorage:', error);
         return defaultSettings;
       }
     }
-    
+
     return defaultSettings;
   });
 
