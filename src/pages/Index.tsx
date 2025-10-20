@@ -162,8 +162,6 @@ const Index = () => {
         newSettings.logoSize = typeof value === 'number' && !isNaN(value) ? value : 1.0;
       }
 
-      console.log(`🔧 Setting changed: ${key} = ${value}`, newSettings);
-
       return newSettings;
     });
   };
@@ -185,14 +183,8 @@ const Index = () => {
 
       const data = await response.json();
       const serverTime = new Date(data.datetime);
-      console.log('✅ World time fetched:', serverTime.toLocaleTimeString());
       return serverTime;
     } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        console.log('⚠️ World time API timeout, using local time');
-      } else {
-        console.log('⚠️ Using local time (world time API unavailable)');
-      }
       return new Date();
     }
   };
@@ -200,8 +192,6 @@ const Index = () => {
   const calculateStationIndex = (time: Date) => {
     const totalSeconds = time.getHours() * 3600 + time.getMinutes() * 60 + time.getSeconds();
     const cyclePosition = totalSeconds % 20; // 20 sekundový cyklus (10s + 10s)
-
-    console.log('🕐 Total seconds from start of day:', totalSeconds, 'Cycle position:', cyclePosition);
 
     // 0 = Vozovna Motol (0-10 sekund)
     // 1 = Motol (10-20 sekund)
@@ -215,13 +205,11 @@ const Index = () => {
 
   useEffect(() => {
     const initializeTime = async () => {
-      console.log('🚀 Initializing world time...');
       const serverTime = await fetchWorldTime();
       setWorldTime(serverTime);
       setCurrentTime(serverTime);
 
       const stationIndex = calculateStationIndex(serverTime);
-      console.log('🎯 Initial station index:', stationIndex);
       setCurrentStationIndex(stationIndex);
     };
 
@@ -239,17 +227,14 @@ const Index = () => {
       setCurrentTime(currentWorldTime);
       
       const newStationIndex = calculateStationIndex(currentWorldTime);
-      
+
       if (newStationIndex !== currentStationIndex) {
-        console.log('🔄 Station changing from', currentStationIndex, 'to', newStationIndex);
         setIsTransitioning(true);
-        
+
         setCurrentStationIndex(newStationIndex);
-        console.log('🎯 Station index changed to:', newStationIndex);
-        
+
         setTimeout(() => {
           setIsTransitioning(false);
-          console.log('✅ Station transition completed');
         }, 100);
       }
     };
@@ -259,7 +244,6 @@ const Index = () => {
     const timer = setInterval(updateTimeAndStation, 1000);
     
     const syncTimer = setInterval(async () => {
-      console.log('🔄 Re-syncing with world time...');
       const newWorldTime = await fetchWorldTime();
       setWorldTime(newWorldTime);
     }, 300000);
@@ -282,8 +266,6 @@ const Index = () => {
   ];
 
   const currentStation = stations[currentStationIndex];
-  console.log('📍 Current station:', currentStation?.textName || currentStation?.displayName, 'Index:', currentStationIndex);
-
 
   const getEffectiveTextSize = () => {
     if (settings.isFullscreen) {
@@ -618,9 +600,7 @@ const Index = () => {
     if (settings.vozovnaOnlyMode) {
       const currentVozovnaStation1 = vozovnaStations[0]; // Směr Centrum
       const currentVozovnaStation2 = vozovnaStations[1]; // Směr Řepy
-      
-      console.log('🚗 Vozovna only mode - showing both directions');
-      
+
       if (settings.vozovnaUnifiedHeader) {
         // Unified header mode
         return (
@@ -748,12 +728,6 @@ const Index = () => {
     const rightStation = currentStationIndex === 0 ? vozovnaStations[0] : motolStations[1]; // Centrum nebo Nemocnice
     const mainStationName = currentStationIndex === 0 ? "Vozovna Motol" : "Motol";
 
-    console.log('🔄 Split view rendering - Current index:', currentStationIndex);
-    console.log('🏠 Main station:', mainStationName);
-    console.log('⬅️ Left station:', leftStation?.textName);
-    console.log('➡️ Right station:', rightStation?.textName);
-    console.log('🎭 Is transitioning:', isTransitioning);
-    
     return (
       <div
         className={`bg-gradient-to-br from-blue-50 via-white to-amber-50 flex flex-col overflow-hidden h-screen`}
@@ -889,7 +863,7 @@ const Index = () => {
                 key={`left-${Array.isArray(leftStation.id) ? leftStation.id.join(',') : leftStation.id}-${currentStationIndex}`}
                 stationId={leftStation.id}
                 textSize={effectiveTextSize}
-                maxItems={8}
+                maxItems={6}
                 showTimesInMinutes={settings.showTimesInMinutes}
               />
             </div>
@@ -924,7 +898,7 @@ const Index = () => {
                 key={`right-${Array.isArray(rightStation.id) ? rightStation.id.join(',') : rightStation.id}-${currentStationIndex}`}
                 stationId={rightStation.id}
                 textSize={effectiveTextSize}
-                maxItems={8}
+                maxItems={6}
                 showTimesInMinutes={settings.showTimesInMinutes}
               />
             </div>
@@ -958,7 +932,7 @@ const Index = () => {
       }}
     >
       {/* Global Alert Banner - Fixed position at top */}
-      {console.log('🚨 Alert banner render check:', { testAlert: settings.testAlert, settings }) || settings.testAlert && (
+      {settings.testAlert && (
         <div className="fixed top-0 left-0 right-0 z-[9999]">
           <AlertBanner
             alerts={[

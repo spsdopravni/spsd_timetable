@@ -623,11 +623,9 @@ export const DailyRobot = ({ textSize = 1.0 }: DailyRobotProps) => {
     const startAnimation = () => {
       // Pokud už animace běží, přeskoč
       if (isAnimating) {
-        console.log('⏸️ Animation already running, skipping');
         return;
       }
 
-      console.log('🤖 Robot starts from right');
       setIsAnimating(true);
       setCurrentMessage(generateMessage());
       setIsVisible(true);
@@ -635,40 +633,34 @@ export const DailyRobot = ({ textSize = 1.0 }: DailyRobotProps) => {
 
       // Robot dorazí doleva po 4 sekundách
       setTimeout(() => {
-        console.log('🐈 Robot at left edge');
         setRobotPhase('atLeft');
       }, 4000);
 
       // Robot se začne vracet doprava po 2 sekundách
       setTimeout(() => {
-        console.log('👉 Robot moving back right');
         setRobotPhase('movingRight');
         setShowBackground(true);
       }, 6000);
 
       // Robot dorazí doprava s pozadím
       setTimeout(() => {
-        console.log('📝 Robot arrived with background');
         setRobotPhase('atRight');
         setShowText(true);
       }, 10000);
 
       // Text a pozadí zmizí po 15 sekundách
       setTimeout(() => {
-        console.log('👋 Hiding text and background');
         setShowText(false);
         setShowBackground(false);
       }, 15000);
 
       // Robot odjíždí doprava po 16 sekundách (po zmizení textu)
       setTimeout(() => {
-        console.log('🚗 Robot moving away right');
         setRobotPhase('movingAway');
       }, 16000);
 
       // Vše úplně zmizí po 19 sekundách
       setTimeout(() => {
-        console.log('👋 Hiding robot');
         setRobotPhase('hidden');
         setIsVisible(false);
         setIsAnimating(false); // Animace skončila

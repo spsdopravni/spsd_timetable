@@ -113,22 +113,6 @@ export const Settings = ({ isOpen, onClose, settings, onSettingChange }: Setting
             </Button>
           </div>
 
-          {/* Časy v minutách */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div>
-              <h3 className="text-lg font-semibold">Časy v minutách</h3>
-              <p className="text-sm text-gray-600">Zobrazit odjezdy za kolik minut místo skutečného času</p>
-            </div>
-            <Button
-              variant={settings.showTimesInMinutes ? "default" : "outline"}
-              onClick={() => onSettingChange('showTimesInMinutes', !settings.showTimesInMinutes)}
-              className="flex items-center gap-2"
-            >
-              <Clock className="w-4 h-4" />
-              {settings.showTimesInMinutes ? 'Minuty' : 'Čas'}
-            </Button>
-          </div>
-
           {/* Fullscreen */}
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
             <div>
@@ -345,7 +329,6 @@ export const Settings = ({ isOpen, onClose, settings, onSettingChange }: Setting
                 onSettingChange('splitView', false);
                 onSettingChange('showWeatherInHeader', false);
                 onSettingChange('vozovnaOnlyMode', false);
-                onSettingChange('showTimesInMinutes', false);
                 onSettingChange('vozovnaUnifiedHeader', false);
                 onSettingChange('testAlert', false);
                 if (document.fullscreenElement) {

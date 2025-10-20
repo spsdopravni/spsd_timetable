@@ -47,11 +47,6 @@ const mapWeatherApiToOpenWeather = (data: any): WeatherData => {
   const cloudiness = data.current.cloud;
   const condition = data.current.condition.text;
   
-  console.log("🌦️ Weather mapping details:");
-  console.log("- Condition:", condition);
-  console.log("- Rain chance:", rainChance, "%");
-  console.log("- Cloudiness:", cloudiness, "%");
-  console.log("- Current weather code:", data.current.condition.code);
   
   return {
     coord: {
@@ -100,7 +95,6 @@ const mapWeatherApiToOpenWeather = (data: any): WeatherData => {
 
 export const getWeather = async (lat: number, lon: number): Promise<WeatherData> => {
   try {
-    console.log("Fetching weather for coordinates:", lat, lon);
     
     const response = await fetch(
       `${WEATHER_BASE}/forecast.json?key=${WEATHER_API_KEY}&q=${lat},${lon}&days=1&aqi=no&alerts=no&lang=cs`
@@ -111,7 +105,6 @@ export const getWeather = async (lat: number, lon: number): Promise<WeatherData>
     }
 
     const data = await response.json();
-    console.log("Weather API response:", data);
     
     return mapWeatherApiToOpenWeather(data);
   } catch (error) {

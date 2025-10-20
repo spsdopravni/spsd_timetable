@@ -69,54 +69,41 @@ export const WeatherWidget = ({ lat, lon, stationName }: WeatherWidgetProps) => 
   const getWeatherIcon = (condition: string, rainChance: number, cloudiness: number) => {
     const lowerCondition = condition.toLowerCase();
     
-    console.log("🎨 Selecting weather icon:");
-    console.log("- Condition:", condition);
-    console.log("- Rain chance:", rainChance, "%");
-    console.log("- Cloudiness:", cloudiness, "%");
     
     // Pokud je vysoká pravděpodobnost deště (nad 60%), ukázat deštové ikony
     if (rainChance > 60) {
       const icon = rainChance > 80 ? '🌧️' : '🌦️';
-      console.log("- Selected icon (high rain):", icon);
       return icon;
     }
     
     // Pokud je střední pravděpodobnost deště (20-60%), ukázat částečně zataženo s možností deště
     if (rainChance > 20) {
-      console.log("- Selected icon (medium rain):", '🌦️');
       return '🌦️';
     }
     
     // Jinak se řídit podle oblačnosti a popisu
     if (cloudiness > 80) {
-      console.log("- Selected icon (overcast):", '☁️');
       return '☁️'; // Overcast
     } else if (cloudiness > 50) {
-      console.log("- Selected icon (partly cloudy):", '⛅');
       return '⛅'; // Partly cloudy
     } else if (cloudiness > 20) {
-      console.log("- Selected icon (mostly sunny):", '🌤️');
       return '🌤️'; // Mostly sunny
     }
     
     // Pro specifické podmínky z API
     if (lowerCondition.includes('snow') || lowerCondition.includes('sníh')) {
-      console.log("- Selected icon (snow):", '❄️');
       return '❄️';
     }
     
     if (lowerCondition.includes('fog') || lowerCondition.includes('mist') || lowerCondition.includes('mlha')) {
-      console.log("- Selected icon (fog):", '🌫️');
       return '🌫️';
     }
     
     if (lowerCondition.includes('thunderstorm') || lowerCondition.includes('bouřka')) {
-      console.log("- Selected icon (thunderstorm):", '⛈️');
       return '⛈️';
     }
     
     // Default pro jasné počasí
-    console.log("- Selected icon (default clear):", '☀️');
     return '☀️';
   };
 

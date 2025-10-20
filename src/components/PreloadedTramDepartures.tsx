@@ -45,7 +45,6 @@ export const PreloadedTramDepartures = ({
 
         // Pokud jsou data mladší než 30 sekund, použij je
         if (age < 30000) {
-          console.log(`🚀 Using preloaded data for ${key} (age: ${Math.round(age/1000)}s)`);
           setDepartures(preloaded.data || []);
           setLastUpdate(new Date(preloaded.timestamp));
           setLoading(false);
@@ -54,14 +53,12 @@ export const PreloadedTramDepartures = ({
       }
 
       // Jinak načti čerstvá data
-      console.log(`🔄 Fetching fresh data for station: ${key}`);
       const result = await getDepartures(stationId);
       const { departures: departuresData } = result;
 
       setDepartures(departuresData);
       setLastUpdate(new Date());
       setLoading(false);
-      console.log(`✅ Successfully loaded ${departuresData.length} departures`);
     } catch (error: any) {
       console.error("Error fetching departures:", error);
       setError(error.message || 'Chyba při načítání odjezdů');

@@ -30,14 +30,11 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
     try {
       setError(null);
       setIsRateLimited(false);
-      
-      console.log(`🔄 Fetching departures for station: ${Array.isArray(stationId) ? stationId.join(',') : stationId} (retry: ${isRetry})`);
 
       const result = await getDepartures(stationId);
       const { departures: departuresData } = result;
 
       if (departuresData.length === 0 && retryCount < 3) {
-        console.log(`⚠️ No data received, scheduling retry ${retryCount + 1}/3`);
         setRetryCount(prev => prev + 1);
         setTimeout(() => fetchDepartures(true), 5000);
         return;
@@ -48,7 +45,6 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
       setRetryDelay(60000);
       setRetryCount(0);
       setIsUpdating(false);
-      console.log(`✅ Successfully loaded ${departuresData.length} departures`);
     } catch (error: any) {
       console.error("Error fetching departures:", error);
       
@@ -80,7 +76,6 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
     const stationChanged = JSON.stringify(previousStationId) !== JSON.stringify(stationId);
 
     if (stationChanged) {
-      console.log(`🔄 Station changed from ${JSON.stringify(previousStationId)} to ${JSON.stringify(stationId)}`);
       setIsUpdating(true);
       setRetryCount(0);
       setPreviousStationId(stationId);
@@ -110,10 +105,9 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
   useEffect(() => {
     if (JSON.stringify(previousStationId) === JSON.stringify(stationId)) {
       const interval = setInterval(() => {
-        console.log(`⏰ Regular fetch for station: ${Array.isArray(stationId) ? stationId.join(',') : stationId}`);
         fetchDepartures();
       }, retryDelay);
-      
+
       return () => clearInterval(interval);
     }
   }, [stationId, retryDelay, previousStationId]);
@@ -307,8 +301,8 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
     );
   }
 
-  // Limit departures to exactly 5 items
-  const limitedDepartures = departures.slice(0, 5);
+  // Limit departures to exactly 6 items
+  const limitedDepartures = departures.slice(0, 6);
 
   return (
     <Card className="shadow-lg bg-white/90 backdrop-blur-sm h-full border-2 border-gray-300 flex flex-col">
@@ -334,18 +328,6 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
               const serviceAlerts = getServiceAlerts(departure);
               const timeToArrival = departure.arrival_timestamp - Math.floor(Date.now() / 1000);
 
-              // Debug log pro klimatizaci a aktuální zastávku
-              if (index === 0) {
-                console.log('🚌 Departure data - stejně jako low_floor:', {
-                  route: departure.route_short_name,
-                  air_conditioning: departure.air_conditioning,
-                  current_stop: departure.current_stop,
-                  wheelchair_accessible: departure.wheelchair_accessible,
-                  low_floor: departure.low_floor,
-                  headsign: departure.headsign
-                });
-              }
-              
               return (
                 <CSSTransition
                   key={`${departure.route_short_name}-${departure.departure_timestamp}-${index}`}
