@@ -111,6 +111,31 @@
   *::-webkit-scrollbar {
     display: none; /* Chrome, Safari, Opera */
   }
+
+  /* Skrýt scrollbar ve fullscreen režimu pro všechny prohlížeče */
+  :fullscreen,
+  :-webkit-full-screen,
+  :-moz-full-screen,
+  :-ms-fullscreen {
+    overflow: hidden !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+
+  :fullscreen *,
+  :-webkit-full-screen *,
+  :-moz-full-screen *,
+  :-ms-fullscreen * {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+
+  :fullscreen *::-webkit-scrollbar,
+  :-webkit-full-screen *::-webkit-scrollbar,
+  :-moz-full-screen *::-webkit-scrollbar,
+  :-ms-fullscreen *::-webkit-scrollbar {
+    display: none !important;
+  }
 }
 
 /* Alert Banner Scroll Animation */
