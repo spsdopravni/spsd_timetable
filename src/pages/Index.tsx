@@ -860,7 +860,7 @@ const Index = () => {
             </div>
 
             <div
-              className={`flex-1 transition-all duration-800 ease-in-out min-h-full ${isTransitioning ? 'opacity-0 transform translate-x-8' : 'opacity-100 transform translate-x-0'}`}
+              className={`flex-1 min-h-full`}
               style={{ fontSize: `${effectiveTextSize}em` }}
             >
               <TramDepartures
@@ -895,7 +895,7 @@ const Index = () => {
             </div>
 
             <div
-              className={`flex-1 transition-all duration-800 ease-in-out min-h-full ${isTransitioning ? 'opacity-0 transform translate-x-8' : 'opacity-100 transform translate-x-0'}`}
+              className={`flex-1 min-h-full`}
               style={{ fontSize: `${effectiveTextSize}em` }}
             >
               <TramDepartures
@@ -1043,7 +1043,7 @@ const Index = () => {
       <div className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0">
         <div className={`flex-1 ${settings.isFullscreen ? 'p-1' : 'p-2'} overflow-hidden min-h-0`}>
           <div
-            className={`h-full transition-all duration-800 ease-in-out min-h-full ${isTransitioning ? 'opacity-0 transform translate-x-8' : 'opacity-100 transform translate-x-0'}`}
+            className={`h-full min-h-full`}
             style={{ fontSize: `${effectiveTextSize}em` }}
           >
             <TramDepartures

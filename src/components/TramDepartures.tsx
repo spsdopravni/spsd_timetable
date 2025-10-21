@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getDepartures, setThirdApiKey } from "@/utils/pidApi";
 import type { Departure } from "@/types/pid";
-import { TransitionGroup, CSSTransition } from "react-transition-group";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface TramDeparturesProps {
   stationId: string | string[];
@@ -25,12 +25,14 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
   const [isRateLimited, setIsRateLimited] = useState(false);
   const [previousStationId, setPreviousStationId] = useState<string | string[]>("");
   const [retryCount, setRetryCount] = useState(0);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   const fetchDepartures = async (isRetry = false) => {
     try {
       setError(null);
       setIsRateLimited(false);
 
+      // Předčítání dat na pozadí
       const result = await getDepartures(stationId);
       const { departures: departuresData } = result;
 
@@ -40,13 +42,33 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
         return;
       }
 
-      setDepartures(departuresData);
-      setLastUpdate(new Date());
-      setRetryDelay(60000);
-      setRetryCount(0);
-      setIsUpdating(false);
+      // Fade out -> změna dat -> fade in animace
+      if (departures.length > 0) {
+        // 1. Fade out (300ms)
+        setIsUpdating(true);
+
+        // 2. Po fade out změníme data
+        setTimeout(() => {
+          setDepartures(departuresData);
+          setLastUpdate(new Date());
+          setRetryDelay(60000);
+          setRetryCount(0);
+
+          // 3. Fade in + layout animace
+          setTimeout(() => {
+            setIsUpdating(false);
+          }, 50);
+        }, 300);
+      } else {
+        // Při prvním načtení žádná animace
+        setDepartures(departuresData);
+        setLastUpdate(new Date());
+        setRetryDelay(60000);
+        setRetryCount(0);
+        setIsUpdating(false);
+      }
     } catch (error: any) {
-      
+
       if (error.message === 'RATE_LIMIT' || error.message === 'RATE_LIMIT_PROTECTION') {
         setError("API limit dosažen - čekám déle...");
         setIsRateLimited(true);
@@ -75,24 +97,42 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
     const stationChanged = JSON.stringify(previousStationId) !== JSON.stringify(stationId);
 
     if (stationChanged) {
-      setIsUpdating(true);
       setRetryCount(0);
       setPreviousStationId(stationId);
 
-      // Preload data first
+      // Preload data first - načteme data na pozadí
       const preloadData = async () => {
         try {
           const result = await getDepartures(stationId);
           setNextDepartures(result.departures);
 
-          // Small delay to ensure smooth transition
+          // Při prvním načtení žádná animace
+          if (isInitialLoad || departures.length === 0) {
+            setDepartures(result.departures);
+            setLastUpdate(new Date());
+            setLoading(false);
+            setIsInitialLoad(false);
+            return;
+          }
+
+          // Fade out -> změna dat -> fade in animace
+          // 1. Fade out (300ms)
+          setIsUpdating(true);
+
+          // 2. Po fade out změníme data
           setTimeout(() => {
             setDepartures(result.departures);
             setLastUpdate(new Date());
-            setIsUpdating(false);
-          }, 100);
+
+            // 3. Fade in + layout animace
+            setTimeout(() => {
+              setIsUpdating(false);
+            }, 50);
+          }, 300);
         } catch (error) {
           // If preload fails, fall back to normal fetch
+          setIsUpdating(false);
+          setLoading(false);
           fetchDepartures();
         }
       };
@@ -304,12 +344,23 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
   const limitedDepartures = departures.slice(0, 6);
 
   return (
-    <Card className="shadow-lg bg-white/90 backdrop-blur-sm h-full border-2 border-gray-300 flex flex-col min-h-full">
+    <Card className="shadow-lg bg-white/90 backdrop-blur-sm h-full border-2 border-gray-300 flex flex-col min-h-full overflow-hidden">
       <CardContent
-        className={`flex-1 p-2 overflow-hidden flex flex-col transition-all duration-500 ease-in-out min-h-full ${isUpdating ? 'opacity-70 scale-[0.98]' : 'opacity-100 scale-100'}`}
+        className="flex-1 p-2 flex flex-col min-h-full"
         style={{ paddingTop: `${0.5 * textSize}rem` }}
       >
-        {limitedDepartures.length === 0 && !isUpdating ? (
+        <motion.div
+          className="flex-1 flex flex-col"
+          initial={false}
+          animate={{
+            opacity: isUpdating ? 0 : 1
+          }}
+          transition={{
+            duration: 0.3,
+            ease: [0.4, 0, 0.2, 1]
+          }}
+        >
+        {limitedDepartures.length === 0 && !isUpdating && !loading ? (
           <div className="text-center py-8 text-gray-600 flex-1 flex items-center justify-center">
             <div>
               <Info className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 mx-auto mb-2 sm:mb-4 text-gray-400" style={{ width: `${Math.max(3, 4 * textSize)}rem`, height: `${Math.max(3, 4 * textSize)}rem` }} />
@@ -317,9 +368,9 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
               <p style={{ fontSize: `${Math.max(1.4, 2.2 * textSize)}rem` }}>Zkontrolujte později</p>
             </div>
           </div>
-        ) : limitedDepartures.length > 0 ? (
+        ) : (limitedDepartures.length > 0 || isUpdating || loading) ? (
           <div className="flex-1 flex flex-col space-y-1" style={{ minHeight: 0 }}>
-            <TransitionGroup component={null}>
+            <AnimatePresence mode="popLayout">
               {limitedDepartures.map((departure, index) => {
               const delay = departure.delay || 0;
               const delayInfo = getDelayBadge(delay);
@@ -328,10 +379,17 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
               const timeToArrival = departure.arrival_timestamp - Math.floor(Date.now() / 1000);
 
               return (
-                <CSSTransition
-                  key={`${departure.route_short_name}-${departure.departure_timestamp}-${index}`}
-                  timeout={300}
-                  classNames="departure"
+                <motion.div
+                  key={`departure-${departure.route_short_name}-${departure.trip_id}-${departure.departure_timestamp}`}
+                  layout
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: -20, transition: { duration: 0.25 } }}
+                  transition={{
+                    layout: { type: "spring", stiffness: 300, damping: 30 },
+                    opacity: { duration: 0.35, ease: [0.4, 0, 0.2, 1] },
+                    y: { duration: 0.35, ease: [0.4, 0, 0.2, 1] }
+                  }}
                 >
                   <div
                   className="flex flex-col lg:flex-row items-start lg:items-center justify-between rounded-lg border border-gray-100 hover:shadow-md transition-all duration-200 bg-white relative flex-1 gap-1 sm:gap-2 lg:gap-0"
@@ -448,23 +506,18 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
                     </Badge>
                   </div>
                   </div>
-                </CSSTransition>
+                </motion.div>
               );
             })}
-            </TransitionGroup>
+            </AnimatePresence>
 
             {/* Add empty flex items to fill remaining space when there are fewer departures */}
             {Array.from({ length: Math.max(0, 5 - limitedDepartures.length) }).map((_, index) => (
               <div key={`empty-${index}`} className="flex-1" style={{ minHeight: `${Math.max(3, 4 * textSize)}rem` }} />
             ))}
           </div>
-        ) : (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center text-gray-500" style={{ fontSize: `${Math.max(1.2, 1.8 * textSize)}rem` }}>
-              Načítám odjezdy...
-            </div>
-          </div>
-        )}
+        ) : null}
+        </motion.div>
       </CardContent>
     </Card>
   );

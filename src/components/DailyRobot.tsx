@@ -678,6 +678,10 @@ export const DailyRobot = ({ textSize = 1.0 }: DailyRobotProps) => {
           {/* Pozadí s textem */}
           <motion.div
             className="fixed bottom-0 left-0 right-0 h-24 z-40 bg-gradient-to-l from-blue-900 via-blue-800 to-blue-900/95 shadow-lg"
+            style={{
+              willChange: 'width, opacity',
+              backfaceVisibility: 'hidden'
+            }}
             initial={{ width: 0, opacity: 0 }}
             animate={{
               width: showBackground ? '100%' : 0,
@@ -686,19 +690,24 @@ export const DailyRobot = ({ textSize = 1.0 }: DailyRobotProps) => {
             exit={{ width: 0, opacity: 0 }}
             transition={{
               duration: 2.5,
-              ease: [0.25, 0.46, 0.45, 0.94]
+              ease: 'linear',
+              type: 'tween'
             }}
           />
 
           {/* Text vycentrovaný na celé obrazovce */}
           <motion.div
             className="fixed bottom-0 left-0 right-0 w-full h-24 z-50 flex items-center justify-center"
+            style={{
+              willChange: 'opacity, transform',
+              backfaceVisibility: 'hidden'
+            }}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{
               opacity: showText ? 1 : 0,
               scale: showText ? 1 : 0.8
             }}
-            transition={{ duration: 1, delay: 0.5 }}
+            transition={{ duration: 1, delay: 0.5, ease: 'linear', type: 'tween' }}
           >
             <div className="text-white font-bold text-center" style={{
               fontSize: `${Math.max(1.2, 2 * textSize)}rem`,
@@ -715,26 +724,27 @@ export const DailyRobot = ({ textSize = 1.0 }: DailyRobotProps) => {
             className="fixed z-[9999]"
             style={{
               bottom: '0px',
-              right: '0px'
+              right: '0px',
+              willChange: 'transform',
+              backfaceVisibility: 'hidden',
+              WebkitFontSmoothing: 'antialiased'
             }}
             animate={{
               x: robotPhase === 'movingLeft' ? 'calc(-100vw + 50px)' :
                  robotPhase === 'atLeft' ? 'calc(-100vw + 50px)' :
-                 robotPhase === 'movingRight' ? 'calc(-70vw + 50px)' :
-                 robotPhase === 'atRight' ? 'calc(-70vw + 50px)' :
+                 robotPhase === 'movingRight' ? 'calc(-85vw + 50px)' :
+                 robotPhase === 'atRight' ? 'calc(-85vw + 50px)' :
                  robotPhase === 'movingAway' ? 'calc(100vw)' :
                  'calc(100vw + 50px)',
               opacity: robotPhase === 'hidden' ? 0 : 1,
-              scale: robotPhase === 'hidden' ? 0.8 : 1,
-              rotate: robotPhase === 'movingLeft' ? -2 :
-                     robotPhase === 'movingRight' ? 2 :
-                     robotPhase === 'movingAway' ? 5 : 0
+              scale: robotPhase === 'hidden' ? 0.8 : 1
             }}
             transition={{
               duration: robotPhase === 'movingLeft' ? 4 :
                        robotPhase === 'movingRight' ? 4 :
                        robotPhase === 'movingAway' ? 3 : 1,
-              ease: [0.15, 0.25, 0.35, 0.85]
+              ease: 'linear',
+              type: 'tween'
             }}
           >
             <motion.img
