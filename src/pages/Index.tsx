@@ -941,9 +941,14 @@ const Index = () => {
         <div className="fixed top-0 left-0 right-0 z-[9999]">
           <AlertBanner
             alerts={[
-              { text: "🚨 TESTOVACÍ ALERT: Tramvaj střet s vozidlem na Andělu - očekávejte zpoždění! 🚨", priority: 1 },
-              { text: "🔧 TESTOVACÍ ALERT: Výluka na lince 9 - náhradní autobusová doprava mezi Smíchovem a Národním divadlem 🔧", priority: 2 },
-              { text: "⚠️ TESTOVACÍ ALERT: Zpožděný provoz tramvají kvůli technické závadě 🔧", priority: 3 }
+              { text: "NEHODA: Tramvaj linka 9 a 10 - střet s vozidlem na zastávce Anděl - očekávejte zpoždění 15-20 minut", priority: 1 },
+              { text: "VÝLUKA: Tramvaj linka 22 mezi zastávkami I. P. Pavlova a Karlovo náměstí - náhradní autobusová doprava X22", priority: 2 },
+              { text: "TECHNICKÁ ZÁVADA: Linka 12 zkrácena do zastávky Výstaviště - úsek do Sídliště Barrandov mimo provoz", priority: 3 },
+              { text: "UZAVŘENÍ MOSTU: Libeňský most uzavřen - linky 1, 3, 8, 24, 25 jezdí odklonem přes Palmovku", priority: 2 },
+              { text: "OMEZENÍ: Tramvaje na trati Národní divadlo - Palackého náměstí jedou sníženou rychlostí kvůli opravě výhybek", priority: 3 },
+              { text: "ZMĚNA TRASY: Linka 20 dočasně neobsluhuje zastávku Arbesovo náměstí - použijte linku 9 nebo 12", priority: 2 },
+              { text: "ZPOŽDĚNÍ: Tramvaje na lince 22 směr Bílá Hora mají zpoždění 10-15 minut kvůli technické závadě vozu", priority: 3 },
+              { text: "AKCE: Karlovo náměstí - objížďka tramvají kvůli veřejné akci - použijte metro linku B", priority: 2 }
             ]}
             textSize={effectiveTextSize}
           />
