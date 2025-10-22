@@ -90,7 +90,7 @@ const Index = () => {
     const defaultSettings = {
       showRightPanel: true,
       isFullscreen: false,
-      zoomLevel: 3.2,
+      zoomLevel: 1.0,
       splitView: true,
       textSize: 1.4,
       logoSize: 1.0,
