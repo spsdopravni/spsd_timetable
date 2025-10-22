@@ -102,6 +102,18 @@
     overflow: hidden;
   }
 
+  /* Hardware acceleration optimizations */
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Reduce paint/composite for better performance */
+  img, video {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
   /* Skrýt scrollbar pro všechny prohlížeče */
   * {
     scrollbar-width: none; /* Firefox */
@@ -220,27 +232,31 @@
   }
 }
 
+/* Simplified walking animation for better performance */
 @keyframes walking-bounce {
   0%, 100% {
-    transform: translateY(0px) translateX(0px) rotate(0deg);
+    transform: translateY(0px) rotate(0deg);
   }
   25% {
-    transform: translateY(-12px) translateX(-6px) rotate(-8deg);
+    transform: translateY(-8px) rotate(-5deg);
   }
   50% {
-    transform: translateY(0px) translateX(0px) rotate(0deg);
+    transform: translateY(0px) rotate(0deg);
   }
   75% {
-    transform: translateY(-8px) translateX(6px) rotate(8deg);
+    transform: translateY(-5px) rotate(5deg);
   }
 }
 
+/* Optimized for low-end hardware - simplified glow effect */
 @keyframes icon-glow-pulse {
   0%, 100% {
-    filter: drop-shadow(0 0 5px rgba(191, 219, 254, 0.5));
+    opacity: 0.9;
+    transform: scale(1);
   }
   50% {
-    filter: drop-shadow(0 0 20px rgba(191, 219, 254, 1)) drop-shadow(0 0 30px rgba(59, 130, 246, 0.8));
+    opacity: 1;
+    transform: scale(1.05);
   }
 }
 
@@ -277,4 +293,11 @@
   opacity: 0;
   transform: translateX(20px) scale(0.95);
   transition: all 300ms ease-in;
+}
+
+/* Performance optimization for animated icons */
+.fa-person-walking {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
