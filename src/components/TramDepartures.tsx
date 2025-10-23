@@ -488,13 +488,24 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
                       </div>
                     </div>
 
-                    <Badge className={`${delayInfo.color} justify-center lg:justify-start`}
-                           style={{
-                             fontSize: `${Math.max(0.5, 0.8 * 1.0)}rem`,
-                             padding: `${Math.max(0.1, 0.2 * 1.0)}rem ${Math.max(0.2, 0.4 * 1.0)}rem`
-                           }}>
-                      {delayInfo.text}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      {approachingInfo && (
+                        <Badge className="bg-green-100 text-green-800 justify-center lg:justify-start"
+                               style={{
+                                 fontSize: `${Math.max(0.5, 0.8 * 1.0)}rem`,
+                                 padding: `${Math.max(0.1, 0.2 * 1.0)}rem ${Math.max(0.2, 0.4 * 1.0)}rem`
+                               }}>
+                          Blíží se
+                        </Badge>
+                      )}
+                      <Badge className={`${delayInfo.color} justify-center lg:justify-start`}
+                             style={{
+                               fontSize: `${Math.max(0.5, 0.8 * 1.0)}rem`,
+                               padding: `${Math.max(0.1, 0.2 * 1.0)}rem ${Math.max(0.2, 0.4 * 1.0)}rem`
+                             }}>
+                        {delayInfo.text}
+                      </Badge>
+                    </div>
                   </div>
                   </div>
                 </div>
