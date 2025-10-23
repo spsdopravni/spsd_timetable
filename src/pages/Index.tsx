@@ -360,17 +360,6 @@ const Index = () => {
           }}>
             Vozovna Motol
           </h1>
-          <div className="flex items-center justify-center gap-4 mt-2">
-            <i className={`fa-solid fa-person-walking text-blue-100`} style={{
-              fontSize: settings.isFullscreen ? 'clamp(2.25rem, 6vw, 7.5rem)' : 'clamp(1.8rem, 4.5vw, 6rem)',
-              animation: 'walking-bounce 1.5s ease-in-out infinite, icon-glow-pulse 2s ease-in-out infinite'
-            }}></i>
-            <div className={`text-blue-100`} style={{
-              fontSize: settings.isFullscreen ? 'clamp(2.25rem, 6vw, 7.5rem)' : 'clamp(1.8rem, 4.5vw, 6rem)'
-            }}>
-              <span className="font-semibold">Motol</span> • 6 min • 400m
-            </div>
-          </div>
         </div>
 
         <div className="flex flex-col items-end gap-1 sm:gap-2 md:gap-4 lg:gap-6 w-full sm:w-auto">
@@ -395,19 +384,6 @@ const Index = () => {
                 day: 'numeric'
               })}
             </div>
-          </div>
-        </div>
-
-        {/* Mobile walking info */}
-        <div className="sm:hidden flex items-center justify-center gap-1 mt-1 w-full">
-          <i className={`fa-solid fa-person-walking text-blue-100`} style={{
-            fontSize: settings.isFullscreen ? 'clamp(3rem, 9vw, 6rem)' : 'clamp(2.25rem, 6vw, 4.5rem)',
-            animation: 'walking-bounce 1.5s ease-in-out infinite, icon-glow-pulse 2s ease-in-out infinite'
-          }}></i>
-          <div className={`text-blue-100`} style={{
-            fontSize: settings.isFullscreen ? 'clamp(3rem, 9vw, 6rem)' : 'clamp(2.25rem, 6vw, 4.5rem)'
-          }}>
-            <span className="font-semibold">Motol</span> • 6 min • 400m
           </div>
         </div>
       </div>
@@ -491,21 +467,6 @@ const Index = () => {
                   <WeatherHeader lat={50.0755} lon={14.4378} />
                 </div>
               )}
-              <div className="flex items-center justify-center gap-2 sm:gap-4 text-center">
-                <i className={`fa-solid fa-person-walking text-blue-100 ${
-                  settings.isFullscreen ? 'text-3xl sm:text-[7.5rem]' : 'text-3xl sm:text-[9rem]'
-                }`} style={{
-                  animation: 'walking-bounce 1.5s ease-in-out infinite, icon-glow-pulse 2s ease-in-out infinite'
-                }}></i>
-                <div>
-                  <div className={`font-semibold ${
-                    settings.isFullscreen ? 'text-3xl sm:text-6xl' : 'text-xl sm:text-5xl'
-                  }`}>Motol</div>
-                  <div className={`text-blue-100 ${
-                    settings.isFullscreen ? 'text-xl sm:text-5xl' : 'text-base sm:text-3xl'
-                  }`}>6 min • 400m</div>
-                </div>
-              </div>
             </div>
           </div>
         )}
@@ -786,7 +747,7 @@ const Index = () => {
 
           <div className="px-1 sm:px-4 lg:px-6 py-2 sm:py-4 lg:py-6 relative z-10 h-full flex items-center">
             <div className="grid grid-cols-1 lg:grid-cols-3 w-full gap-4 items-center">
-              {/* Left side - Logo + Walking Info */}
+              {/* Left side - Logo */}
               <div className="flex items-center gap-2 sm:gap-4 lg:gap-6 justify-start">
                 <div className="flex-shrink-0 cursor-pointer" onClick={handleLogoClick}>
                   <img
@@ -799,21 +760,6 @@ const Index = () => {
                     }`}
                     style={getLogoStyle()}
                   />
-                </div>
-
-                {/* Walking info - vždy viditelné */}
-                <div className="flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-5">
-                  <i className={`fa-solid fa-person-walking text-blue-100 ${
-                    settings.isFullscreen ? 'text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl' : 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl'
-                  }`} style={{animation: 'walking-bounce 1.5s ease-in-out infinite, icon-glow-pulse 2s ease-in-out infinite'}}></i>
-                  <div>
-                    <div className={`font-semibold text-white ${
-                      settings.isFullscreen ? 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl' : 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl'
-                    }`}>Motol</div>
-                    <div className={`text-blue-100 font-semibold ${
-                      settings.isFullscreen ? 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl' : 'text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl'
-                    }`}>6 min • 400m</div>
-                  </div>
                 </div>
               </div>
 
@@ -1025,24 +971,6 @@ const Index = () => {
             </div>
           </div>
 
-          <div className="hidden sm:flex items-center justify-center gap-4 text-center">
-            <i className={`fa-solid fa-person-walking text-blue-100 ${
-              settings.isFullscreen ? 'text-[10.5rem]' : 'text-[9rem]'
-            }`} style={{
-              animation: 'walking-bounce 1.5s ease-in-out infinite, icon-glow-pulse 2s ease-in-out infinite'
-            }}></i>
-            <div>
-              <div className={`font-semibold ${
-                settings.isFullscreen ? 'text-[9rem]' : 'text-[7.5rem]'
-              }`}>
-                Motol
-              </div>
-              <div className={`text-blue-100 ${
-                settings.isFullscreen ? 'text-[7.5rem]' : 'text-6xl'
-              }`}>6 min • 400m</div>
-            </div>
-          </div>
-
           <div className="flex flex-col items-center sm:items-end gap-2 sm:gap-4 w-full sm:w-auto">
             <div className="text-center sm:text-right">
               <div className={`font-bold ${
@@ -1060,20 +988,6 @@ const Index = () => {
                   day: 'numeric'
                 })}
               </div>
-            </div>
-          </div>
-
-          {/* Mobile walking info */}
-          <div className="sm:hidden flex items-center justify-center gap-1 mt-1 w-full">
-            <i className={`fa-solid fa-person-walking text-blue-100 ${
-              settings.isFullscreen ? 'text-3xl' : 'text-3xl'
-            }`} style={{
-              animation: 'walking-bounce 1.5s ease-in-out infinite, icon-glow-pulse 2s ease-in-out infinite'
-            }}></i>
-            <div className={`text-blue-100 ${
-              settings.isFullscreen ? 'text-3xl' : 'text-3xl'
-            }`}>
-              <span className="font-semibold">Motol</span> • 6 min • 400m
             </div>
           </div>
         </div>
