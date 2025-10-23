@@ -279,10 +279,19 @@ const TramDeparturesComponent = ({ stationId, textSize = 1.0, maxItems = 5, cust
 
   const formatDisplayTime = (departure: Departure) => {
     const timeToArrival = departure.arrival_timestamp - Math.floor(Date.now() / 1000);
-    
+
     if (showTimesInMinutes) {
       if (timeToArrival < 60) {
-        return `${timeToArrival}s`;
+        // Pod minutou - zobrazit zprávu podle cíle
+        const headsign = departure.headsign?.toLowerCase() || '';
+
+        if (headsign.includes('vozovna motol')) {
+          return 'stíhaš';
+        } else if (headsign.includes('motol') && !headsign.includes('vozovna')) {
+          return 'nestíhaš už';
+        } else {
+          return '<1 min';
+        }
       } else {
         const minutes = Math.floor(timeToArrival / 60);
         return `${minutes} min`;

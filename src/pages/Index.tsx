@@ -82,6 +82,8 @@ const Index = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentStationIndex, setCurrentStationIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [worldTime, setWorldTime] = useState<Date | null>(null);
+  const [timeOffset, setTimeOffset] = useState(0); // Offset mezi serverovým a lokálním časem
 
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('tram-display-settings');
@@ -164,6 +166,31 @@ const Index = () => {
     });
   };
 
+  // Synchronizace času s WorldTimeAPI
+  const fetchWorldTime = async (): Promise<Date | null> => {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s timeout
+
+      const response = await fetch('https://worldtimeapi.org/api/timezone/Europe/Prague', {
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        return null;
+      }
+
+      const data = await response.json();
+      const serverTime = new Date(data.datetime);
+      return serverTime;
+    } catch (error) {
+      // Fallback na lokální čas
+      return null;
+    }
+  };
+
   const calculateStationIndex = (time: Date) => {
     const totalSeconds = time.getHours() * 3600 + time.getMinutes() * 60 + time.getSeconds();
     const cyclePosition = totalSeconds % 20; // 20 sekundový cyklus (10s + 10s)
@@ -177,13 +204,49 @@ const Index = () => {
     }
   };
 
+  // Inicializace a synchronizace času
+  useEffect(() => {
+    const initializeTime = async () => {
+      const serverTime = await fetchWorldTime();
+
+      if (serverTime) {
+        const localTime = new Date();
+        const offset = serverTime.getTime() - localTime.getTime();
+        setTimeOffset(offset);
+        setWorldTime(serverTime);
+      } else {
+        // Fallback na lokální čas
+        setTimeOffset(0);
+        setWorldTime(new Date());
+      }
+    };
+
+    initializeTime();
+
+    // Re-synchronizace každých 10 minut (600000 ms) - optimalizováno pro 1 GB RAM
+    const syncInterval = setInterval(async () => {
+      const serverTime = await fetchWorldTime();
+      if (serverTime) {
+        const localTime = new Date();
+        const offset = serverTime.getTime() - localTime.getTime();
+        setTimeOffset(offset);
+        setWorldTime(serverTime);
+      }
+    }, 600000); // 10 minut
+
+    return () => {
+      clearInterval(syncInterval);
+    };
+  }, []);
 
   useEffect(() => {
     const updateTimeAndStation = () => {
-      const now = new Date();
-      setCurrentTime(now);
+      // Použij offset pro přesný čas
+      const localTime = new Date();
+      const adjustedTime = new Date(localTime.getTime() + timeOffset);
+      setCurrentTime(adjustedTime);
 
-      const newStationIndex = calculateStationIndex(now);
+      const newStationIndex = calculateStationIndex(adjustedTime);
 
       if (newStationIndex !== currentStationIndex) {
         setIsTransitioning(true);
@@ -204,7 +267,7 @@ const Index = () => {
     return () => {
       clearInterval(timer);
     };
-  }, [currentStationIndex]);
+  }, [currentStationIndex, timeOffset]);
 
   const motolStations = [
     stations[2],
