@@ -20,6 +20,7 @@ interface SettingsProps {
     showTimesInMinutes: boolean;
     vozovnaUnifiedHeader: boolean;
     testAlert: boolean;
+    lowPerformanceMode: boolean;
   };
   onSettingChange: (key: string, value: any) => void;
 }
@@ -300,6 +301,22 @@ export const Settings = ({ isOpen, onClose, settings, onSettingChange }: Setting
               </Button>
             </div>
           )}
+
+          {/* Low Performance Mode */}
+          <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+            <div>
+              <h3 className="text-lg font-semibold">⚡ Režim nízkého výkonu</h3>
+              <p className="text-sm text-gray-600">Pro slabý hardware (Raspberry Pi) - vypne animace a sníží refresh rate</p>
+            </div>
+            <Button
+              variant={settings.lowPerformanceMode ? "default" : "outline"}
+              onClick={() => onSettingChange('lowPerformanceMode', !settings.lowPerformanceMode)}
+              className="flex items-center gap-2"
+            >
+              <Monitor className="w-4 h-4" />
+              {settings.lowPerformanceMode ? 'Aktivní' : 'Aktivovat'}
+            </Button>
+          </div>
 
           {/* Test Alert */}
           <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-200">

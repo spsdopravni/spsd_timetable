@@ -96,7 +96,8 @@ const Index = () => {
       vozovnaOnlyMode: false,
       showTimesInMinutes: true,
       vozovnaUnifiedHeader: false,
-      testAlert: false
+      testAlert: false,
+      lowPerformanceMode: false
     };
     
     if (saved) {
@@ -579,6 +580,7 @@ const Index = () => {
                     maxItems={8}
                     customTitle={currentVozovnaStation1.direction}
                     showTimesInMinutes={settings.showTimesInMinutes}
+                    lowPerformanceMode={settings.lowPerformanceMode}
                   />
                 </div>
               </div>
@@ -595,6 +597,7 @@ const Index = () => {
                     maxItems={8}
                     customTitle={currentVozovnaStation2.direction}
                     showTimesInMinutes={settings.showTimesInMinutes}
+                    lowPerformanceMode={settings.lowPerformanceMode}
                   />
                 </div>
               </div>
