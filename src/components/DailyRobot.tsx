@@ -830,7 +830,12 @@ export const DailyRobot = () => {
               className="w-auto object-contain"
               style={{
                 height: `${Math.max(5, 12 * 1.0)}rem`,
-                filter: 'drop-shadow(4px 4px 12px rgba(0,0,0,0.4))'
+                filter: 'drop-shadow(4px 4px 12px rgba(0,0,0,0.4))',
+                // Zrcadlově otočit doprava, když jede zprava doleva
+                transform: (robotPhase === 'movingRight' || robotPhase === 'atRight' || robotPhase === 'movingAway')
+                  ? 'scaleX(-1)'
+                  : 'scaleX(1)',
+                transition: 'transform 0.3s ease-in-out'
               }}
               onError={(e) => {
                 // Fallback na výchozí robot, pokud obrázek neexistuje

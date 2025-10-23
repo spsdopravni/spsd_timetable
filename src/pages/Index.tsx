@@ -6,6 +6,7 @@ import { Settings } from "@/components/Settings";
 import { WeatherHeader } from "@/components/WeatherHeader";
 import { DailyRobot } from "@/components/DailyRobot";
 import { AlertBanner } from "@/components/AlertBanner";
+import { Building2, Home } from "lucide-react";
 
 const Index = () => {
   const stations = [
@@ -15,17 +16,27 @@ const Index = () => {
       displayName: "Vozovna Motol (Směr Centrum)",
       textName: "Vozovna Motol (Směr Centrum)",
       simpleName: "Vozovna Motol",
-      direction: "Směr Centrum",
+      direction: (
+        <div className="flex items-center gap-2">
+          Směr Centrum
+          <Building2 className="w-10 h-10 text-blue-600 flex-shrink-0" />
+        </div>
+      ),
       lat: 50.0755,
       lon: 14.4037
     },
     {
-      id: "U865Z2P", 
+      id: "U865Z2P",
       name: "Vozovna Motol (Směr Řepy)",
       displayName: "Vozovna Motol (Směr Řepy)",
       textName: "Vozovna Motol (Směr Řepy)",
       simpleName: "Vozovna Motol",
-      direction: "Směr Řepy",
+      direction: (
+        <div className="flex items-center gap-2">
+          Směr Řepy
+          <Home className="w-10 h-10 text-green-600 flex-shrink-0" />
+        </div>
+      ),
       lat: 50.0755,
       lon: 14.4037
     },
