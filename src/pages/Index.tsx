@@ -6,7 +6,6 @@ import { Settings } from "@/components/Settings";
 import { WeatherHeader } from "@/components/WeatherHeader";
 import { DailyRobot } from "@/components/DailyRobot";
 import { AlertBanner } from "@/components/AlertBanner";
-import { Building2, Home } from "lucide-react";
 
 const Index = () => {
   const stations = [
@@ -16,12 +15,7 @@ const Index = () => {
       displayName: "Vozovna Motol (Směr Centrum)",
       textName: "Vozovna Motol (Směr Centrum)",
       simpleName: "Vozovna Motol",
-      direction: (
-        <div className="inline-flex items-center gap-2">
-          Směr Centrum
-          <Building2 className="text-blue-600 flex-shrink-0" style={{ width: '1em', height: '1em', marginBottom: '0.1em' }} />
-        </div>
-      ),
+      direction: "Směr Centrum",
       lat: 50.0755,
       lon: 14.4037
     },
@@ -31,19 +25,14 @@ const Index = () => {
       displayName: "Vozovna Motol (Směr Řepy)",
       textName: "Vozovna Motol (Směr Řepy)",
       simpleName: "Vozovna Motol",
-      direction: (
-        <div className="inline-flex items-center gap-2">
-          Směr Řepy
-          <Home className="text-green-600 flex-shrink-0" style={{ width: '1em', height: '1em', marginBottom: '0.1em' }} />
-        </div>
-      ),
+      direction: "Směr Řepy",
       lat: 50.0755,
       lon: 14.4037
     },
     {
       id: ["U394Z3P", "U394Z3"],
       name: (
-        <div className="inline-flex items-center gap-2">
+        <div className="inline-flex items-center gap-2" style={{ borderRadius: '0.5rem' }}>
           Směr Zličín
           <img src="/pictures/metroB.svg" alt="Metro B" className="flex-shrink-0" style={{ width: '1em', height: '1em', marginBottom: '0.1em' }} onError={(e) => {
             const target = e.target as HTMLImageElement;
@@ -52,7 +41,7 @@ const Index = () => {
         </div>
       ),
       displayName: (
-        <div className="inline-flex items-center gap-2">
+        <div className="inline-flex items-center gap-2" style={{ borderRadius: '0.5rem' }}>
           Směr Zličín
           <img src="/pictures/metroB.svg" alt="Metro B" className="flex-shrink-0" style={{ width: '1em', height: '1em', marginBottom: '0.1em' }} onError={(e) => {
             const target = e.target as HTMLImageElement;
@@ -68,7 +57,7 @@ const Index = () => {
     {
       id: ["U394Z4P", "U394Z4"],
       name: (
-        <div className="inline-flex items-center gap-2">
+        <div className="inline-flex items-center gap-2" style={{ borderRadius: '0.5rem' }}>
           Směr Nemocnice Motol
           <img src="/pictures/metroA.svg" alt="Metro A" className="flex-shrink-0" style={{ width: '1em', height: '1em', marginBottom: '0.1em' }} onError={(e) => {
             const target = e.target as HTMLImageElement;
@@ -77,7 +66,7 @@ const Index = () => {
         </div>
       ),
       displayName: (
-        <div className="inline-flex items-center gap-2">
+        <div className="inline-flex items-center gap-2" style={{ borderRadius: '0.5rem' }}>
           Směr Nemocnice Motol
           <img src="/pictures/metroA.svg" alt="Metro A" className="flex-shrink-0" style={{ width: '1em', height: '1em', marginBottom: '0.1em' }} onError={(e) => {
             const target = e.target as HTMLImageElement;
