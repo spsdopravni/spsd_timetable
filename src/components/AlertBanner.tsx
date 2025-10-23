@@ -56,7 +56,7 @@ export const AlertBanner = ({ alerts, textSize = 1.0 }: AlertBannerProps) => {
           {/* Ikona upozornění */}
           <div className="flex-shrink-0 mr-3">
             <AlertTriangle
-              className="text-white animate-pulse"
+              className="text-white"
               style={{
                 width: `${Math.max(2.0, 3.0 * textSize)}rem`,
                 height: `${Math.max(2.0, 3.0 * textSize)}rem`

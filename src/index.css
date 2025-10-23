@@ -102,6 +102,18 @@
     overflow: hidden;
   }
 
+  /* RASPBERRY PI OPTIMALIZACE - VYPNOUT VŠECHNY ANIMACE PRO 1 GB RAM */
+  *, *::before, *::after {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+    -webkit-animation-duration: 0s !important;
+    -webkit-animation-delay: 0s !important;
+    -webkit-transition-duration: 0s !important;
+    -webkit-transition-delay: 0s !important;
+  }
+
   /* Hardware acceleration optimizations */
   * {
     -webkit-font-smoothing: antialiased;

@@ -41,7 +41,7 @@ export const WeatherWidget = ({ lat, lon, stationName }: WeatherWidgetProps) => 
     return (
       <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
         <CardContent className="p-3">
-          <div className="animate-pulse space-y-2">
+          <div className="space-y-2">
             <div className="h-5 bg-gray-200 rounded w-3/4"></div>
             <div className="h-10 bg-gray-200 rounded"></div>
             <div className="space-y-1">

@@ -353,7 +353,7 @@ const TramDeparturesComponent = ({ stationId, textSize = 1.0, maxItems = 5, cust
                   key={`departure-${departure.route_short_name}-${departure.trip_id}-${departure.departure_timestamp}`}
                 >
                   <div
-                  className="flex flex-col lg:flex-row items-start lg:items-center justify-between rounded-lg border border-gray-100 hover:shadow-md transition-all duration-200 bg-white relative flex-1 gap-1 sm:gap-2 lg:gap-0"
+                  className="flex flex-col lg:flex-row items-start lg:items-center justify-between rounded-lg border border-gray-100 bg-white relative flex-1 gap-1 sm:gap-2 lg:gap-0"
                   style={{
                     padding: `${Math.max(0.3, 0.6 * textSize)}rem`,
                     marginBottom: `${0.3 * textSize}rem`,
@@ -437,13 +437,13 @@ const TramDeparturesComponent = ({ stationId, textSize = 1.0, maxItems = 5, cust
                       {/* Approaching vehicle notification */}
                       {approachingInfo && (
                         <div className="absolute top-1 right-1 sm:top-2 sm:right-20 z-10">
-                          <div className="bg-green-600 text-white px-2 py-1 sm:px-3 sm:py-1 rounded-full text-xs font-bold animate-pulse shadow-lg border-2 border-green-400"
+                          <div className="bg-green-600 text-white px-2 py-1 sm:px-3 sm:py-1 rounded-full text-xs font-bold shadow-lg border-2 border-green-400"
                                style={{
                                  fontSize: `${Math.max(0.6, 1.0 * textSize)}rem`,
                                  padding: `${Math.max(0.2, 0.3 * textSize)}rem ${Math.max(0.4, 0.8 * textSize)}rem`
                                }}>
                             <div className="flex items-center gap-1">
-                              <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
+                              <div className="w-2 h-2 bg-white rounded-full"></div>
                               <span className="hidden sm:inline">Blíží se!</span>
                               <span className="sm:hidden">●</span>
                             </div>
