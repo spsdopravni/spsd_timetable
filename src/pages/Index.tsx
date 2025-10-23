@@ -6,6 +6,7 @@ import { Settings } from "@/components/Settings";
 import { WeatherHeader } from "@/components/WeatherHeader";
 import { DailyRobot } from "@/components/DailyRobot";
 import { AlertBanner } from "@/components/AlertBanner";
+import { Building2, Home } from "lucide-react";
 
 const Index = () => {
   const stations = [
@@ -15,17 +16,27 @@ const Index = () => {
       displayName: "Vozovna Motol (Směr Centrum)",
       textName: "Vozovna Motol (Směr Centrum)",
       simpleName: "Vozovna Motol",
-      direction: "Směr Centrum",
+      direction: (
+        <div className="flex items-center gap-2">
+          Směr Centrum
+          <Building2 className="text-blue-600 flex-shrink-0" style={{ width: '1em', height: '1em' }} />
+        </div>
+      ),
       lat: 50.0755,
       lon: 14.4037
     },
     {
-      id: "U865Z2P", 
+      id: "U865Z2P",
       name: "Vozovna Motol (Směr Řepy)",
       displayName: "Vozovna Motol (Směr Řepy)",
       textName: "Vozovna Motol (Směr Řepy)",
       simpleName: "Vozovna Motol",
-      direction: "Směr Řepy",
+      direction: (
+        <div className="flex items-center gap-2">
+          Směr Řepy
+          <Home className="text-green-600 flex-shrink-0" style={{ width: '1em', height: '1em' }} />
+        </div>
+      ),
       lat: 50.0755,
       lon: 14.4037
     },
@@ -34,18 +45,18 @@ const Index = () => {
       name: (
         <div className="flex items-center gap-2">
           Směr Zličín
-          <img src="/pictures/metroB.svg" alt="Metro B" className="w-12 h-12 flex-shrink-0" onError={(e) => {
+          <img src="/pictures/metroB.svg" alt="Metro B" className="flex-shrink-0" style={{ width: '1em', height: '1em' }} onError={(e) => {
             const target = e.target as HTMLImageElement;
-            target.outerHTML = '<span class="inline-flex items-center justify-center w-12 h-12 bg-yellow-500 text-white font-bold text-2xl rounded flex-shrink-0" title="Metro B">B</span>';
+            target.outerHTML = '<span class="inline-flex items-center justify-center bg-yellow-500 text-white font-bold rounded flex-shrink-0" style="width: 1em; height: 1em; font-size: 0.6em" title="Metro B">B</span>';
           }} />
         </div>
       ),
       displayName: (
         <div className="flex items-center gap-2">
           Směr Zličín
-          <img src="/pictures/metroB.svg" alt="Metro B" className="w-12 h-12 flex-shrink-0" onError={(e) => {
+          <img src="/pictures/metroB.svg" alt="Metro B" className="flex-shrink-0" style={{ width: '1em', height: '1em' }} onError={(e) => {
             const target = e.target as HTMLImageElement;
-            target.outerHTML = '<span class="inline-flex items-center justify-center w-12 h-12 bg-yellow-500 text-white font-bold text-2xl rounded flex-shrink-0" title="Metro B">B</span>';
+            target.outerHTML = '<span class="inline-flex items-center justify-center bg-yellow-500 text-white font-bold rounded flex-shrink-0" style="width: 1em; height: 1em; font-size: 0.6em" title="Metro B">B</span>';
           }} />
         </div>
       ),
@@ -59,18 +70,18 @@ const Index = () => {
       name: (
         <div className="flex items-center gap-2">
           Směr Nemocnice Motol
-          <img src="/pictures/metroA.svg" alt="Metro A" className="w-12 h-12 flex-shrink-0" onError={(e) => {
+          <img src="/pictures/metroA.svg" alt="Metro A" className="flex-shrink-0" style={{ width: '1em', height: '1em' }} onError={(e) => {
             const target = e.target as HTMLImageElement;
-            target.outerHTML = '<span class="inline-flex items-center justify-center w-12 h-12 bg-green-600 text-white font-bold text-2xl rounded flex-shrink-0" title="Metro A">A</span>';
+            target.outerHTML = '<span class="inline-flex items-center justify-center bg-green-600 text-white font-bold rounded flex-shrink-0" style="width: 1em; height: 1em; font-size: 0.6em" title="Metro A">A</span>';
           }} />
         </div>
       ),
       displayName: (
         <div className="flex items-center gap-2">
           Směr Nemocnice Motol
-          <img src="/pictures/metroA.svg" alt="Metro A" className="w-12 h-12 flex-shrink-0" onError={(e) => {
+          <img src="/pictures/metroA.svg" alt="Metro A" className="flex-shrink-0" style={{ width: '1em', height: '1em' }} onError={(e) => {
             const target = e.target as HTMLImageElement;
-            target.outerHTML = '<span class="inline-flex items-center justify-center w-12 h-12 bg-green-600 text-white font-bold text-2xl rounded flex-shrink-0" title="Metro A">A</span>';
+            target.outerHTML = '<span class="inline-flex items-center justify-center bg-green-600 text-white font-bold rounded flex-shrink-0" style="width: 1em; height: 1em; font-size: 0.6em" title="Metro A">A</span>';
           }} />
         </div>
       ),
