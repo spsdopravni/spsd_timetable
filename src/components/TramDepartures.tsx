@@ -224,10 +224,32 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
     return headsign;
   };
 
+  const isSchoolTram = (departure: Departure, stationName: string) => {
+    const vehicleNumber = departure.vehicle_number;
+    const station = stationName.toLowerCase();
+
+    // Tramvaje #8466 a #8467 jedoucí přes Vozovna Motol
+    if ((vehicleNumber === "8466" || vehicleNumber === "8467") &&
+        station.includes("vozovna motol")) {
+      return true;
+    }
+
+    return false;
+  };
+
   const getServiceAlerts = (departure: Departure) => {
     const alerts = [];
 
     const headsign = departure.headsign?.toLowerCase() || '';
+
+    // Školní tramvaj alert
+    if (isSchoolTram(departure, stationName)) {
+      alerts.push({
+        icon: <Bus className="w-5 h-5 text-blue-600" style={{ width: `${1.5 * 1.0}rem`, height: `${1.5 * 1.0}rem` }} />,
+        text: "Školní Tramvaj",
+        color: "bg-blue-100 text-blue-800"
+      });
+    }
 
     const isShortened = headsign.includes('jen do') || headsign.includes('pouze do');
     const isToDepot = headsign.includes('vozovna') && !headsign.includes('ústředn');
@@ -398,14 +420,34 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
                   key={`departure-${departure.route_short_name}-${departure.trip_id}-${departure.departure_timestamp}`}
                 >
                   <div
-                  className="flex flex-col lg:flex-row items-start lg:items-center justify-between rounded-lg border border-gray-100 bg-white relative flex-1 gap-1 sm:gap-2 lg:gap-0"
+                  className={`flex flex-col lg:flex-row items-start lg:items-center justify-between rounded-lg border relative flex-1 gap-1 sm:gap-2 lg:gap-0 ${
+                    isSchoolTram(departure, stationName)
+                      ? 'border-blue-300'
+                      : 'border-gray-100 bg-white'
+                  }`}
                   style={{
                     padding: `${Math.max(0.3, 0.6 * 1.0)}rem`,
                     marginBottom: `${0.3 * 1.0}rem`,
-                    minHeight: `${Math.max(4, 6 * 1.0)}rem`
+                    minHeight: `${Math.max(4, 6 * 1.0)}rem`,
+                    ...(isSchoolTram(departure, stationName) && {
+                      backgroundImage: 'url(/pictures/school-tram-bg.png)',
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      backgroundRepeat: 'no-repeat',
+                      boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)',
+                      position: 'relative'
+                    })
                   }}
                 >
-                  <div className="flex items-center gap-1 sm:gap-2 w-full lg:w-auto" style={{ gap: `${Math.max(0.2, 0.4 * 1.0)}rem` }}>
+                  {/* Overlay pro lepší čitelnost textu na school-tram pozadí */}
+                  {isSchoolTram(departure, stationName) && (
+                    <div
+                      className="absolute inset-0 bg-white bg-opacity-80 rounded-lg"
+                      style={{ zIndex: 1 }}
+                    />
+                  )}
+
+                  <div className="flex items-center gap-1 sm:gap-2 w-full lg:w-auto relative" style={{ gap: `${Math.max(0.2, 0.4 * 1.0)}rem`, zIndex: 2 }}>
                     <div className={`rounded-lg flex items-center justify-center ${getRouteColor(departure.route_type)}`}
                          style={{
                            width: departure.route_short_name.length > 2 ?
@@ -482,7 +524,7 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
                     </div>
                   </div>
 
-                  <div className="text-center lg:text-right flex-shrink-0 relative w-full lg:w-auto flex flex-col items-center lg:items-end" style={{ gap: `${Math.max(0.2, 0.3 * 1.0)}rem` }}>
+                  <div className="text-center lg:text-right flex-shrink-0 relative w-full lg:w-auto flex flex-col items-center lg:items-end" style={{ gap: `${Math.max(0.2, 0.3 * 1.0)}rem`, zIndex: 2 }}>
                     <div className="flex items-center gap-2">
                       {/* Show "Stíháš" or "Nestíháš" to the left of time */}
                       {showTimesInMinutes && timeToArrival < 240 && (
