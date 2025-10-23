@@ -20,6 +20,22 @@ export const DailyRobot = () => {
     const month = today.getMonth() + 1; // 1-12
     const day = today.getDate();
 
+    // Silvestr a Nový rok (25.12 - 2.1) - NEJVYŠŠÍ PRIORITA
+    if ((month === 12 && day >= 25) || (month === 1 && day <= 2)) {
+      return {
+        image: '/pictures/robot-newyear.png',
+        theme: 'newyear'
+      };
+    }
+
+    // Vánoční téma (1. prosince - 24. prosince)
+    if (month === 12 && day < 25) {
+      return {
+        image: '/pictures/robot-christmas.png',
+        theme: 'christmas'
+      };
+    }
+
     // Halloween téma (20. října - 1. listopadu)
     if ((month === 10 && day >= 20) || (month === 11 && day <= 1)) {
       return {
@@ -28,24 +44,8 @@ export const DailyRobot = () => {
       };
     }
 
-    // Vánoční téma (1. prosince - 31. prosince)
-    if (month === 12) {
-      return {
-        image: '/pictures/robot-christmas.png',
-        theme: 'christmas'
-      };
-    }
-
-    // Silvestr a Nový rok (31.12 - 2.1)
-    if ((month === 12 && day === 31) || (month === 1 && day <= 2)) {
-      return {
-        image: '/pictures/robot-newyear.png',
-        theme: 'newyear'
-      };
-    }
-
     // Velikonoce (pohyblivý svátek - přibližně březen/duben)
-    // Zjednodušená detekce: kolem velikonoc v dubnu
+    // Zjednodušená detekce: kolem velikonoc v dubnu (10-20.4)
     if (month === 4 && day >= 10 && day <= 20) {
       return {
         image: '/pictures/robot-easter.png',
@@ -53,7 +53,7 @@ export const DailyRobot = () => {
       };
     }
 
-    // Jarní téma (1. března - 31. května)
+    // Jarní téma (1. března - 31. května, kromě velikonoc)
     if (month >= 3 && month <= 5) {
       return {
         image: '/pictures/robot-spring.png',
@@ -77,8 +77,8 @@ export const DailyRobot = () => {
       };
     }
 
-    // Zimní téma (1. ledna - 28. února)
-    if (month === 1 && day > 2 || month === 2) {
+    // Zimní téma (3. ledna - 28. února)
+    if ((month === 1 && day > 2) || month === 2) {
       return {
         image: '/pictures/robot-winter.png',
         theme: 'winter'
@@ -1007,13 +1007,6 @@ export const DailyRobot = () => {
     // Aktualizovat téma robota při každé změně zprávy
     setRobotTheme(getRobotTheme());
   }, [messageCounter]);
-
-  // Aktualizovat téma při každém renderu (pro debug)
-  useEffect(() => {
-    const theme = getRobotTheme();
-    console.log('🤖 Robot theme:', theme);
-    setRobotTheme(theme);
-  }, []);
 
   // Postupná animace - robot jede z prava doleva a zpět
   useEffect(() => {

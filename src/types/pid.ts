@@ -27,6 +27,7 @@ export interface Departure {
   route_color?: string;
   route_text_color?: string;
   headsign: string;
+  is_night?: boolean;
 
   // Trip informace
   trip_id?: string;

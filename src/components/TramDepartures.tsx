@@ -1,5 +1,5 @@
 import { useState, useEffect, memo } from "react";
-import { Clock, AlertTriangle, Info, Snowflake, Car, MapPin, Wrench, Bus, Wind, Wifi, Accessibility, Bike, Zap, Calendar, ArrowRight } from "lucide-react";
+import { Clock, AlertTriangle, Info, Snowflake, Car, MapPin, Wrench, Bus, Wind, Accessibility, Calendar, ArrowRight, Moon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getDepartures, setThirdApiKey } from "@/utils/pidApi";
@@ -213,9 +213,10 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
           <img
             src="/pictures/metroB.svg"
             alt="Metro B"
-            className="w-6 h-6 inline-block"
+            className="inline-block align-middle"
+            style={{ width: `${Math.max(1.6, 2.8 * 1.0)}rem`, height: `${Math.max(1.6, 2.8 * 1.0)}rem`, verticalAlign: 'middle' }}
           />
-          <ArrowRight className="w-12 h-12 text-blue-600" />
+          <ArrowRight style={{ width: `${Math.max(1.6, 2.8 * 1.0)}rem`, height: `${Math.max(1.6, 2.8 * 1.0)}rem` }} className="text-blue-600" />
           <span className="text-orange-600 font-medium">301/352</span>
         </div>
       );
@@ -242,15 +243,6 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
 
     const headsign = departure.headsign?.toLowerCase() || '';
 
-    // Školní tramvaj alert
-    if (isSchoolTram(departure, stationName)) {
-      alerts.push({
-        icon: <Bus className="w-5 h-5 text-blue-600" style={{ width: `${1.5 * 1.0}rem`, height: `${1.5 * 1.0}rem` }} />,
-        text: "Školní Tramvaj",
-        color: "bg-blue-100 text-blue-800"
-      });
-    }
-
     const isShortened = headsign.includes('jen do') || headsign.includes('pouze do');
     const isToDepot = headsign.includes('vozovna') && !headsign.includes('ústředn');
 
@@ -263,51 +255,13 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
     //   });
     // }
 
-    if (departure.wifi) {
-      alerts.push({
-        icon: <Wifi className="w-5 h-5 text-blue-600" style={{ width: `${1.5 * 1.0}rem`, height: `${1.5 * 1.0}rem` }} />,
-        text: "WiFi",
-        color: "bg-blue-100 text-blue-800"
-      });
-    }
-
-    if (departure.low_floor) {
-      alerts.push({
-        icon: <Accessibility className="w-5 h-5 text-green-600" style={{ width: `${1.5 * 1.0}rem`, height: `${1.5 * 1.0}rem` }} />,
-        text: "Nízká podlaha",
-        color: "bg-green-100 text-green-800"
-      });
-    }
-
-    if (departure.usb_charging) {
-      alerts.push({
-        icon: <Zap className="w-5 h-5 text-yellow-600" style={{ width: `${1.5 * 1.0}rem`, height: `${1.5 * 1.0}rem` }} />,
-        text: "USB nabíjení",
-        color: "bg-yellow-100 text-yellow-800"
-      });
-    }
-
-    if (departure.bike_rack) {
-      alerts.push({
-        icon: <Bike className="w-5 h-5 text-orange-600" style={{ width: `${1.5 * 1.0}rem`, height: `${1.5 * 1.0}rem` }} />,
-        text: "Stojan na kola",
-        color: "bg-orange-100 text-orange-800"
-      });
-    }
+    // WiFi, stojan na kolo, USB nabíjení a NP odstraněno
 
     if (isShortened) {
       alerts.push({
         icon: <AlertTriangle className="w-5 h-5 text-yellow-600" style={{ width: `${1.5 * 1.0}rem`, height: `${1.5 * 1.0}rem` }} />,
         text: "Zkrácená jízda",
         color: "bg-yellow-100 text-yellow-800"
-      });
-    }
-
-    if (isToDepot) {
-      alerts.push({
-        icon: <Wrench className="w-5 h-5 text-orange-600" style={{ width: `${1.5 * 1.0}rem`, height: `${1.5 * 1.0}rem` }} />,
-        text: "Jízda do vozovny",
-        color: "bg-orange-100 text-orange-800"
       });
     }
 
@@ -342,18 +296,43 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
         return 'Nestíháš';
       }
 
-      if (timeToArrival < 60) {
-        // Pod minutou - zobrazit zprávu podle ZASTÁVKY (ne podle cíle)
-        if (station.includes('vozovna motol') || station.includes('vozovna')) {
-          return 'Stíháš';
-        } else if (station.includes('motol') && !station.includes('vozovna')) {
-          return 'Nestíháš';
-        } else {
-          return '<1 min';
+      // Vozovna Motol - specifické limity podle směru
+      if (station.includes('vozovna motol') || station.includes('vozovna')) {
+        const headsign = departure.headsign?.toLowerCase() || '';
+        const direction = departure.trip_headsign?.toLowerCase() || '';
+        const combinedInfo = `${headsign} ${direction}`.toLowerCase();
+
+        // Směr Centrum - pod 30s nestíháš
+        if (combinedInfo.includes('centrum')) {
+          if (timeToArrival < 30) {
+            return 'Nestíháš';
+          } else if (timeToArrival < 60) {
+            return 'Stíháš';
+          }
         }
-      } else {
-        return `${minutes} min`;
+        // Směr Řepy - pod 50s nestíháš
+        else if (combinedInfo.includes('řepy') || combinedInfo.includes('repy')) {
+          if (timeToArrival < 50) {
+            return 'Nestíháš';
+          } else if (timeToArrival < 60) {
+            return 'Stíháš';
+          }
+        }
+        // Obecně pro Vozovnu - pod 60s stíháš
+        else if (timeToArrival < 60) {
+          return 'Stíháš';
+        }
       }
+      // Ostatní stanice Motol (ne Vozovna)
+      else if ((station.includes('motol') && !station.includes('vozovna')) && timeToArrival < 60) {
+        return 'Nestíháš';
+      }
+      // Ostatní stanice
+      else if (timeToArrival < 60) {
+        return '<1 min';
+      }
+
+      return `${minutes} min`;
     } else {
       return new Date(departure.arrival_timestamp * 1000).toLocaleTimeString('cs-CZ', {
         hour: '2-digit',
@@ -392,7 +371,7 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
   const limitedDepartures = departures.slice(0, 7);
 
   return (
-    <Card className="shadow-lg bg-white/90 h-full border-2 border-gray-300 flex flex-col min-h-full overflow-hidden">
+    <Card className="shadow-lg bg-white/90 h-full border-2 border-gray-300 flex flex-col overflow-hidden">
       <CardContent
         className="flex-1 p-2 flex flex-col min-h-full"
         style={{ paddingTop: `${0.5 * 1.0}rem` }}
@@ -422,7 +401,7 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
                   <div
                   className={`flex flex-col lg:flex-row items-start lg:items-center justify-between rounded-lg border relative flex-1 gap-1 sm:gap-2 lg:gap-0 ${
                     isSchoolTram(departure, stationName)
-                      ? 'border-blue-300'
+                      ? 'border-gray-100'
                       : 'border-gray-100 bg-white'
                   }`}
                   style={{
@@ -430,24 +409,14 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
                     marginBottom: `${0.3 * 1.0}rem`,
                     minHeight: `${Math.max(4, 6 * 1.0)}rem`,
                     ...(isSchoolTram(departure, stationName) && {
-                      backgroundImage: 'url(/pictures/school-tram-bg.png)',
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                      backgroundRepeat: 'no-repeat',
-                      boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)',
-                      position: 'relative'
+                      background: 'linear-gradient(to right, rgba(235, 93, 67, 0.2), rgba(235, 93, 67, 0.15))',
+                      borderColor: '#EB5D43',
+                      boxShadow: '0 2px 8px rgba(235, 93, 67, 0.4)'
                     })
                   }}
                 >
-                  {/* Overlay pro lepší čitelnost textu na school-tram pozadí */}
-                  {isSchoolTram(departure, stationName) && (
-                    <div
-                      className="absolute inset-0 bg-white bg-opacity-80 rounded-lg"
-                      style={{ zIndex: 1 }}
-                    />
-                  )}
 
-                  <div className="flex items-center gap-1 sm:gap-2 w-full lg:w-auto relative" style={{ gap: `${Math.max(0.2, 0.4 * 1.0)}rem`, zIndex: 2 }}>
+                  <div className="flex items-center w-full lg:w-auto" style={{ gap: `${Math.max(0.6, 1.0 * 1.0)}rem` }}>
                     <div className={`rounded-lg flex items-center justify-center ${getRouteColor(departure.route_type)}`}
                          style={{
                            width: departure.route_short_name.length > 2 ?
@@ -475,9 +444,6 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
                           </span>
                           {departure.wheelchair_accessible && (
                             <i className="fas fa-wheelchair text-blue-600" style={{ fontSize: `${Math.max(0.9, 1.4 * 1.0)}rem` }}></i>
-                          )}
-                          {departure.low_floor && (
-                            <span className="text-green-600 font-bold text-sm bg-green-100 px-1 rounded" style={{ fontSize: `${Math.max(0.7, 1.2 * 1.0)}rem` }}>NP</span>
                           )}
                           {hasAirConditioning(departure) && (
                             <i className="fas fa-snowflake text-blue-500" style={{ fontSize: `${Math.max(0.9, 1.4 * 1.0)}rem` }} title="Klimatizace"></i>
@@ -508,11 +474,12 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
                           marginTop: `${0.2 * 1.0}rem`
                         }}>
                           {serviceAlerts.map((alert, alertIndex) => (
-                            <Badge key={alertIndex} className={`${alert.color} flex items-center gap-1`} 
-                                   style={{ 
+                            <Badge key={alertIndex} className={`${alert.color} flex items-center gap-1`}
+                                   style={{
                                      fontSize: `${1.0 * 1.0}rem`,
                                      padding: `${0.3 * 1.0}rem ${0.5 * 1.0}rem`,
-                                     gap: `${0.2 * 1.0}rem`
+                                     gap: `${0.2 * 1.0}rem`,
+                                     ...(alert.customStyle || {})
                                    }}>
                               {alert.icon}
                               <span>{alert.text}</span>
@@ -524,11 +491,11 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
                     </div>
                   </div>
 
-                  <div className="text-center lg:text-right flex-shrink-0 relative w-full lg:w-auto flex flex-col items-center lg:items-end" style={{ gap: `${Math.max(0.2, 0.3 * 1.0)}rem`, zIndex: 2 }}>
+                  <div className="text-center lg:text-right flex-shrink-0 w-full lg:w-auto flex flex-col items-center lg:items-end" style={{ gap: `${Math.max(0.2, 0.3 * 1.0)}rem` }}>
                     <div className="flex items-center gap-2">
                       {/* Show "Stíháš" or "Nestíháš" to the left of time */}
                       {showTimesInMinutes && timeToArrival < 240 && (
-                        <div className="font-black" style={{
+                        <div className="font-bold" style={{
                           fontSize: `${Math.max(2.2, 4.0 * 1.0)}rem`,
                           color: formatDisplayTime(departure).includes('Nestíháš') ? '#dc2626' : '#16a34a'
                         }}>
@@ -536,7 +503,7 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
                         </div>
                       )}
 
-                      <div className="font-black text-gray-900" style={{ fontSize: `${Math.max(2.2, 4.0 * 1.0)}rem` }}>
+                      <div className="font-bold text-gray-900" style={{ fontSize: `${Math.max(2.2, 4.0 * 1.0)}rem` }}>
                         {showTimesInMinutes && (formatDisplayTime(departure).includes('Stíháš') || formatDisplayTime(departure).includes('Nestíháš'))
                           ? ''
                           : formatDisplayTime(departure)}
@@ -544,6 +511,40 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
                     </div>
 
                     <div className="flex items-center gap-2">
+                      {isSchoolTram(departure, stationName) && (
+                        <Badge className="text-white justify-center lg:justify-start flex items-center gap-1"
+                               style={{
+                                 fontSize: `${Math.max(0.5, 0.8 * 1.0)}rem`,
+                                 padding: `${Math.max(0.1, 0.2 * 1.0)}rem ${Math.max(0.2, 0.4 * 1.0)}rem`,
+                                 backgroundColor: '#EB5D43',
+                                 gap: `${0.2 * 1.0}rem`
+                               }}>
+                          <img src="/pictures/tramvaj.svg" alt="Tramvaj" style={{ width: `${1.0 * 1.0}rem`, height: `${1.0 * 1.0}rem`, filter: 'brightness(0) invert(1)' }} />
+                          <span>Školní Tramvaj</span>
+                        </Badge>
+                      )}
+                      {departure.is_night && (
+                        <Badge className="bg-indigo-100 text-indigo-800 justify-center lg:justify-start flex items-center gap-1"
+                               style={{
+                                 fontSize: `${Math.max(0.5, 0.8 * 1.0)}rem`,
+                                 padding: `${Math.max(0.1, 0.2 * 1.0)}rem ${Math.max(0.2, 0.4 * 1.0)}rem`,
+                                 gap: `${0.2 * 1.0}rem`
+                               }}>
+                          <Moon style={{ width: `${1.0 * 1.0}rem`, height: `${1.0 * 1.0}rem` }} />
+                          <span>Noční linka</span>
+                        </Badge>
+                      )}
+                      {(departure.headsign?.toLowerCase().includes('vozovna') && !departure.headsign?.toLowerCase().includes('ústředn')) && (
+                        <Badge className="bg-orange-100 text-orange-800 justify-center lg:justify-start flex items-center gap-1"
+                               style={{
+                                 fontSize: `${Math.max(0.5, 0.8 * 1.0)}rem`,
+                                 padding: `${Math.max(0.1, 0.2 * 1.0)}rem ${Math.max(0.2, 0.4 * 1.0)}rem`,
+                                 gap: `${0.2 * 1.0}rem`
+                               }}>
+                          <Wrench style={{ width: `${1.0 * 1.0}rem`, height: `${1.0 * 1.0}rem` }} />
+                          <span>Jízda do vozovny</span>
+                        </Badge>
+                      )}
                       {approachingInfo && (
                         <Badge className="bg-green-100 text-green-800 justify-center lg:justify-start"
                                style={{
@@ -566,11 +567,6 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
                 </div>
               );
             })}
-
-            {/* Add empty flex items to fill remaining space when there are fewer departures */}
-            {Array.from({ length: Math.max(0, 5 - limitedDepartures.length) }).map((_, index) => (
-              <div key={`empty-${index}`} className="flex-1" style={{ minHeight: `${Math.max(3, 4 * 1.0)}rem` }} />
-            ))}
           </div>
         ) : null}
         </div>

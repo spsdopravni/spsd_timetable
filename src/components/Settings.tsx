@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { X, Plus, Minus, Monitor, Maximize, LayoutGrid, Eye, EyeOff, Type, Split, Clock, Columns, Image, AlertTriangle } from 'lucide-react';
+import { X, Plus, Minus, Monitor, Maximize, LayoutGrid, Eye, EyeOff, Type, Split, Clock, Columns, Image, AlertTriangle, Snowflake, Bot } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +19,7 @@ interface SettingsProps {
     vozovnaUnifiedHeader: boolean;
     testAlert: boolean;
     lowPerformanceMode: boolean;
+    snowyLogo: boolean;
   };
   onSettingChange: (key: string, value: any) => void;
 }
@@ -253,6 +254,26 @@ export const Settings = ({ isOpen, onClose, settings, onSettingChange }: Setting
             </Button>
           </div>
 
+          {/* Zasněžené logo */}
+          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div>
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Snowflake className="w-5 h-5" />
+                Zasněžené logo
+              </h3>
+              <p className="text-sm text-gray-600">Zimní varianta loga školy se sněhovou vločkou</p>
+            </div>
+            <Button
+              variant={settings.snowyLogo ? "default" : "outline"}
+              onClick={() => onSettingChange('snowyLogo', !settings.snowyLogo)}
+              className="flex items-center gap-2"
+            >
+              <Snowflake className="w-4 h-4" />
+              {settings.snowyLogo ? 'Zapnuto' : 'Vypnuto'}
+            </Button>
+          </div>
+
+
           {/* Reset */}
           <div className="pt-4 border-t">
             <Button
@@ -265,6 +286,7 @@ export const Settings = ({ isOpen, onClose, settings, onSettingChange }: Setting
                 onSettingChange('vozovnaOnlyMode', false);
                 onSettingChange('vozovnaUnifiedHeader', false);
                 onSettingChange('testAlert', false);
+                onSettingChange('snowyLogo', false);
               }}
               className="w-full"
             >

@@ -1,6 +1,21 @@
 import type { Station, Departure } from "@/types/pid";
+import { getMockDepartures } from "./mockData";
 
 const API_BASE = "https://api.golemio.cz";
+
+// Environment detection
+const isDevelopment = import.meta.env.MODE === 'development';
+// Umožni manuální override přes environment variable
+const forceMockData = import.meta.env.VITE_USE_MOCK_DATA;
+const USE_MOCK_DATA = forceMockData !== undefined
+  ? forceMockData === 'true'
+  : isDevelopment; // Defaultně dev = mock, prod = API
+
+console.log('🔧 Environment:', import.meta.env.MODE);
+console.log('📊 Using mock data:', USE_MOCK_DATA);
+if (forceMockData !== undefined) {
+  console.log('⚙️ Mock data forced via VITE_USE_MOCK_DATA:', forceMockData);
+}
 
 // API klíče pro různé endpointy
 const API_KEY_1 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzcwNCwiaWF0IjoxNzYwNzkxMjUwLCJleHAiOjExNzYwNzkxMjUwLCJpc3MiOiJnb2xlbWlvIiwianRpIjoiM2Y4MWJiMjItM2YxNC00ODgxLThlMDYtYjQ1YmRlOTYzZjk3In0.BR0653y2bfG0zxdkOYvDgvywRR9Z9nXB4NlatJXR38A";
@@ -175,20 +190,28 @@ export const getRouteTransfers = async (routeId: string): Promise<{[key: string]
 };
 
 export const getDepartures = async (stationIds: string | string[]): Promise<Departure[]> => {
+  // 🔧 DEV MODE: Použij mock data místo API
+  if (USE_MOCK_DATA) {
+    console.log('🎭 DEV MODE: Returning mock data instead of calling API');
+    // Simuluj malé zpoždění jako u API
+    await new Promise(resolve => setTimeout(resolve, 300));
+    return getMockDepartures();
+  }
+
+  // 🌐 PROD MODE: Volej skutečné API
   try {
     const ids = Array.isArray(stationIds) ? stationIds : [stationIds];
-    
-    
+
     let allDepartures: any[] = [];
     let allAlerts: any[] = [];
     let workingStations: string[] = [];
-    
+
     // Zkusíme načíst odjezdy postupně pro každé ID s příslušným API klíčem
     for (const stationId of ids) {
       try {
         const headers = getHeadersForStation(stationId);
         const apiKey = getApiKeyForStation(stationId);
-        
+
         // Používáme třetí API klíč pro rozšířená data o vozidlech
         const extendedHeaders = {
           "X-Access-Token": API_KEY_3,
@@ -209,7 +232,7 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
 
         if (response.ok) {
           const data = await response.json();
-          
+
           if (data.departures && Array.isArray(data.departures) && data.departures.length > 0) {
             allDepartures = [...allDepartures, ...data.departures];
             workingStations.push(stationId);
@@ -351,6 +374,7 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
           route_short_name: dep.route?.short_name || 'N/A',
           route_type: dep.route?.type || 0,
           headsign: dep.trip?.headsign || 'Neznámý směr',
+          is_night: dep.route?.is_night || false,
           trip_id: tripId,
           trip_number: tripNumber,
           wheelchair_accessible: dep.trip?.is_wheelchair_accessible || false,

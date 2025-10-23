@@ -34,18 +34,18 @@ const Index = () => {
       name: (
         <div className="inline-flex items-center gap-2" style={{ borderRadius: '0.5rem' }}>
           Směr Zličín
-          <img src="/pictures/metroB.svg" alt="Metro B" className="flex-shrink-0" style={{ width: '1em', height: '1em', marginBottom: '0.1em' }} onError={(e) => {
+          <img src="/pictures/metroB.svg" alt="Metro B" className="flex-shrink-0" style={{ width: '1em', height: '1em', marginTop: '0.15em' }} onError={(e) => {
             const target = e.target as HTMLImageElement;
-            target.outerHTML = '<span class="inline-flex items-center justify-center bg-yellow-500 text-white font-bold rounded flex-shrink-0" style="width: 1em; height: 1em; font-size: 0.6em; margin-bottom: 0.1em" title="Metro B">B</span>';
+            target.outerHTML = '<span class="inline-flex items-center justify-center bg-yellow-500 text-white font-bold rounded flex-shrink-0" style="width: 1em; height: 1em; font-size: 0.6em; margin-top: 0.15em" title="Metro B">B</span>';
           }} />
         </div>
       ),
       displayName: (
         <div className="inline-flex items-center gap-2" style={{ borderRadius: '0.5rem' }}>
           Směr Zličín
-          <img src="/pictures/metroB.svg" alt="Metro B" className="flex-shrink-0" style={{ width: '1em', height: '1em', marginBottom: '0.1em' }} onError={(e) => {
+          <img src="/pictures/metroB.svg" alt="Metro B" className="flex-shrink-0" style={{ width: '1em', height: '1em', marginTop: '0.15em' }} onError={(e) => {
             const target = e.target as HTMLImageElement;
-            target.outerHTML = '<span class="inline-flex items-center justify-center bg-yellow-500 text-white font-bold rounded flex-shrink-0" style="width: 1em; height: 1em; font-size: 0.6em; margin-bottom: 0.1em" title="Metro B">B</span>';
+            target.outerHTML = '<span class="inline-flex items-center justify-center bg-yellow-500 text-white font-bold rounded flex-shrink-0" style="width: 1em; height: 1em; font-size: 0.6em; margin-top: 0.15em" title="Metro B">B</span>';
           }} />
         </div>
       ),
@@ -59,18 +59,18 @@ const Index = () => {
       name: (
         <div className="inline-flex items-center gap-2" style={{ borderRadius: '0.5rem' }}>
           Směr Nemocnice Motol
-          <img src="/pictures/metroA.svg" alt="Metro A" className="flex-shrink-0" style={{ width: '1em', height: '1em', marginBottom: '0.1em' }} onError={(e) => {
+          <img src="/pictures/metroA.svg" alt="Metro A" className="flex-shrink-0" style={{ width: '1em', height: '1em', marginTop: '0.15em' }} onError={(e) => {
             const target = e.target as HTMLImageElement;
-            target.outerHTML = '<span class="inline-flex items-center justify-center bg-green-600 text-white font-bold rounded flex-shrink-0" style="width: 1em; height: 1em; font-size: 0.6em; margin-bottom: 0.1em" title="Metro A">A</span>';
+            target.outerHTML = '<span class="inline-flex items-center justify-center bg-green-600 text-white font-bold rounded flex-shrink-0" style="width: 1em; height: 1em; font-size: 0.6em; margin-top: 0.15em" title="Metro A">A</span>';
           }} />
         </div>
       ),
       displayName: (
         <div className="inline-flex items-center gap-2" style={{ borderRadius: '0.5rem' }}>
           Směr Nemocnice Motol
-          <img src="/pictures/metroA.svg" alt="Metro A" className="flex-shrink-0" style={{ width: '1em', height: '1em', marginBottom: '0.1em' }} onError={(e) => {
+          <img src="/pictures/metroA.svg" alt="Metro A" className="flex-shrink-0" style={{ width: '1em', height: '1em', marginTop: '0.15em' }} onError={(e) => {
             const target = e.target as HTMLImageElement;
-            target.outerHTML = '<span class="inline-flex items-center justify-center bg-green-600 text-white font-bold rounded flex-shrink-0" style="width: 1em; height: 1em; font-size: 0.6em; margin-bottom: 0.1em" title="Metro A">A</span>';
+            target.outerHTML = '<span class="inline-flex items-center justify-center bg-green-600 text-white font-bold rounded flex-shrink-0" style="width: 1em; height: 1em; font-size: 0.6em; margin-top: 0.15em" title="Metro A">A</span>';
           }} />
         </div>
       ),
@@ -97,9 +97,10 @@ const Index = () => {
       showTimesInMinutes: true,
       vozovnaUnifiedHeader: false,
       testAlert: false,
-      lowPerformanceMode: false
+      lowPerformanceMode: false,
+      snowyLogo: false
     };
-    
+
     if (saved) {
       try {
         const parsedSettings = JSON.parse(saved);
@@ -118,6 +119,13 @@ const Index = () => {
 
     return defaultSettings;
   });
+
+  // Helper funkce pro získání správné cesty k logu
+  const getLogoPath = () => {
+    return settings.snowyLogo
+      ? "/pictures/snow_spsd.png"
+      : "/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png";
+  };
 
   const [showSettings, setShowSettings] = useState(false);
   const [logoClickCount, setLogoClickCount] = useState(0);
@@ -290,8 +298,8 @@ const Index = () => {
         backgroundSize: 'auto',
         backgroundPosition: 'center',
         backgroundRepeat: 'repeat',
-        height: '10vh',
-        minHeight: '80px'
+        height: '7.5vh',
+        minHeight: '60px'
       }}
     >
       <div className="absolute inset-0 bg-blue-900/80"></div>
@@ -300,7 +308,7 @@ const Index = () => {
         {/* Vlevo - Logo školy */}
         <div className="cursor-pointer flex-shrink-0" onClick={handleLogoClick}>
           <img
-            src="/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png"
+            src={getLogoPath()}
             alt="Logo školy"
             className="object-contain"
             style={{
@@ -359,8 +367,8 @@ const Index = () => {
         backgroundSize: 'auto',
         backgroundPosition: 'center',
         backgroundRepeat: 'repeat',
-        height: '12vh',
-        minHeight: '120px'
+        height: '9vh',
+        minHeight: '90px'
       }}
     >
       <div className="absolute inset-0 bg-blue-900/80"></div>
@@ -372,7 +380,7 @@ const Index = () => {
             <div className="flex items-center gap-2 sm:gap-6">
               <div className="flex-shrink-0 cursor-pointer" onClick={handleLogoClick}>
                 <img
-                  src="/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png"
+                  src={getLogoPath()}
                   alt="Logo školy"
                   className="object-contain w-32 h-32 sm:w-[512px] sm:h-[512px]"
                   style={getLogoStyle()}
@@ -396,7 +404,7 @@ const Index = () => {
             <div className="flex items-center gap-4 w-full sm:w-auto">
               <div className="flex-shrink-0 cursor-pointer" onClick={handleLogoClick}>
                 <img
-                  src="/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png"
+                  src={getLogoPath()}
                   alt="Logo školy"
                   className="object-contain w-64 h-64"
                 />
@@ -438,8 +446,8 @@ const Index = () => {
         backgroundSize: 'auto',
         backgroundPosition: 'center',
         backgroundRepeat: 'repeat',
-        height: '12vh',
-        minHeight: '120px'
+        height: '9vh',
+        minHeight: '90px'
       }}
     >
       <div className="absolute inset-0 bg-blue-900/80"></div>
@@ -681,8 +689,8 @@ const Index = () => {
             backgroundSize: 'auto',
             backgroundPosition: 'center',
             backgroundRepeat: 'repeat',
-            height: '18vh',
-            minHeight: '150px'
+            height: '13.5vh',
+            minHeight: '112px'
           }}
         >
           <div className="absolute inset-0 bg-blue-900/80"></div>
@@ -693,7 +701,7 @@ const Index = () => {
               <div className="flex items-center gap-2 sm:gap-4 lg:gap-6 justify-start">
                 <div className="flex-shrink-0 cursor-pointer" onClick={handleLogoClick}>
                   <img
-                    src="/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png"
+                    src={getLogoPath()}
                     alt="Logo školy"
                     className="object-contain w-56 h-56 sm:w-64 md:w-80 lg:w-96 xl:w-[28rem] sm:h-56 md:h-64 lg:h-80 xl:h-96"
                     style={getLogoStyle()}
@@ -738,10 +746,10 @@ const Index = () => {
           {/* Left panel - Směr Řepy nebo Směr Zličín */}
           <div className="flex-1 p-2 overflow-hidden flex flex-col min-h-0">
             {/* Direction header - elegant style */}
-            <div className="bg-white/95 border-l-8 border-blue-600 text-gray-800 px-4 mb-2 shadow-lg flex items-center" style={{ height: '8.75vh', minHeight: '105px', maxHeight: '140px' }}>
-              <div className="flex items-center gap-3 w-full h-full">
-                <i className="fas fa-arrow-right text-blue-600 flex-shrink-0" style={{ fontSize: 'clamp(3.5rem, 6.125vh, 5.25rem)' }}></i>
-                <h2 className="font-bold flex-1 leading-none" style={{ fontSize: 'clamp(2.625rem, 6.125vh, 4.375rem)' }} key={`left-dir-${currentStationIndex}`}>
+            <div className="bg-white/95 border-l-8 border-blue-600 text-gray-800 px-3 mb-2 shadow-lg flex items-center rounded-lg" style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }}>
+              <div className="flex items-center gap-2 w-full h-full">
+                <i className="fas fa-arrow-right text-blue-600 flex-shrink-0" style={{ fontSize: 'clamp(2rem, 3.5vh, 3rem)' }}></i>
+                <h2 className="font-bold flex-1 leading-none" style={{ fontSize: 'clamp(1.75rem, 3.5vh, 2.5rem)' }} key={`left-dir-${currentStationIndex}`}>
                   {React.isValidElement(leftStation.displayName) ? (
                     <div className="flex items-center gap-2">
                       <span className="flex-shrink-0">{leftStation.direction}</span>
@@ -753,7 +761,7 @@ const Index = () => {
             </div>
 
             <div
-              className={`flex-1 min-h-full`}
+              className={`flex-1`}
             >
               <TramDepartures
                 key={`left-${Array.isArray(leftStation.id) ? leftStation.id.join(',') : leftStation.id}-${currentStationIndex}`}
@@ -768,10 +776,10 @@ const Index = () => {
           {/* Right panel - Směr Centrum nebo Směr Nemocnice Motol */}
           <div className="flex-1 p-2 overflow-hidden flex flex-col min-h-0">
             {/* Direction header - elegant style */}
-            <div className="bg-white/95 border-l-8 border-blue-600 text-gray-800 px-4 mb-2 shadow-lg flex items-center" style={{ height: '8.75vh', minHeight: '105px', maxHeight: '140px' }}>
-              <div className="flex items-center gap-3 w-full h-full">
-                <i className="fas fa-arrow-right text-blue-600 flex-shrink-0" style={{ fontSize: 'clamp(3.5rem, 6.125vh, 5.25rem)' }}></i>
-                <h2 className="font-bold flex-1 leading-none" style={{ fontSize: 'clamp(2.625rem, 6.125vh, 4.375rem)' }} key={`right-dir-${currentStationIndex}`}>
+            <div className="bg-white/95 border-l-8 border-blue-600 text-gray-800 px-3 mb-2 shadow-lg flex items-center rounded-lg" style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }}>
+              <div className="flex items-center gap-2 w-full h-full">
+                <i className="fas fa-arrow-right text-blue-600 flex-shrink-0" style={{ fontSize: 'clamp(2rem, 3.5vh, 3rem)' }}></i>
+                <h2 className="font-bold flex-1 leading-none" style={{ fontSize: 'clamp(1.75rem, 3.5vh, 2.5rem)' }} key={`right-dir-${currentStationIndex}`}>
                   {React.isValidElement(rightStation.displayName) ? (
                     <div className="flex items-center gap-2">
                       <span className="flex-shrink-0">{rightStation.direction}</span>
@@ -783,7 +791,7 @@ const Index = () => {
             </div>
 
             <div
-              className={`flex-1 min-h-full`}
+              className={`flex-1`}
             >
               <TramDepartures
                 key={`right-${Array.isArray(rightStation.id) ? rightStation.id.join(',') : rightStation.id}-${currentStationIndex}`}
@@ -857,7 +865,7 @@ const Index = () => {
           <div className="flex items-center gap-1 sm:gap-4 lg:gap-6 w-full sm:w-auto">
             <div className="flex-shrink-0 cursor-pointer" onClick={handleLogoClick}>
               <img
-                src="/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png"
+                src={getLogoPath()}
                 alt="Logo školy"
                 className="object-contain w-28 h-28 sm:w-96 sm:h-96"
                 style={getLogoStyle()}
