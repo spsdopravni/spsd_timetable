@@ -454,22 +454,6 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
                   </div>
 
                   <div className="text-center lg:text-right flex-shrink-0 relative w-full lg:w-auto flex flex-col items-center lg:items-end" style={{ gap: `${Math.max(0.2, 0.3 * 1.0)}rem` }}>
-                    {/* Approaching vehicle notification - moved above time */}
-                    {approachingInfo && (
-                      <div className="mb-1">
-                        <div className="bg-green-600 text-white px-2 py-1 sm:px-3 sm:py-1 rounded-full text-xs font-bold shadow-lg border-2 border-green-400"
-                             style={{
-                               fontSize: `${Math.max(0.6, 1.0 * 1.0)}rem`,
-                               padding: `${Math.max(0.2, 0.3 * 1.0)}rem ${Math.max(0.4, 0.8 * 1.0)}rem`
-                             }}>
-                          <div className="flex items-center gap-1">
-                            <div className="w-2 h-2 bg-white rounded-full"></div>
-                            <span>Blíží se!</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
                     <div className="flex items-center gap-2">
                       {/* Show "Stíháš" or "Nestíháš" to the left of time */}
                       {showTimesInMinutes && timeToArrival < 240 && (
