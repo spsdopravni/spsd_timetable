@@ -679,13 +679,20 @@ export const DailyRobot = () => {
     }
   };
 
-  const [robotTheme, setRobotTheme] = useState(getRobotTheme());
+  const [robotTheme, setRobotTheme] = useState(() => getRobotTheme());
 
   useEffect(() => {
     setCurrentMessage(generateMessage());
     // Aktualizovat téma robota při každé změně zprávy
     setRobotTheme(getRobotTheme());
   }, [messageCounter]);
+
+  // Aktualizovat téma při každém renderu (pro debug)
+  useEffect(() => {
+    const theme = getRobotTheme();
+    console.log('🤖 Robot theme:', theme);
+    setRobotTheme(theme);
+  }, []);
 
   // Postupná animace - robot jede z prava doleva a zpět
   useEffect(() => {
