@@ -1,5 +1,5 @@
 import { useState, useEffect, memo } from "react";
-import { Clock, AlertTriangle, Info, Snowflake, Car, MapPin, Wrench, Bus, Wind, Wifi, Accessibility, Bike, Zap, Calendar } from "lucide-react";
+import { Clock, AlertTriangle, Info, Snowflake, Car, MapPin, Wrench, Bus, Wind, Wifi, Accessibility, Bike, Zap, Calendar, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getDepartures, setThirdApiKey } from "@/utils/pidApi";
@@ -192,7 +192,26 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
   };
 
   const getDirectionDisplay = (departure: Departure) => {
-    return departure.headsign;
+    const routeNumber = departure.route_short_name;
+    const headsign = departure.headsign;
+
+    // Speciální logika pro linku 174 končící na "Luka"
+    if (routeNumber === "174" && headsign && headsign.toLowerCase().includes("luka")) {
+      return (
+        <div className="flex items-center gap-2">
+          <span>{headsign}</span>
+          <img
+            src="/pictures/metroB.svg"
+            alt="Metro B"
+            className="w-6 h-6 inline-block"
+          />
+          <ArrowRight className="w-4 h-4 text-blue-600" />
+          <span className="text-blue-600 font-medium">301/352</span>
+        </div>
+      );
+    }
+
+    return headsign;
   };
 
   const getServiceAlerts = (departure: Departure) => {
