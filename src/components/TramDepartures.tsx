@@ -149,8 +149,10 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
 
   const getDelayBadge = (delay: number) => {
     if (delay <= 0) return { text: "Včas", color: "bg-green-100 text-green-800" };
-    if (delay <= 60) return { text: `+${Math.floor(delay / 60)} min`, color: "bg-yellow-100 text-yellow-800" };
-    return { text: `+${Math.floor(delay / 60)} min`, color: "bg-red-100 text-red-800" };
+    const minutes = Math.floor(delay / 60);
+    if (minutes === 0) return { text: "Včas", color: "bg-green-100 text-green-800" };
+    if (delay <= 60) return { text: `+${minutes} min`, color: "bg-yellow-100 text-yellow-800" };
+    return { text: `+${minutes} min`, color: "bg-red-100 text-red-800" };
   };
 
   const getVehicleTypeInfo = (departure: Departure) => {
@@ -281,19 +283,24 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
     const timeToArrival = departure.arrival_timestamp - Math.floor(Date.now() / 1000);
 
     if (showTimesInMinutes) {
+      const minutes = Math.floor(timeToArrival / 60);
+
+      // Check if departure is from Motol and under 4 minutes
+      const station = stationName.toLowerCase();
+      if ((station.includes('motol') && !station.includes('vozovna')) && minutes < 4) {
+        return 'Nestíháš';
+      }
+
       if (timeToArrival < 60) {
         // Pod minutou - zobrazit zprávu podle ZASTÁVKY (ne podle cíle)
-        const station = stationName.toLowerCase();
-
         if (station.includes('vozovna motol') || station.includes('vozovna')) {
-          return 'stíhaš';
+          return 'Stíháš';
         } else if (station.includes('motol') && !station.includes('vozovna')) {
-          return 'nestíhaš už';
+          return 'Nestíháš';
         } else {
           return '<1 min';
         }
       } else {
-        const minutes = Math.floor(timeToArrival / 60);
         return `${minutes} min`;
       }
     } else {
@@ -373,17 +380,17 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
                     <div className={`rounded-lg flex items-center justify-center ${getRouteColor(departure.route_type)}`}
                          style={{
                            width: departure.route_short_name.length > 2 ?
-                             `${Math.max(2.8, 4.2 * 1.0)}rem` :
-                             `${Math.max(2.4, 3.6 * 1.0)}rem`,
-                           height: `${Math.max(2.4, 3.6 * 1.0)}rem`,
+                             `${Math.max(3.5, 5.25 * 1.0)}rem` :
+                             `${Math.max(3.0, 4.5 * 1.0)}rem`,
+                           height: `${Math.max(3.0, 4.5 * 1.0)}rem`,
                            minWidth: departure.route_short_name.length > 2 ?
-                             `${Math.max(2.8, 4.2 * 1.0)}rem` :
-                             `${Math.max(2.4, 3.6 * 1.0)}rem`
+                             `${Math.max(3.5, 5.25 * 1.0)}rem` :
+                             `${Math.max(3.0, 4.5 * 1.0)}rem`
                          }}>
                       <span className="font-bold" style={{
                         fontSize: departure.route_short_name.length > 2 ?
-                          `${Math.max(1.0, 1.8 * 1.0)}rem` :
-                          `${Math.max(1.2, 2.4 * 1.0)}rem`
+                          `${Math.max(1.25, 2.25 * 1.0)}rem` :
+                          `${Math.max(1.5, 3.0 * 1.0)}rem`
                       }}>
                         {departure.route_short_name}
                       </span>
@@ -443,28 +450,42 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
                         </div>
                       )}
 
-                      {/* Approaching vehicle notification */}
-                      {approachingInfo && (
-                        <div className="absolute top-1 right-1 sm:top-2 sm:right-20 z-10">
-                          <div className="bg-green-600 text-white px-2 py-1 sm:px-3 sm:py-1 rounded-full text-xs font-bold shadow-lg border-2 border-green-400"
-                               style={{
-                                 fontSize: `${Math.max(0.6, 1.0 * 1.0)}rem`,
-                                 padding: `${Math.max(0.2, 0.3 * 1.0)}rem ${Math.max(0.4, 0.8 * 1.0)}rem`
-                               }}>
-                            <div className="flex items-center gap-1">
-                              <div className="w-2 h-2 bg-white rounded-full"></div>
-                              <span className="hidden sm:inline">Blíží se!</span>
-                              <span className="sm:hidden">●</span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </div>
 
-                  <div className="text-center lg:text-right space-y-1 flex-shrink-0 relative w-full lg:w-auto" style={{ gap: `${Math.max(0.2, 0.3 * 1.0)}rem` }}>
-                    <div className="font-black text-gray-900" style={{ fontSize: `${Math.max(2.2, 4.0 * 1.0)}rem` }}>
-                      {formatDisplayTime(departure)}
+                  <div className="text-center lg:text-right flex-shrink-0 relative w-full lg:w-auto flex flex-col items-center lg:items-end" style={{ gap: `${Math.max(0.2, 0.3 * 1.0)}rem` }}>
+                    {/* Approaching vehicle notification - moved above time */}
+                    {approachingInfo && (
+                      <div className="mb-1">
+                        <div className="bg-green-600 text-white px-2 py-1 sm:px-3 sm:py-1 rounded-full text-xs font-bold shadow-lg border-2 border-green-400"
+                             style={{
+                               fontSize: `${Math.max(0.6, 1.0 * 1.0)}rem`,
+                               padding: `${Math.max(0.2, 0.3 * 1.0)}rem ${Math.max(0.4, 0.8 * 1.0)}rem`
+                             }}>
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 bg-white rounded-full"></div>
+                            <span>Blíží se!</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2">
+                      {/* Show "Stíháš" or "Nestíháš" to the left of time */}
+                      {showTimesInMinutes && timeToArrival < 240 && (
+                        <div className="font-bold" style={{
+                          fontSize: `${Math.max(1.4, 2.4 * 1.0)}rem`,
+                          color: formatDisplayTime(departure).includes('Nestíháš') ? '#dc2626' : '#16a34a'
+                        }}>
+                          {formatDisplayTime(departure).includes('Stíháš') || formatDisplayTime(departure).includes('Nestíháš') ? formatDisplayTime(departure) : ''}
+                        </div>
+                      )}
+
+                      <div className="font-black text-gray-900" style={{ fontSize: `${Math.max(2.2, 4.0 * 1.0)}rem` }}>
+                        {showTimesInMinutes && (formatDisplayTime(departure).includes('Stíháš') || formatDisplayTime(departure).includes('Nestíháš'))
+                          ? ''
+                          : formatDisplayTime(departure)}
+                      </div>
                     </div>
 
                     <Badge className={`${delayInfo.color} justify-center lg:justify-start`}
