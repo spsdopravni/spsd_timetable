@@ -15,6 +15,83 @@ export const DailyRobot = () => {
     return days[new Date().getDay()];
   };
 
+  const getRobotTheme = () => {
+    const today = new Date();
+    const month = today.getMonth() + 1; // 1-12
+    const day = today.getDate();
+
+    // Halloween téma (20. října - 1. listopadu)
+    if ((month === 10 && day >= 20) || (month === 11 && day <= 1)) {
+      return {
+        image: '/pictures/robot-halloween.png',
+        theme: 'halloween'
+      };
+    }
+
+    // Vánoční téma (1. prosince - 31. prosince)
+    if (month === 12) {
+      return {
+        image: '/pictures/robot-christmas.png',
+        theme: 'christmas'
+      };
+    }
+
+    // Silvestr a Nový rok (31.12 - 2.1)
+    if ((month === 12 && day === 31) || (month === 1 && day <= 2)) {
+      return {
+        image: '/pictures/robot-newyear.png',
+        theme: 'newyear'
+      };
+    }
+
+    // Velikonoce (pohyblivý svátek - přibližně březen/duben)
+    // Zjednodušená detekce: kolem velikonoc v dubnu
+    if (month === 4 && day >= 10 && day <= 20) {
+      return {
+        image: '/pictures/robot-easter.png',
+        theme: 'easter'
+      };
+    }
+
+    // Jarní téma (1. března - 31. května)
+    if (month >= 3 && month <= 5) {
+      return {
+        image: '/pictures/robot-spring.png',
+        theme: 'spring'
+      };
+    }
+
+    // Letní téma (1. června - 31. srpna)
+    if (month >= 6 && month <= 8) {
+      return {
+        image: '/pictures/robot-summer.png',
+        theme: 'summer'
+      };
+    }
+
+    // Podzimní téma (1. září - 19. října)
+    if (month === 9 || (month === 10 && day < 20)) {
+      return {
+        image: '/pictures/robot-autumn.png',
+        theme: 'autumn'
+      };
+    }
+
+    // Zimní téma (1. ledna - 28. února)
+    if (month === 1 && day > 2 || month === 2) {
+      return {
+        image: '/pictures/robot-winter.png',
+        theme: 'winter'
+      };
+    }
+
+    // Výchozí klasický robot
+    return {
+      image: '/pictures/robotz.png',
+      theme: 'classic'
+    };
+  };
+
   const getNameDayInfo = () => {
     const today = new Date();
     const month = today.getMonth() + 1;
@@ -602,8 +679,12 @@ export const DailyRobot = () => {
     }
   };
 
+  const [robotTheme, setRobotTheme] = useState(getRobotTheme());
+
   useEffect(() => {
     setCurrentMessage(generateMessage());
+    // Aktualizovat téma robota při každé změně zprávy
+    setRobotTheme(getRobotTheme());
   }, [messageCounter]);
 
   // Postupná animace - robot jede z prava doleva a zpět
@@ -744,12 +825,19 @@ export const DailyRobot = () => {
             }}
           >
             <motion.img
-              src="/pictures/robotz.png"
-              alt="Robot"
+              src={robotTheme.image}
+              alt={`Robot ${robotTheme.theme}`}
               className="w-auto object-contain"
               style={{
                 height: `${Math.max(5, 12 * 1.0)}rem`,
                 filter: 'drop-shadow(4px 4px 12px rgba(0,0,0,0.4))'
+              }}
+              onError={(e) => {
+                // Fallback na výchozí robot, pokud obrázek neexistuje
+                const target = e.target as HTMLImageElement;
+                if (target.src !== '/pictures/robotz.png') {
+                  target.src = '/pictures/robotz.png';
+                }
               }}
             />
           </motion.div>

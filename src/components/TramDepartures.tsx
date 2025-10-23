@@ -26,6 +26,7 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
   const [previousStationId, setPreviousStationId] = useState<string | string[]>("");
   const [retryCount, setRetryCount] = useState(0);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [currentTime, setCurrentTime] = useState<number>(Math.floor(Date.now() / 1000));
 
   const fetchDepartures = async (isRetry = false) => {
     try {
@@ -132,6 +133,15 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
     }
   }, [stationId, retryDelay, previousStationId]);
 
+  // Aktualizace času každou sekundu pro kontinuální countdown
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Math.floor(Date.now() / 1000));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
   const formatTime = (seconds: number) => {
     if (seconds < 60) return `${seconds}s`;
     const minutes = Math.floor(seconds / 60);
@@ -156,13 +166,13 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
   };
 
   const getVehicleTypeInfo = (departure: Departure) => {
-    const timeToArrival = departure.arrival_timestamp - Math.floor(Date.now() / 1000);
-    
+    const timeToArrival = departure.arrival_timestamp - currentTime;
+
     if (timeToArrival <= 120 && timeToArrival > 0) {
       const vehicleType = getVehicleType(departure.route_type);
       return `${vehicleType} se blíži do stanice`;
     }
-    
+
     return null;
   };
 
@@ -299,7 +309,7 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
   };
 
   const formatDisplayTime = (departure: Departure) => {
-    const timeToArrival = departure.arrival_timestamp - Math.floor(Date.now() / 1000);
+    const timeToArrival = departure.arrival_timestamp - currentTime;
 
     if (showTimesInMinutes) {
       const minutes = Math.floor(timeToArrival / 60);
@@ -381,7 +391,7 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
               const delayInfo = getDelayBadge(delay);
               const approachingInfo = getVehicleTypeInfo(departure);
               const serviceAlerts = getServiceAlerts(departure);
-              const timeToArrival = departure.arrival_timestamp - Math.floor(Date.now() / 1000);
+              const timeToArrival = departure.arrival_timestamp - currentTime;
 
               return (
                 <div
