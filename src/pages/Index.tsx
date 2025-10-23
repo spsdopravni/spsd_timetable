@@ -644,6 +644,7 @@ const Index = () => {
                     customTitle={currentVozovnaStation1.direction}
                     showTimesInMinutes={settings.showTimesInMinutes}
                     lowPerformanceMode={settings.lowPerformanceMode}
+                    stationName={currentVozovnaStation1.simpleName || currentVozovnaStation1.textName}
                   />
                 </div>
               </div>
@@ -661,9 +662,14 @@ const Index = () => {
                     customTitle={currentVozovnaStation2.direction}
                     showTimesInMinutes={settings.showTimesInMinutes}
                     lowPerformanceMode={settings.lowPerformanceMode}
+                    stationName={currentVozovnaStation2.simpleName || currentVozovnaStation2.textName}
                   />
                 </div>
               </div>
+            </div>
+
+            <div className="fixed bottom-4 right-4 z-50 max-w-xs">
+              <DailyRobot textSize={effectiveTextSize * 0.5} />
             </div>
 
             <Settings
@@ -673,7 +679,6 @@ const Index = () => {
               onSettingChange={handleSettingChange}
             />
           </div>
-          <DailyRobot textSize={effectiveTextSize} />
         </>
         );
       }
@@ -704,6 +709,7 @@ const Index = () => {
                   maxItems={8}
                   customTitle={currentVozovnaStation1.direction}
                   showTimesInMinutes={settings.showTimesInMinutes}
+                  stationName={currentVozovnaStation1.simpleName || currentVozovnaStation1.textName}
                 />
               </div>
             </div>
@@ -723,9 +729,14 @@ const Index = () => {
                   maxItems={8}
                   customTitle={currentVozovnaStation2.direction}
                   showTimesInMinutes={settings.showTimesInMinutes}
+                  stationName={currentVozovnaStation2.simpleName || currentVozovnaStation2.textName}
                 />
               </div>
             </div>
+          </div>
+
+          <div className="fixed bottom-4 right-4 z-50 max-w-xs">
+            <DailyRobot textSize={effectiveTextSize * 0.5} />
           </div>
 
           <Settings
@@ -735,7 +746,6 @@ const Index = () => {
             onSettingChange={handleSettingChange}
           />
         </div>
-        <DailyRobot textSize={effectiveTextSize} />
         </>
       );
     }
@@ -886,6 +896,7 @@ const Index = () => {
                 textSize={effectiveTextSize}
                 maxItems={6}
                 showTimesInMinutes={settings.showTimesInMinutes}
+                stationName={leftStation.simpleName || leftStation.textName || mainStationName}
               />
             </div>
           </div>
@@ -921,9 +932,14 @@ const Index = () => {
                 textSize={effectiveTextSize}
                 maxItems={6}
                 showTimesInMinutes={settings.showTimesInMinutes}
+                stationName={rightStation.simpleName || rightStation.textName || mainStationName}
               />
             </div>
           </div>
+        </div>
+
+        <div className="fixed bottom-4 right-4 z-50 max-w-xs">
+          <DailyRobot textSize={effectiveTextSize * 0.5} />
         </div>
 
         <Settings
@@ -933,7 +949,6 @@ const Index = () => {
           onSettingChange={handleSettingChange}
         />
       </div>
-      <DailyRobot textSize={effectiveTextSize} />
       </>
     );
   }
@@ -1074,6 +1089,7 @@ const Index = () => {
               textSize={effectiveTextSize}
               maxItems={8}
               showTimesInMinutes={settings.showTimesInMinutes}
+              stationName={currentStation.simpleName || currentStation.textName || ""}
             />
           </div>
         </div>
@@ -1098,6 +1114,10 @@ const Index = () => {
         )}
       </div>
 
+      <div className="fixed bottom-4 right-4 z-50 max-w-xs">
+        <DailyRobot textSize={effectiveTextSize * 0.5} />
+      </div>
+
       <Settings
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
@@ -1105,7 +1125,6 @@ const Index = () => {
         onSettingChange={handleSettingChange}
       />
     </div>
-    <DailyRobot textSize={effectiveTextSize} />
     </>
   );
 };

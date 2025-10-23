@@ -12,9 +12,10 @@ interface TramDeparturesProps {
   customTitle?: string;
   showTimesInMinutes?: boolean;
   lowPerformanceMode?: boolean;
+  stationName?: string;
 }
 
-const TramDeparturesComponent = ({ stationId, textSize = 1.0, maxItems = 5, customTitle, showTimesInMinutes = false, lowPerformanceMode = false }: TramDeparturesProps) => {
+const TramDeparturesComponent = ({ stationId, textSize = 1.0, maxItems = 5, customTitle, showTimesInMinutes = false, lowPerformanceMode = false, stationName = "" }: TramDeparturesProps) => {
   const [departures, setDepartures] = useState<Departure[]>([]);
   const [loading, setLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -282,12 +283,12 @@ const TramDeparturesComponent = ({ stationId, textSize = 1.0, maxItems = 5, cust
 
     if (showTimesInMinutes) {
       if (timeToArrival < 60) {
-        // Pod minutou - zobrazit zprávu podle cíle
-        const headsign = departure.headsign?.toLowerCase() || '';
+        // Pod minutou - zobrazit zprávu podle ZASTÁVKY (ne podle cíle)
+        const station = stationName.toLowerCase();
 
-        if (headsign.includes('vozovna motol')) {
+        if (station.includes('vozovna motol') || station.includes('vozovna')) {
           return 'stíhaš';
-        } else if (headsign.includes('motol') && !headsign.includes('vozovna')) {
+        } else if (station.includes('motol') && !station.includes('vozovna')) {
           return 'nestíhaš už';
         } else {
           return '<1 min';
