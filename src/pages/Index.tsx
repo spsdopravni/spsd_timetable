@@ -11,7 +11,7 @@ const Index = () => {
   const stations = [
     {
       id: "U865Z1P",
-      name: "Vozovna Motol (Směr Centrum)",
+      name: "Vozovna (Směr Centrum)",
       displayName: "Vozovna Motol (Směr Centrum)",
       textName: "Vozovna Motol (Směr Centrum)",
       simpleName: "Vozovna Motol",
@@ -33,23 +33,24 @@ const Index = () => {
       id: ["U394Z3P", "U394Z3"],
       name: (
         <div className="flex items-center gap-2">
-          Motol (Směr Zličín
+          Směr Zličín
           <img src="/pictures/metroB.png" alt="Metro B" className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20" onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.outerHTML = '<span class="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20 bg-yellow-500 text-white font-bold text-xl sm:text-2xl md:text-3xl rounded" title="Metro B">B</span>';
-          }} />)
+          }} />
         </div>
       ),
       displayName: (
         <div className="flex items-center gap-2">
-          Motol (Směr Zličín
+          Směr Zličín
           <img src="/pictures/metroB.png" alt="Metro B" className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20" onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.outerHTML = '<span class="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20 bg-yellow-500 text-white font-bold text-xl sm:text-2xl md:text-3xl rounded" title="Metro B">B</span>';
-          }} />)
+          }} />
         </div>
       ),
-      textName: "Motol (Směr Zličín Metro B)",
+      textName: "Směr Zličín Metro B",
+      simpleName: "Motol",
       lat: 50.0675,
       lon: 14.3365
     },
@@ -57,23 +58,24 @@ const Index = () => {
       id: ["U394Z4P", "U394Z4"],
       name: (
         <div className="flex items-center gap-2">
-          Motol (Směr Nemocnice Motol
+          Směr Nemocnice Motol
           <img src="/pictures/metroA.png" alt="Metro A" className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20" onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.outerHTML = '<span class="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20 bg-green-600 text-white font-bold text-xl sm:text-2xl md:text-3xl rounded" title="Metro A">A</span>';
-          }} />)
+          }} />
         </div>
       ),
       displayName: (
         <div className="flex items-center gap-2">
-          Motol (Směr Nemocnice Motol
+          Směr Nemocnice Motol
           <img src="/pictures/metroA.png" alt="Metro A" className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20" onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.outerHTML = '<span class="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20 bg-green-600 text-white font-bold text-xl sm:text-2xl md:text-3xl rounded" title="Metro A">A</span>';
-          }} />)
+          }} />
         </div>
       ),
-      textName: "Motol (Směr Nemocnice Motol Metro A)",
+      textName: "Směr Nemocnice Motol Metro A",
+      simpleName: "Motol",
       lat: 50.0677,
       lon: 14.3357
     }

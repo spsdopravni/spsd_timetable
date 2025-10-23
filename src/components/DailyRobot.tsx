@@ -1,4 +1,5 @@
 import React, { memo } from 'react';
+import { motion } from 'framer-motion';
 import { Card, CardContent } from "@/components/ui/card";
 
 interface DailyRobotProps {
@@ -6,7 +7,7 @@ interface DailyRobotProps {
 }
 
 const DailyRobotComponent = ({ textSize = 1.0 }: DailyRobotProps) => {
-  // Jednoduchý robot bez animací pro RAM optimalizaci
+  // Robot jezdící zprava doleva
   const getDayMessage = () => {
     const day = new Date().getDay();
     const messages = [
@@ -24,25 +25,54 @@ const DailyRobotComponent = ({ textSize = 1.0 }: DailyRobotProps) => {
   const message = getDayMessage();
 
   return (
-    <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-50 to-pink-50">
-      <CardContent className="p-4 text-center">
-        <div
-          className="text-6xl mb-2"
+    <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-50 to-pink-50 relative overflow-hidden">
+      {/* Modrá animovaná čára nahoře */}
+      <motion.div
+        className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 via-blue-600 to-blue-400"
+        animate={{
+          scaleX: [1, 1.5, 1],
+          opacity: [0.5, 1, 0.5]
+        }}
+        transition={{
+          duration: 2,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
+
+      <CardContent className="p-4 flex items-center gap-4 overflow-hidden">
+        {/* Robot jezdící zprava doleva */}
+        <motion.div
+          className="text-6xl flex-shrink-0"
           style={{ fontSize: `${Math.max(3, 4 * textSize)}rem` }}
+          animate={{
+            x: [300, -50, 300],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "linear",
+            times: [0, 0.5, 1]
+          }}
         >
           🤖
-        </div>
-        <div
-          className="text-2xl font-bold text-gray-800 mb-1"
-          style={{ fontSize: `${Math.max(1.2, 1.8 * textSize)}rem` }}
-        >
-          {message.emoji} {message.text}
-        </div>
-        <div
-          className="text-sm text-gray-600"
-          style={{ fontSize: `${Math.max(0.8, 1.2 * textSize)}rem` }}
-        >
-          Mějte bezpečnou cestu!
+        </motion.div>
+
+        {/* Text vedle robota */}
+        <div className="flex-1">
+          <div
+            className="text-2xl font-bold text-gray-800 mb-1"
+            style={{ fontSize: `${Math.max(1.2, 1.8 * textSize)}rem` }}
+          >
+            {message.emoji} {message.text}
+          </div>
+
+          <div
+            className="text-sm text-gray-600"
+            style={{ fontSize: `${Math.max(0.8, 1.2 * textSize)}rem` }}
+          >
+            Mějte bezpečnou cestu!
+          </div>
         </div>
       </CardContent>
     </Card>
