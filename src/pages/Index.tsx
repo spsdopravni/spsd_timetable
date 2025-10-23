@@ -738,10 +738,10 @@ const Index = () => {
           {/* Left panel - Směr Řepy nebo Směr Zličín */}
           <div className="flex-1 p-2 overflow-hidden flex flex-col min-h-0">
             {/* Direction header - elegant style */}
-            <div className="bg-white/95 border-l-8 border-blue-600 text-gray-800 px-4 mb-2 shadow-lg flex items-center" style={{ height: '6.25vh', minHeight: '75px', maxHeight: '100px' }}>
+            <div className="bg-white/95 border-l-8 border-blue-600 text-gray-800 px-4 mb-2 shadow-lg flex items-center" style={{ height: '8.75vh', minHeight: '105px', maxHeight: '140px' }}>
               <div className="flex items-center gap-3 w-full h-full">
-                <i className="fas fa-arrow-right text-blue-600 flex-shrink-0" style={{ fontSize: 'clamp(2.5rem, 4.375vh, 3.75rem)' }}></i>
-                <h2 className="font-bold flex-1 leading-none" style={{ fontSize: 'clamp(1.875rem, 4.375vh, 3.125rem)' }} key={`left-dir-${currentStationIndex}`}>
+                <i className="fas fa-arrow-right text-blue-600 flex-shrink-0" style={{ fontSize: 'clamp(3.5rem, 6.125vh, 5.25rem)' }}></i>
+                <h2 className="font-bold flex-1 leading-none" style={{ fontSize: 'clamp(2.625rem, 6.125vh, 4.375rem)' }} key={`left-dir-${currentStationIndex}`}>
                   {React.isValidElement(leftStation.displayName) ? (
                     <div className="flex items-center gap-2">
                       <span className="flex-shrink-0">{leftStation.direction}</span>
@@ -758,7 +758,7 @@ const Index = () => {
               <TramDepartures
                 key={`left-${Array.isArray(leftStation.id) ? leftStation.id.join(',') : leftStation.id}-${currentStationIndex}`}
                 stationId={leftStation.id}
-                  maxItems={6}
+                  maxItems={7}
                 showTimesInMinutes={settings.showTimesInMinutes}
                 stationName={leftStation.simpleName || leftStation.textName || mainStationName}
               />
@@ -768,10 +768,10 @@ const Index = () => {
           {/* Right panel - Směr Centrum nebo Směr Nemocnice Motol */}
           <div className="flex-1 p-2 overflow-hidden flex flex-col min-h-0">
             {/* Direction header - elegant style */}
-            <div className="bg-white/95 border-l-8 border-blue-600 text-gray-800 px-4 mb-2 shadow-lg flex items-center" style={{ height: '6.25vh', minHeight: '75px', maxHeight: '100px' }}>
+            <div className="bg-white/95 border-l-8 border-blue-600 text-gray-800 px-4 mb-2 shadow-lg flex items-center" style={{ height: '8.75vh', minHeight: '105px', maxHeight: '140px' }}>
               <div className="flex items-center gap-3 w-full h-full">
-                <i className="fas fa-arrow-right text-blue-600 flex-shrink-0" style={{ fontSize: 'clamp(2.5rem, 4.375vh, 3.75rem)' }}></i>
-                <h2 className="font-bold flex-1 leading-none" style={{ fontSize: 'clamp(1.875rem, 4.375vh, 3.125rem)' }} key={`right-dir-${currentStationIndex}`}>
+                <i className="fas fa-arrow-right text-blue-600 flex-shrink-0" style={{ fontSize: 'clamp(3.5rem, 6.125vh, 5.25rem)' }}></i>
+                <h2 className="font-bold flex-1 leading-none" style={{ fontSize: 'clamp(2.625rem, 6.125vh, 4.375rem)' }} key={`right-dir-${currentStationIndex}`}>
                   {React.isValidElement(rightStation.displayName) ? (
                     <div className="flex items-center gap-2">
                       <span className="flex-shrink-0">{rightStation.direction}</span>
@@ -788,7 +788,7 @@ const Index = () => {
               <TramDepartures
                 key={`right-${Array.isArray(rightStation.id) ? rightStation.id.join(',') : rightStation.id}-${currentStationIndex}`}
                 stationId={rightStation.id}
-                  maxItems={6}
+                  maxItems={7}
                 showTimesInMinutes={settings.showTimesInMinutes}
                 stationName={rightStation.simpleName || rightStation.textName || mainStationName}
               />
