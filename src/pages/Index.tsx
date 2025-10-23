@@ -631,16 +631,17 @@ const Index = () => {
               </div>
             </div>
 
-            <div className="fixed bottom-4 right-4 z-50 max-w-xs">
-              <DailyRobot textSize={effectiveTextSize * 0.5} />
-            </div>
-
             <Settings
               isOpen={showSettings}
               onClose={() => setShowSettings(false)}
               settings={settings}
               onSettingChange={handleSettingChange}
             />
+          </div>
+
+          {/* Robot na celé šířce dole */}
+          <div className="fixed bottom-0 left-0 right-0 z-50 w-full">
+            <DailyRobot textSize={effectiveTextSize * 0.5} />
           </div>
         </>
         );
@@ -698,16 +699,17 @@ const Index = () => {
             </div>
           </div>
 
-          <div className="fixed bottom-4 right-4 z-50 max-w-xs">
-            <DailyRobot textSize={effectiveTextSize * 0.5} />
-          </div>
-
           <Settings
             isOpen={showSettings}
             onClose={() => setShowSettings(false)}
             settings={settings}
             onSettingChange={handleSettingChange}
           />
+        </div>
+
+        {/* Robot na celé šířce dole */}
+        <div className="fixed bottom-0 left-0 right-0 z-50 w-full">
+          <DailyRobot textSize={effectiveTextSize * 0.5} />
         </div>
         </>
       );
@@ -886,16 +888,17 @@ const Index = () => {
           </div>
         </div>
 
-        <div className="fixed bottom-4 right-4 z-50 max-w-xs">
-          <DailyRobot textSize={effectiveTextSize * 0.5} />
-        </div>
-
         <Settings
           isOpen={showSettings}
           onClose={() => setShowSettings(false)}
           settings={settings}
           onSettingChange={handleSettingChange}
         />
+      </div>
+
+      {/* Robot na celé šířce dole */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 w-full">
+        <DailyRobot textSize={effectiveTextSize * 0.5} />
       </div>
       </>
     );
@@ -1030,16 +1033,17 @@ const Index = () => {
         )}
       </div>
 
-      <div className="fixed bottom-4 right-4 z-50 max-w-xs">
-        <DailyRobot textSize={effectiveTextSize * 0.5} />
-      </div>
-
       <Settings
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
         settings={settings}
         onSettingChange={handleSettingChange}
       />
+    </div>
+
+    {/* Robot na celé šířce dole */}
+    <div className="fixed bottom-0 left-0 right-0 z-50 w-full">
+      <DailyRobot textSize={effectiveTextSize * 0.5} />
     </div>
     </>
   );
