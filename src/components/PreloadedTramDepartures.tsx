@@ -7,7 +7,6 @@ import type { Departure } from "@/types/pid";
 
 interface PreloadedTramDeparturesProps {
   stationId: string | string[];
-  textSize?: number;
   maxItems?: number;
   customTitle?: string;
   showTimesInMinutes?: boolean;
@@ -16,7 +15,6 @@ interface PreloadedTramDeparturesProps {
 
 export const PreloadedTramDepartures = ({
   stationId,
-  textSize = 1.0,
   maxItems = 8,
   customTitle,
   showTimesInMinutes = false,
@@ -132,13 +130,13 @@ export const PreloadedTramDepartures = ({
     return (
       <Card className="w-full h-full">
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2" style={{ fontSize: `${Math.max(1.4, 2.2 * textSize)}rem` }}>
+          <CardTitle className="flex items-center gap-2" style={{ fontSize: `${Math.max(1.4, 2.2 * 1.0)}rem` }}>
             <Clock className="w-6 h-6" />
             {customTitle || "Načítám odjezdy..."}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          <p className="text-gray-700 mb-2 text-xl" style={{ fontSize: `${1.5 * textSize}rem` }}>Načítám odjezdy...</p>
+          <p className="text-gray-700 mb-2 text-xl" style={{ fontSize: `${1.5 * 1.0}rem` }}>Načítám odjezdy...</p>
           <div className="animate-pulse space-y-2">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="h-16 bg-gray-200 rounded"></div>
@@ -153,17 +151,17 @@ export const PreloadedTramDepartures = ({
     return (
       <Card className="w-full h-full">
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-red-600" style={{ fontSize: `${Math.max(1.4, 2.2 * textSize)}rem` }}>
+          <CardTitle className="flex items-center gap-2 text-red-600" style={{ fontSize: `${Math.max(1.4, 2.2 * 1.0)}rem` }}>
             <AlertTriangle className="w-6 h-6" />
             Chyba načítání
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-gray-700 mb-2 text-lg" style={{ fontSize: `${1.25 * textSize}rem` }}>{error}</p>
+          <p className="text-gray-700 mb-2 text-lg" style={{ fontSize: `${1.25 * 1.0}rem` }}>{error}</p>
           <button
             onClick={() => fetchDepartures(true)}
             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-            style={{ fontSize: `${1 * textSize}rem` }}
+            style={{ fontSize: `${1 * 1.0}rem` }}
           >
             Zkusit znovu
           </button>
@@ -178,14 +176,14 @@ export const PreloadedTramDepartures = ({
     return (
       <Card className="w-full h-full">
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2" style={{ fontSize: `${Math.max(1.4, 2.2 * textSize)}rem` }}>
+          <CardTitle className="flex items-center gap-2" style={{ fontSize: `${Math.max(1.4, 2.2 * 1.0)}rem` }}>
             <Info className="w-6 h-6" />
             {customTitle || "Žádné odjezdy"}
           </CardTitle>
         </CardHeader>
         <CardContent className="text-center py-8">
-          <p style={{ fontSize: `${Math.max(1.8, 2.8 * textSize)}rem` }}>Žádné odjezdy do 30 min</p>
-          <p style={{ fontSize: `${Math.max(1.4, 2.2 * textSize)}rem` }}>Zkontrolujte později</p>
+          <p style={{ fontSize: `${Math.max(1.8, 2.8 * 1.0)}rem` }}>Žádné odjezdy do 30 min</p>
+          <p style={{ fontSize: `${Math.max(1.4, 2.2 * 1.0)}rem` }}>Zkontrolujte později</p>
         </CardContent>
       </Card>
     );
@@ -194,7 +192,7 @@ export const PreloadedTramDepartures = ({
   return (
     <Card className="w-full h-full">
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2" style={{ fontSize: `${Math.max(1.4, 2.2 * textSize)}rem` }}>
+        <CardTitle className="flex items-center gap-2" style={{ fontSize: `${Math.max(1.4, 2.2 * 1.0)}rem` }}>
           <Clock className="w-6 h-6" />
           {customTitle || `Odjezdy (${displayDepartures.length})`}
         </CardTitle>
@@ -213,28 +211,28 @@ export const PreloadedTramDepartures = ({
                   className={`rounded-lg text-white font-bold flex items-center justify-center ${routeColor}`}
                   style={{
                     width: departure.route_short_name.length > 2 ?
-                      `${Math.max(2.8, 4.2 * textSize)}rem` :
-                      `${Math.max(2.4, 3.6 * textSize)}rem`,
-                    height: `${Math.max(2.4, 3.6 * textSize)}rem`,
+                      `${Math.max(2.8, 4.2 * 1.0)}rem` :
+                      `${Math.max(2.4, 3.6 * 1.0)}rem`,
+                    height: `${Math.max(2.4, 3.6 * 1.0)}rem`,
                     fontSize: departure.route_short_name.length > 2 ?
-                      `${Math.max(1.0, 1.8 * textSize)}rem` :
-                      `${Math.max(1.2, 2.4 * textSize)}rem`
+                      `${Math.max(1.0, 1.8 * 1.0)}rem` :
+                      `${Math.max(1.2, 2.4 * 1.0)}rem`
                   }}
                 >
                   {routeNumber}
                 </div>
 
                 <div className="flex-1">
-                  <span className="font-bold text-gray-900" style={{ fontSize: `${Math.max(1.6, 2.8 * textSize)}rem` }}>
+                  <span className="font-bold text-gray-900" style={{ fontSize: `${Math.max(1.6, 2.8 * 1.0)}rem` }}>
                     {departure.headsign}
                   </span>
 
                   <div className="flex items-center gap-2 mt-1">
                     {departure.wheelchair_accessible && (
-                      <i className="fas fa-wheelchair text-blue-600" style={{ fontSize: `${Math.max(0.9, 1.4 * textSize)}rem` }}></i>
+                      <i className="fas fa-wheelchair text-blue-600" style={{ fontSize: `${Math.max(0.9, 1.4 * 1.0)}rem` }}></i>
                     )}
                     {departure.low_floor && (
-                      <span className="text-green-600 font-bold text-sm bg-green-100 px-1 rounded" style={{ fontSize: `${Math.max(0.7, 1.2 * textSize)}rem` }}>
+                      <span className="text-green-600 font-bold text-sm bg-green-100 px-1 rounded" style={{ fontSize: `${Math.max(0.7, 1.2 * 1.0)}rem` }}>
                         NP
                       </span>
                     )}
@@ -243,13 +241,13 @@ export const PreloadedTramDepartures = ({
               </div>
 
               <div className="text-right">
-                <div className="font-black text-gray-900" style={{ fontSize: `${Math.max(2.2, 4.0 * textSize)}rem` }}>
+                <div className="font-black text-gray-900" style={{ fontSize: `${Math.max(2.2, 4.0 * 1.0)}rem` }}>
                   {formatTime(departure.departure_timestamp, showTimesInMinutes)}
                 </div>
                 {delayText && (
                   <div
                     className={`text-sm font-medium ${departure.delay && departure.delay > 0 ? 'text-red-600' : 'text-green-600'}`}
-                    style={{ fontSize: `${Math.max(0.5, 0.8 * textSize)}rem` }}
+                    style={{ fontSize: `${Math.max(0.5, 0.8 * 1.0)}rem` }}
                   >
                     {delayText}
                   </div>

@@ -40,12 +40,7 @@ export default defineConfig(({ mode }) => ({
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['lucide-react'],
-          'radix-vendor': [
-            '@radix-ui/react-toast',
-            '@radix-ui/react-tooltip',
-            '@radix-ui/react-slot'
-          ],
+          'ui-vendor': ['lucide-react', 'clsx', 'tailwind-merge']
         }
       }
     },

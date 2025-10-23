@@ -10,10 +10,8 @@ interface SettingsProps {
   onClose: () => void;
   settings: {
     showRightPanel: boolean;
-    isFullscreen: boolean;
     zoomLevel: number;
     splitView: boolean;
-    textSize: number;
     logoSize: number;
     showWeatherInHeader: boolean;
     vozovnaOnlyMode: boolean;
@@ -38,16 +36,6 @@ export const Settings = ({ isOpen, onClose, settings, onSettingChange }: Setting
     onSettingChange('zoomLevel', newZoom);
   };
 
-  const handleTextSizeIncrease = () => {
-    const newSize = Math.min(settings.textSize + 0.21, 4.2);
-    onSettingChange('textSize', newSize);
-  };
-
-  const handleTextSizeDecrease = () => {
-    const newSize = Math.max(settings.textSize - 0.21, 1.05);
-    onSettingChange('textSize', newSize);
-  };
-
   const handleLogoSizeIncrease = () => {
     const newSize = Math.min(settings.logoSize + 0.1, 3.0);
     onSettingChange('logoSize', newSize);
@@ -58,19 +46,6 @@ export const Settings = ({ isOpen, onClose, settings, onSettingChange }: Setting
     onSettingChange('logoSize', newSize);
   };
 
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen();
-      onSettingChange('isFullscreen', true);
-    } else {
-      document.exitFullscreen();
-      onSettingChange('isFullscreen', false);
-    }
-  };
-
-  const getDisplayTextSize = () => {
-    return Math.round((settings.textSize / 2.1) * 100);
-  };
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center">
@@ -114,22 +89,6 @@ export const Settings = ({ isOpen, onClose, settings, onSettingChange }: Setting
             </Button>
           </div>
 
-          {/* Fullscreen */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div>
-              <h3 className="text-lg font-semibold">Celoobrazovkový režim</h3>
-              <p className="text-sm text-gray-600">Zobrazit na celou obrazovku</p>
-            </div>
-            <Button
-              variant={settings.isFullscreen ? "default" : "outline"}
-              onClick={toggleFullscreen}
-              className="flex items-center gap-2"
-            >
-              {settings.isFullscreen ? <Monitor className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
-              {settings.isFullscreen ? 'Aktivní' : 'Aktivovat'}
-            </Button>
-          </div>
-
           {/* Zoom */}
           <div className="p-4 bg-gray-50 rounded-lg">
             <div className="flex items-center justify-between mb-4">
@@ -166,46 +125,6 @@ export const Settings = ({ isOpen, onClose, settings, onSettingChange }: Setting
               >
                 <Plus className="w-4 h-4" />
                 Přiblížit
-              </Button>
-            </div>
-          </div>
-
-          {/* Velikost textu */}
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-lg font-semibold">Velikost textu</h3>
-                <p className="text-sm text-gray-600">Upravit velikost textu v odjezdech</p>
-              </div>
-              <Badge variant="secondary" className="text-lg px-3 py-1">
-                {getDisplayTextSize()}%
-              </Badge>
-            </div>
-            <div className="flex items-center gap-4">
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={handleTextSizeDecrease}
-                disabled={settings.textSize <= 1.05}
-                className="flex items-center gap-2"
-              >
-                <Minus className="w-4 h-4" />
-                Zmenšit
-              </Button>
-              <div className="flex-1 text-center">
-                <div className="text-sm text-gray-600">
-                  Rozsah: 50% - 200%
-                </div>
-              </div>
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={handleTextSizeIncrease}
-                disabled={settings.textSize >= 4.2}
-                className="flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Zvětšit
               </Button>
             </div>
           </div>
@@ -340,17 +259,12 @@ export const Settings = ({ isOpen, onClose, settings, onSettingChange }: Setting
               variant="outline"
               onClick={() => {
                 onSettingChange('showRightPanel', true);
-                onSettingChange('isFullscreen', false);
                 onSettingChange('zoomLevel', 1.0);
-                onSettingChange('textSize', 2.1);
                 onSettingChange('splitView', false);
                 onSettingChange('showWeatherInHeader', false);
                 onSettingChange('vozovnaOnlyMode', false);
                 onSettingChange('vozovnaUnifiedHeader', false);
                 onSettingChange('testAlert', false);
-                if (document.fullscreenElement) {
-                  document.exitFullscreen();
-                }
               }}
               className="w-full"
             >

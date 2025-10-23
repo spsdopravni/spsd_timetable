@@ -1,11 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-interface DailyRobotProps {
-  textSize?: number;
-}
-
-export const DailyRobot = ({ textSize = 1.0 }: DailyRobotProps) => {
+export const DailyRobot = () => {
   const [currentMessage, setCurrentMessage] = useState('');
   const [isVisible, setIsVisible] = useState(false);
   const [robotPhase, setRobotPhase] = useState('hidden'); // 'hidden', 'movingLeft', 'atLeft', 'movingRight', 'atRight', 'movingAway'
@@ -677,7 +673,7 @@ export const DailyRobot = ({ textSize = 1.0 }: DailyRobotProps) => {
         <>
           {/* Pozadí s textem */}
           <motion.div
-            className="fixed bottom-0 left-0 right-0 h-24 z-40 bg-gradient-to-l from-blue-900 via-blue-800 to-blue-900/95 shadow-lg"
+            className="robot-animation fixed bottom-0 left-0 right-0 h-24 z-40 bg-gradient-to-l from-blue-900 via-blue-800 to-blue-900/95 shadow-lg"
             style={{
               willChange: 'width, opacity',
               backfaceVisibility: 'hidden'
@@ -697,7 +693,7 @@ export const DailyRobot = ({ textSize = 1.0 }: DailyRobotProps) => {
 
           {/* Text vycentrovaný na celé obrazovce */}
           <motion.div
-            className="fixed bottom-0 left-0 right-0 w-full h-24 z-50 flex items-center justify-center"
+            className="robot-animation fixed bottom-0 left-0 right-0 w-full h-24 z-50 flex items-center justify-center"
             style={{
               willChange: 'opacity, transform',
               backfaceVisibility: 'hidden'
@@ -710,7 +706,7 @@ export const DailyRobot = ({ textSize = 1.0 }: DailyRobotProps) => {
             transition={{ duration: 1, delay: 0.5, ease: 'linear', type: 'tween' }}
           >
             <div className="text-white font-bold text-center" style={{
-              fontSize: `${Math.max(1.2, 2 * textSize)}rem`,
+              fontSize: `${Math.max(1.2, 2 * 1.0)}rem`,
               wordBreak: 'keep-all',
               whiteSpace: 'nowrap',
               overflow: 'hidden'
@@ -721,7 +717,7 @@ export const DailyRobot = ({ textSize = 1.0 }: DailyRobotProps) => {
 
           {/* Robot */}
           <motion.div
-            className="fixed z-[9999]"
+            className="robot-animation fixed z-[9999]"
             style={{
               bottom: '0px',
               right: '0px',
@@ -752,7 +748,7 @@ export const DailyRobot = ({ textSize = 1.0 }: DailyRobotProps) => {
               alt="Robot"
               className="w-auto object-contain"
               style={{
-                height: `${Math.max(5, 12 * textSize)}rem`,
+                height: `${Math.max(5, 12 * 1.0)}rem`,
                 filter: 'drop-shadow(4px 4px 12px rgba(0,0,0,0.4))'
               }}
             />

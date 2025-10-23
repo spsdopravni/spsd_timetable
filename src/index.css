@@ -102,8 +102,10 @@
     overflow: hidden;
   }
 
-  /* RASPBERRY PI OPTIMALIZACE - VYPNOUT VŠECHNY ANIMACE PRO 1 GB RAM */
-  *, *::before, *::after {
+  /* OPTIMALIZACE PRO LOW-END HARDWARE - Vypnout animace kromě robota */
+  *:not(.robot-animation):not(.robot-animation *),
+  *:not(.robot-animation)::before,
+  *:not(.robot-animation)::after {
     animation-duration: 0s !important;
     animation-delay: 0s !important;
     transition-duration: 0s !important;
@@ -112,6 +114,14 @@
     -webkit-animation-delay: 0s !important;
     -webkit-transition-duration: 0s !important;
     -webkit-transition-delay: 0s !important;
+  }
+
+  /* Povolit animace pro robota */
+  .robot-animation, .robot-animation * {
+    animation-duration: revert !important;
+    animation-delay: revert !important;
+    transition-duration: revert !important;
+    transition-delay: revert !important;
   }
 
   /* Hardware acceleration optimizations */

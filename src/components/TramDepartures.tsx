@@ -7,7 +7,6 @@ import type { Departure } from "@/types/pid";
 
 interface TramDeparturesProps {
   stationId: string | string[];
-  textSize?: number;
   maxItems?: number;
   customTitle?: string;
   showTimesInMinutes?: boolean;
@@ -15,7 +14,7 @@ interface TramDeparturesProps {
   stationName?: string;
 }
 
-const TramDeparturesComponent = ({ stationId, textSize = 1.0, maxItems = 5, customTitle, showTimesInMinutes = false, lowPerformanceMode = false, stationName = "" }: TramDeparturesProps) => {
+const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTimesInMinutes = false, lowPerformanceMode = false, stationName = "" }: TramDeparturesProps) => {
   const [departures, setDepartures] = useState<Departure[]>([]);
   const [loading, setLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -205,7 +204,7 @@ const TramDeparturesComponent = ({ stationId, textSize = 1.0, maxItems = 5, cust
     // Klimatizace se zobrazuje jako ikona vedle názvu, takže ji nepotřebujeme v alerts
     // if (departure.air_conditioning) {
     //   alerts.push({
-    //     icon: <Snowflake className="w-5 h-5 text-cyan-600" style={{ width: `${1.5 * textSize}rem`, height: `${1.5 * textSize}rem` }} />,
+    //     icon: <Snowflake className="w-5 h-5 text-cyan-600" style={{ width: `${1.5 * 1.0}rem`, height: `${1.5 * 1.0}rem` }} />,
     //     text: "Klimatizace",
     //     color: "bg-cyan-100 text-cyan-800"
     //   });
@@ -213,7 +212,7 @@ const TramDeparturesComponent = ({ stationId, textSize = 1.0, maxItems = 5, cust
 
     if (departure.wifi) {
       alerts.push({
-        icon: <Wifi className="w-5 h-5 text-blue-600" style={{ width: `${1.5 * textSize}rem`, height: `${1.5 * textSize}rem` }} />,
+        icon: <Wifi className="w-5 h-5 text-blue-600" style={{ width: `${1.5 * 1.0}rem`, height: `${1.5 * 1.0}rem` }} />,
         text: "WiFi",
         color: "bg-blue-100 text-blue-800"
       });
@@ -221,7 +220,7 @@ const TramDeparturesComponent = ({ stationId, textSize = 1.0, maxItems = 5, cust
 
     if (departure.low_floor) {
       alerts.push({
-        icon: <Accessibility className="w-5 h-5 text-green-600" style={{ width: `${1.5 * textSize}rem`, height: `${1.5 * textSize}rem` }} />,
+        icon: <Accessibility className="w-5 h-5 text-green-600" style={{ width: `${1.5 * 1.0}rem`, height: `${1.5 * 1.0}rem` }} />,
         text: "Nízká podlaha",
         color: "bg-green-100 text-green-800"
       });
@@ -229,7 +228,7 @@ const TramDeparturesComponent = ({ stationId, textSize = 1.0, maxItems = 5, cust
 
     if (departure.usb_charging) {
       alerts.push({
-        icon: <Zap className="w-5 h-5 text-yellow-600" style={{ width: `${1.5 * textSize}rem`, height: `${1.5 * textSize}rem` }} />,
+        icon: <Zap className="w-5 h-5 text-yellow-600" style={{ width: `${1.5 * 1.0}rem`, height: `${1.5 * 1.0}rem` }} />,
         text: "USB nabíjení",
         color: "bg-yellow-100 text-yellow-800"
       });
@@ -237,7 +236,7 @@ const TramDeparturesComponent = ({ stationId, textSize = 1.0, maxItems = 5, cust
 
     if (departure.bike_rack) {
       alerts.push({
-        icon: <Bike className="w-5 h-5 text-orange-600" style={{ width: `${1.5 * textSize}rem`, height: `${1.5 * textSize}rem` }} />,
+        icon: <Bike className="w-5 h-5 text-orange-600" style={{ width: `${1.5 * 1.0}rem`, height: `${1.5 * 1.0}rem` }} />,
         text: "Stojan na kola",
         color: "bg-orange-100 text-orange-800"
       });
@@ -245,7 +244,7 @@ const TramDeparturesComponent = ({ stationId, textSize = 1.0, maxItems = 5, cust
 
     if (isShortened) {
       alerts.push({
-        icon: <AlertTriangle className="w-5 h-5 text-yellow-600" style={{ width: `${1.5 * textSize}rem`, height: `${1.5 * textSize}rem` }} />,
+        icon: <AlertTriangle className="w-5 h-5 text-yellow-600" style={{ width: `${1.5 * 1.0}rem`, height: `${1.5 * 1.0}rem` }} />,
         text: "Zkrácená jízda",
         color: "bg-yellow-100 text-yellow-800"
       });
@@ -253,7 +252,7 @@ const TramDeparturesComponent = ({ stationId, textSize = 1.0, maxItems = 5, cust
 
     if (isToDepot) {
       alerts.push({
-        icon: <Wrench className="w-5 h-5 text-orange-600" style={{ width: `${1.5 * textSize}rem`, height: `${1.5 * textSize}rem` }} />,
+        icon: <Wrench className="w-5 h-5 text-orange-600" style={{ width: `${1.5 * 1.0}rem`, height: `${1.5 * 1.0}rem` }} />,
         text: "Jízda do vozovny",
         color: "bg-orange-100 text-orange-800"
       });
@@ -262,13 +261,13 @@ const TramDeparturesComponent = ({ stationId, textSize = 1.0, maxItems = 5, cust
     if (departure.alert_hash) {
       if (departure.alert_hash === 'canceled') {
         alerts.push({
-          icon: <AlertTriangle className="w-5 h-5 text-red-600" style={{ width: `${1.5 * textSize}rem`, height: `${1.5 * textSize}rem` }} />,
+          icon: <AlertTriangle className="w-5 h-5 text-red-600" style={{ width: `${1.5 * 1.0}rem`, height: `${1.5 * 1.0}rem` }} />,
           text: "Zrušeno",
           color: "bg-red-100 text-red-800"
         });
       } else {
         alerts.push({
-          icon: <Info className="w-5 h-5 text-blue-600" style={{ width: `${1.5 * textSize}rem`, height: `${1.5 * textSize}rem` }} />,
+          icon: <Info className="w-5 h-5 text-blue-600" style={{ width: `${1.5 * 1.0}rem`, height: `${1.5 * 1.0}rem` }} />,
           text: "Výluka/Omezení",
           color: "bg-blue-100 text-blue-800"
         });
@@ -313,13 +312,13 @@ const TramDeparturesComponent = ({ stationId, textSize = 1.0, maxItems = 5, cust
         <CardContent className="p-4 text-center h-full flex items-center justify-center">
           <div>
             <AlertTriangle className={`w-12 h-12 mx-auto mb-2 ${isRateLimited ? 'text-orange-500' : 'text-red-500'}`} />
-            <p className="text-gray-700 mb-2 text-lg" style={{ fontSize: `${1.25 * textSize}rem` }}>{error}</p>
-            <p className="text-gray-600 text-base" style={{ fontSize: `${1 * textSize}rem` }}>
+            <p className="text-gray-700 mb-2 text-lg" style={{ fontSize: `${1.25 * 1.0}rem` }}>{error}</p>
+            <p className="text-gray-600 text-base" style={{ fontSize: `${1 * 1.0}rem` }}>
               Další pokus za {Math.round(retryDelay / 1000)} sekund
             </p>
             {isRateLimited && (
               <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                <p className="text-orange-800 text-sm" style={{ fontSize: `${0.8 * textSize}rem` }}>
+                <p className="text-orange-800 text-sm" style={{ fontSize: `${0.8 * 1.0}rem` }}>
                   API má omezený počet požadavků za minutu.<br/>
                   Automaticky zkusím znovu za chvíli.
                 </p>
@@ -338,15 +337,15 @@ const TramDeparturesComponent = ({ stationId, textSize = 1.0, maxItems = 5, cust
     <Card className="shadow-lg bg-white/90 h-full border-2 border-gray-300 flex flex-col min-h-full overflow-hidden">
       <CardContent
         className="flex-1 p-2 flex flex-col min-h-full"
-        style={{ paddingTop: `${0.5 * textSize}rem` }}
+        style={{ paddingTop: `${0.5 * 1.0}rem` }}
       >
         <div className="flex-1 flex flex-col">
         {limitedDepartures.length === 0 && !isUpdating && !loading ? (
           <div className="text-center py-8 text-gray-600 flex-1 flex items-center justify-center">
             <div>
-              <Info className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 mx-auto mb-2 sm:mb-4 text-gray-400" style={{ width: `${Math.max(3, 4 * textSize)}rem`, height: `${Math.max(3, 4 * textSize)}rem` }} />
-              <p style={{ fontSize: `${Math.max(1.8, 2.8 * textSize)}rem` }}>Žádné odjezdy do 30 min</p>
-              <p style={{ fontSize: `${Math.max(1.4, 2.2 * textSize)}rem` }}>Zkontrolujte později</p>
+              <Info className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 mx-auto mb-2 sm:mb-4 text-gray-400" style={{ width: `${Math.max(3, 4 * 1.0)}rem`, height: `${Math.max(3, 4 * 1.0)}rem` }} />
+              <p style={{ fontSize: `${Math.max(1.8, 2.8 * 1.0)}rem` }}>Žádné odjezdy do 30 min</p>
+              <p style={{ fontSize: `${Math.max(1.4, 2.2 * 1.0)}rem` }}>Zkontrolujte později</p>
             </div>
           </div>
         ) : (limitedDepartures.length > 0 || isUpdating || loading) ? (
@@ -365,77 +364,77 @@ const TramDeparturesComponent = ({ stationId, textSize = 1.0, maxItems = 5, cust
                   <div
                   className="flex flex-col lg:flex-row items-start lg:items-center justify-between rounded-lg border border-gray-100 bg-white relative flex-1 gap-1 sm:gap-2 lg:gap-0"
                   style={{
-                    padding: `${Math.max(0.3, 0.6 * textSize)}rem`,
-                    marginBottom: `${0.3 * textSize}rem`,
-                    minHeight: `${Math.max(4, 6 * textSize)}rem`
+                    padding: `${Math.max(0.3, 0.6 * 1.0)}rem`,
+                    marginBottom: `${0.3 * 1.0}rem`,
+                    minHeight: `${Math.max(4, 6 * 1.0)}rem`
                   }}
                 >
-                  <div className="flex items-center gap-1 sm:gap-2 w-full lg:w-auto" style={{ gap: `${Math.max(0.2, 0.4 * textSize)}rem` }}>
+                  <div className="flex items-center gap-1 sm:gap-2 w-full lg:w-auto" style={{ gap: `${Math.max(0.2, 0.4 * 1.0)}rem` }}>
                     <div className={`rounded-lg flex items-center justify-center ${getRouteColor(departure.route_type)}`}
                          style={{
                            width: departure.route_short_name.length > 2 ?
-                             `${Math.max(2.8, 4.2 * textSize)}rem` :
-                             `${Math.max(2.4, 3.6 * textSize)}rem`,
-                           height: `${Math.max(2.4, 3.6 * textSize)}rem`,
+                             `${Math.max(2.8, 4.2 * 1.0)}rem` :
+                             `${Math.max(2.4, 3.6 * 1.0)}rem`,
+                           height: `${Math.max(2.4, 3.6 * 1.0)}rem`,
                            minWidth: departure.route_short_name.length > 2 ?
-                             `${Math.max(2.8, 4.2 * textSize)}rem` :
-                             `${Math.max(2.4, 3.6 * textSize)}rem`
+                             `${Math.max(2.8, 4.2 * 1.0)}rem` :
+                             `${Math.max(2.4, 3.6 * 1.0)}rem`
                          }}>
                       <span className="font-bold" style={{
                         fontSize: departure.route_short_name.length > 2 ?
-                          `${Math.max(1.0, 1.8 * textSize)}rem` :
-                          `${Math.max(1.2, 2.4 * textSize)}rem`
+                          `${Math.max(1.0, 1.8 * 1.0)}rem` :
+                          `${Math.max(1.2, 2.4 * 1.0)}rem`
                       }}>
                         {departure.route_short_name}
                       </span>
                     </div>
 
                     <div className="flex-1">
-                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-1" style={{ marginBottom: `${0.1 * textSize}rem` }}>
-                        <div className="flex items-center gap-1 flex-wrap" style={{ gap: `${0.4 * textSize}rem` }}>
-                          <span className="font-bold text-gray-900" style={{ fontSize: `${Math.max(1.6, 2.8 * textSize)}rem` }}>
+                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-1" style={{ marginBottom: `${0.1 * 1.0}rem` }}>
+                        <div className="flex items-center gap-1 flex-wrap" style={{ gap: `${0.4 * 1.0}rem` }}>
+                          <span className="font-bold text-gray-900" style={{ fontSize: `${Math.max(1.6, 2.8 * 1.0)}rem` }}>
                             {getDirectionDisplay(departure)}
                           </span>
                           {departure.wheelchair_accessible && (
-                            <i className="fas fa-wheelchair text-blue-600" style={{ fontSize: `${Math.max(0.9, 1.4 * textSize)}rem` }}></i>
+                            <i className="fas fa-wheelchair text-blue-600" style={{ fontSize: `${Math.max(0.9, 1.4 * 1.0)}rem` }}></i>
                           )}
                           {departure.low_floor && (
-                            <span className="text-green-600 font-bold text-sm bg-green-100 px-1 rounded" style={{ fontSize: `${Math.max(0.7, 1.2 * textSize)}rem` }}>NP</span>
+                            <span className="text-green-600 font-bold text-sm bg-green-100 px-1 rounded" style={{ fontSize: `${Math.max(0.7, 1.2 * 1.0)}rem` }}>NP</span>
                           )}
                           {hasAirConditioning(departure) && (
-                            <i className="fas fa-snowflake text-blue-500" style={{ fontSize: `${Math.max(0.9, 1.4 * textSize)}rem` }} title="Klimatizace"></i>
+                            <i className="fas fa-snowflake text-blue-500" style={{ fontSize: `${Math.max(0.9, 1.4 * 1.0)}rem` }} title="Klimatizace"></i>
                           )}
                         </div>
                       </div>
 
                       <div className="flex items-center gap-1 sm:gap-2 text-gray-600" style={{
-                        fontSize: `${Math.max(0.7, 1.2 * textSize)}rem`,
-                        gap: `${Math.max(0.2, 0.3 * textSize)}rem`
+                        fontSize: `${Math.max(0.7, 1.2 * 1.0)}rem`,
+                        gap: `${Math.max(0.2, 0.3 * 1.0)}rem`
                       }}>
-                        <div className="flex items-center gap-1" style={{ gap: `${0.3 * textSize}rem` }}>
-                          <Clock className="w-3 h-3 sm:w-4 sm:h-4" style={{ width: `${Math.max(0.6, 1.2 * textSize)}rem`, height: `${Math.max(0.6, 1.2 * textSize)}rem` }} />
+                        <div className="flex items-center gap-1" style={{ gap: `${0.3 * 1.0}rem` }}>
+                          <Clock className="w-3 h-3 sm:w-4 sm:h-4" style={{ width: `${Math.max(0.6, 1.2 * 1.0)}rem`, height: `${Math.max(0.6, 1.2 * 1.0)}rem` }} />
                           {formatTime(timeToArrival)}
                         </div>
-                        {departure.current_stop && (
-                          <div className="flex items-center gap-1" style={{ gap: `${0.3 * textSize}rem` }}>
-                            <MapPin className="w-3 h-3 sm:w-4 sm:h-4" style={{ width: `${Math.max(0.6, 1.2 * textSize)}rem`, height: `${Math.max(0.6, 1.2 * textSize)}rem` }} />
-                            <span className="max-w-full" title={departure.current_stop}>{departure.current_stop}</span>
-                          </div>
-                        )}
+                        <div className="flex items-center gap-1" style={{ gap: `${0.3 * 1.0}rem` }}>
+                          <MapPin className="w-3 h-3 sm:w-4 sm:h-4" style={{ width: `${Math.max(0.6, 1.2 * 1.0)}rem`, height: `${Math.max(0.6, 1.2 * 1.0)}rem` }} />
+                          <span className="max-w-full" title={departure.current_stop || 'Poloha neznámá'}>
+                            {departure.current_stop || 'Poloha neznámá'}
+                          </span>
+                        </div>
                       </div>
 
 
                       {serviceAlerts.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1" style={{ 
-                          gap: `${0.4 * textSize}rem`,
-                          marginTop: `${0.2 * textSize}rem`
+                          gap: `${0.4 * 1.0}rem`,
+                          marginTop: `${0.2 * 1.0}rem`
                         }}>
                           {serviceAlerts.map((alert, alertIndex) => (
                             <Badge key={alertIndex} className={`${alert.color} flex items-center gap-1`} 
                                    style={{ 
-                                     fontSize: `${1.0 * textSize}rem`,
-                                     padding: `${0.3 * textSize}rem ${0.5 * textSize}rem`,
-                                     gap: `${0.2 * textSize}rem`
+                                     fontSize: `${1.0 * 1.0}rem`,
+                                     padding: `${0.3 * 1.0}rem ${0.5 * 1.0}rem`,
+                                     gap: `${0.2 * 1.0}rem`
                                    }}>
                               {alert.icon}
                               <span>{alert.text}</span>
@@ -449,8 +448,8 @@ const TramDeparturesComponent = ({ stationId, textSize = 1.0, maxItems = 5, cust
                         <div className="absolute top-1 right-1 sm:top-2 sm:right-20 z-10">
                           <div className="bg-green-600 text-white px-2 py-1 sm:px-3 sm:py-1 rounded-full text-xs font-bold shadow-lg border-2 border-green-400"
                                style={{
-                                 fontSize: `${Math.max(0.6, 1.0 * textSize)}rem`,
-                                 padding: `${Math.max(0.2, 0.3 * textSize)}rem ${Math.max(0.4, 0.8 * textSize)}rem`
+                                 fontSize: `${Math.max(0.6, 1.0 * 1.0)}rem`,
+                                 padding: `${Math.max(0.2, 0.3 * 1.0)}rem ${Math.max(0.4, 0.8 * 1.0)}rem`
                                }}>
                             <div className="flex items-center gap-1">
                               <div className="w-2 h-2 bg-white rounded-full"></div>
@@ -463,15 +462,15 @@ const TramDeparturesComponent = ({ stationId, textSize = 1.0, maxItems = 5, cust
                     </div>
                   </div>
 
-                  <div className="text-center lg:text-right space-y-1 flex-shrink-0 relative w-full lg:w-auto" style={{ gap: `${Math.max(0.2, 0.3 * textSize)}rem` }}>
-                    <div className="font-black text-gray-900" style={{ fontSize: `${Math.max(2.2, 4.0 * textSize)}rem` }}>
+                  <div className="text-center lg:text-right space-y-1 flex-shrink-0 relative w-full lg:w-auto" style={{ gap: `${Math.max(0.2, 0.3 * 1.0)}rem` }}>
+                    <div className="font-black text-gray-900" style={{ fontSize: `${Math.max(2.2, 4.0 * 1.0)}rem` }}>
                       {formatDisplayTime(departure)}
                     </div>
 
                     <Badge className={`${delayInfo.color} justify-center lg:justify-start`}
                            style={{
-                             fontSize: `${Math.max(0.5, 0.8 * textSize)}rem`,
-                             padding: `${Math.max(0.1, 0.2 * textSize)}rem ${Math.max(0.2, 0.4 * textSize)}rem`
+                             fontSize: `${Math.max(0.5, 0.8 * 1.0)}rem`,
+                             padding: `${Math.max(0.1, 0.2 * 1.0)}rem ${Math.max(0.2, 0.4 * 1.0)}rem`
                            }}>
                       {delayInfo.text}
                     </Badge>
@@ -483,7 +482,7 @@ const TramDeparturesComponent = ({ stationId, textSize = 1.0, maxItems = 5, cust
 
             {/* Add empty flex items to fill remaining space when there are fewer departures */}
             {Array.from({ length: Math.max(0, 5 - limitedDepartures.length) }).map((_, index) => (
-              <div key={`empty-${index}`} className="flex-1" style={{ minHeight: `${Math.max(3, 4 * textSize)}rem` }} />
+              <div key={`empty-${index}`} className="flex-1" style={{ minHeight: `${Math.max(3, 4 * 1.0)}rem` }} />
             ))}
           </div>
         ) : null}
