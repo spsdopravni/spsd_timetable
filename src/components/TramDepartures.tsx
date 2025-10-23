@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { Clock, AlertTriangle, Info, Snowflake, Car, MapPin, Wrench, Bus, Wind, Wifi, Accessibility, Bike, Zap, Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getDepartures, setThirdApiKey } from "@/utils/pidApi";
 import type { Departure } from "@/types/pid";
-import { motion, AnimatePresence } from "framer-motion";
 
 interface TramDeparturesProps {
   stationId: string | string[];
@@ -15,7 +14,7 @@ interface TramDeparturesProps {
   lowPerformanceMode?: boolean;
 }
 
-export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, customTitle, showTimesInMinutes = false, lowPerformanceMode = false }: TramDeparturesProps) => {
+const TramDeparturesComponent = ({ stationId, textSize = 1.0, maxItems = 5, customTitle, showTimesInMinutes = false, lowPerformanceMode = false }: TramDeparturesProps) => {
   const [departures, setDepartures] = useState<Departure[]>([]);
   const [loading, setLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -43,28 +42,12 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
         return;
       }
 
-      // Low-performance mode: bez animací, delší refresh
-      if (lowPerformanceMode || departures.length === 0) {
-        setDepartures(departuresData);
-        setLastUpdate(new Date());
-        setRetryDelay(lowPerformanceMode ? 120000 : 60000); // 2 min vs 1 min
-        setRetryCount(0);
-        setIsUpdating(false);
-      } else {
-        // Fade out -> změna dat -> fade in animace
-        setIsUpdating(true);
-
-        setTimeout(() => {
-          setDepartures(departuresData);
-          setLastUpdate(new Date());
-          setRetryDelay(60000);
-          setRetryCount(0);
-
-          setTimeout(() => {
-            setIsUpdating(false);
-          }, 50);
-        }, 300);
-      }
+      // Vždy bez animací pro úsporu RAM
+      setDepartures(departuresData);
+      setLastUpdate(new Date());
+      setRetryDelay(lowPerformanceMode ? 180000 : 120000); // 3 min vs 2 min
+      setRetryCount(0);
+      setIsUpdating(false);
     } catch (error: any) {
 
       if (error.message === 'RATE_LIMIT' || error.message === 'RATE_LIMIT_PROTECTION') {
@@ -341,24 +324,13 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
   // Limit departures to exactly 6 items
   const limitedDepartures = departures.slice(0, 6);
 
-  // Wrapper - podmíněně použij motion nebo běžný div
-  const ContentWrapper = lowPerformanceMode ? 'div' : motion.div;
-  const ItemWrapper = lowPerformanceMode ? 'div' : motion.div;
-
   return (
-    <Card className="shadow-lg bg-white/90 backdrop-blur-sm h-full border-2 border-gray-300 flex flex-col min-h-full overflow-hidden">
+    <Card className="shadow-lg bg-white/90 h-full border-2 border-gray-300 flex flex-col min-h-full overflow-hidden">
       <CardContent
         className="flex-1 p-2 flex flex-col min-h-full"
         style={{ paddingTop: `${0.5 * textSize}rem` }}
       >
-        <ContentWrapper
-          className="flex-1 flex flex-col"
-          {...(!lowPerformanceMode && {
-            initial: false,
-            animate: { opacity: isUpdating ? 0 : 1 },
-            transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] }
-          })}
-        >
+        <div className="flex-1 flex flex-col">
         {limitedDepartures.length === 0 && !isUpdating && !loading ? (
           <div className="text-center py-8 text-gray-600 flex-1 flex items-center justify-center">
             <div>
@@ -369,8 +341,7 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
           </div>
         ) : (limitedDepartures.length > 0 || isUpdating || loading) ? (
           <div className="flex-1 flex flex-col space-y-1" style={{ minHeight: 0 }}>
-            {lowPerformanceMode ? (
-              limitedDepartures.map((departure, index) => {
+            {limitedDepartures.map((departure, index) => {
               const delay = departure.delay || 0;
               const delayInfo = getDelayBadge(delay);
               const approachingInfo = getVehicleTypeInfo(departure);
@@ -378,19 +349,8 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
               const timeToArrival = departure.arrival_timestamp - Math.floor(Date.now() / 1000);
 
               return (
-                <ItemWrapper
+                <div
                   key={`departure-${departure.route_short_name}-${departure.trip_id}-${departure.departure_timestamp}`}
-                  {...(!lowPerformanceMode && {
-                    layout: true,
-                    initial: { opacity: 0, y: 15 },
-                    animate: { opacity: 1, y: 0 },
-                    exit: { opacity: 0, x: -20, transition: { duration: 0.25 } },
-                    transition: {
-                      layout: { type: "spring", stiffness: 300, damping: 30 },
-                      opacity: { duration: 0.35, ease: [0.4, 0, 0.2, 1] },
-                      y: { duration: 0.35, ease: [0.4, 0, 0.2, 1] }
-                    }
-                  })}
                 >
                   <div
                   className="flex flex-col lg:flex-row items-start lg:items-center justify-between rounded-lg border border-gray-100 hover:shadow-md transition-all duration-200 bg-white relative flex-1 gap-1 sm:gap-2 lg:gap-0"
@@ -507,151 +467,9 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
                     </Badge>
                   </div>
                   </div>
-                </ItemWrapper>
+                </div>
               );
-              })
-            ) : (
-              <AnimatePresence mode="popLayout">
-                {limitedDepartures.map((departure, index) => {
-                  const delay = departure.delay || 0;
-                  const delayInfo = getDelayBadge(delay);
-                  const approachingInfo = getVehicleTypeInfo(departure);
-                  const serviceAlerts = getServiceAlerts(departure);
-                  const timeToArrival = departure.arrival_timestamp - Math.floor(Date.now() / 1000);
-
-                  return (
-                    <ItemWrapper
-                      key={`departure-${departure.route_short_name}-${departure.trip_id}-${departure.departure_timestamp}`}
-                      layout
-                      initial={{ opacity: 0, y: 15 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, x: -20, transition: { duration: 0.25 } }}
-                      transition={{
-                        layout: { type: "spring", stiffness: 300, damping: 30 },
-                        opacity: { duration: 0.35, ease: [0.4, 0, 0.2, 1] },
-                        y: { duration: 0.35, ease: [0.4, 0, 0.2, 1] }
-                      }}
-                    >
-                      <div
-                      className="flex flex-col lg:flex-row items-start lg:items-center justify-between rounded-lg border border-gray-100 hover:shadow-md transition-all duration-200 bg-white relative flex-1 gap-1 sm:gap-2 lg:gap-0"
-                      style={{
-                        padding: `${Math.max(0.3, 0.6 * textSize)}rem`,
-                        marginBottom: `${0.3 * textSize}rem`,
-                        minHeight: `${Math.max(4, 6 * textSize)}rem`
-                      }}
-                    >
-                      <div className="flex items-center gap-1 sm:gap-2 w-full lg:w-auto" style={{ gap: `${Math.max(0.2, 0.4 * textSize)}rem` }}>
-                        <div className={`rounded-lg flex items-center justify-center ${getRouteColor(departure.route_type)}`}
-                             style={{
-                               width: departure.route_short_name.length > 2 ?
-                                 `${Math.max(2.8, 4.2 * textSize)}rem` :
-                                 `${Math.max(2.4, 3.6 * textSize)}rem`,
-                               height: `${Math.max(2.4, 3.6 * textSize)}rem`,
-                               minWidth: departure.route_short_name.length > 2 ?
-                                 `${Math.max(2.8, 4.2 * textSize)}rem` :
-                                 `${Math.max(2.4, 3.6 * textSize)}rem`
-                             }}>
-                          <span className="font-bold" style={{
-                            fontSize: departure.route_short_name.length > 2 ?
-                              `${Math.max(1.0, 1.8 * textSize)}rem` :
-                              `${Math.max(1.2, 2.4 * textSize)}rem`
-                          }}>
-                            {departure.route_short_name}
-                          </span>
-                        </div>
-
-                        <div className="flex-1">
-                          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-1" style={{ marginBottom: `${0.1 * textSize}rem` }}>
-                            <div className="flex items-center gap-1 flex-wrap" style={{ gap: `${0.4 * textSize}rem` }}>
-                              <span className="font-bold text-gray-900" style={{ fontSize: `${Math.max(1.6, 2.8 * textSize)}rem` }}>
-                                {getDirectionDisplay(departure)}
-                              </span>
-                              {departure.wheelchair_accessible && (
-                                <i className="fas fa-wheelchair text-blue-600" style={{ fontSize: `${Math.max(0.9, 1.4 * textSize)}rem` }}></i>
-                              )}
-                              {departure.low_floor && (
-                                <span className="text-green-600 font-bold text-sm bg-green-100 px-1 rounded" style={{ fontSize: `${Math.max(0.7, 1.2 * textSize)}rem` }}>NP</span>
-                              )}
-                              {hasAirConditioning(departure) && (
-                                <i className="fas fa-snowflake text-blue-500" style={{ fontSize: `${Math.max(0.9, 1.4 * textSize)}rem` }} title="Klimatizace"></i>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-1 sm:gap-2 text-gray-600" style={{
-                            fontSize: `${Math.max(0.7, 1.2 * textSize)}rem`,
-                            gap: `${Math.max(0.2, 0.3 * textSize)}rem`
-                          }}>
-                            <div className="flex items-center gap-1" style={{ gap: `${0.3 * textSize}rem` }}>
-                              <Clock className="w-3 h-3 sm:w-4 sm:h-4" style={{ width: `${Math.max(0.6, 1.2 * textSize)}rem`, height: `${Math.max(0.6, 1.2 * textSize)}rem` }} />
-                              {formatTime(timeToArrival)}
-                            </div>
-                            {departure.current_stop && (
-                              <div className="flex items-center gap-1" style={{ gap: `${0.3 * textSize}rem` }}>
-                                <MapPin className="w-3 h-3 sm:w-4 sm:h-4" style={{ width: `${Math.max(0.6, 1.2 * textSize)}rem`, height: `${Math.max(0.6, 1.2 * textSize)}rem` }} />
-                                <span className="max-w-full" title={departure.current_stop}>{departure.current_stop}</span>
-                              </div>
-                            )}
-                          </div>
-
-
-                          {serviceAlerts.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1" style={{
-                              gap: `${0.4 * textSize}rem`,
-                              marginTop: `${0.2 * textSize}rem`
-                            }}>
-                              {serviceAlerts.map((alert, alertIndex) => (
-                                <Badge key={alertIndex} className={`${alert.color} flex items-center gap-1`}
-                                       style={{
-                                         fontSize: `${1.0 * textSize}rem`,
-                                         padding: `${0.3 * textSize}rem ${0.5 * textSize}rem`,
-                                         gap: `${0.2 * textSize}rem`
-                                       }}>
-                                  {alert.icon}
-                                  <span>{alert.text}</span>
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* Approaching vehicle notification */}
-                          {approachingInfo && (
-                            <div className="absolute top-1 right-1 sm:top-2 sm:right-20 z-10">
-                              <div className="bg-green-600 text-white px-2 py-1 sm:px-3 sm:py-1 rounded-full text-xs font-bold animate-pulse shadow-lg border-2 border-green-400"
-                                   style={{
-                                     fontSize: `${Math.max(0.6, 1.0 * textSize)}rem`,
-                                     padding: `${Math.max(0.2, 0.3 * textSize)}rem ${Math.max(0.4, 0.8 * textSize)}rem`
-                                   }}>
-                                <div className="flex items-center gap-1">
-                                  <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
-                                  <span className="hidden sm:inline">Blíží se!</span>
-                                  <span className="sm:hidden">●</span>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="text-center lg:text-right space-y-1 flex-shrink-0 relative w-full lg:w-auto" style={{ gap: `${Math.max(0.2, 0.3 * textSize)}rem` }}>
-                        <div className="font-black text-gray-900" style={{ fontSize: `${Math.max(2.2, 4.0 * textSize)}rem` }}>
-                          {formatDisplayTime(departure)}
-                        </div>
-
-                        <Badge className={`${delayInfo.color} justify-center lg:justify-start`}
-                               style={{
-                                 fontSize: `${Math.max(0.5, 0.8 * textSize)}rem`,
-                                 padding: `${Math.max(0.1, 0.2 * textSize)}rem ${Math.max(0.2, 0.4 * textSize)}rem`
-                               }}>
-                          {delayInfo.text}
-                        </Badge>
-                      </div>
-                      </div>
-                    </ItemWrapper>
-                  );
-                })}
-              </AnimatePresence>
-            )}
+            })}
 
             {/* Add empty flex items to fill remaining space when there are fewer departures */}
             {Array.from({ length: Math.max(0, 5 - limitedDepartures.length) }).map((_, index) => (
@@ -659,8 +477,10 @@ export const TramDepartures = ({ stationId, textSize = 1.0, maxItems = 5, custom
             ))}
           </div>
         ) : null}
-        </ContentWrapper>
+        </div>
       </CardContent>
     </Card>
   );
 };
+
+export const TramDepartures = memo(TramDeparturesComponent);

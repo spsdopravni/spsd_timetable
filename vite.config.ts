@@ -25,14 +25,22 @@ export default defineConfig(({ mode }) => ({
       compress: {
         drop_console: true,
         drop_debugger: true,
-        pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn']
+        pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn'],
+        passes: 3,
+        unsafe: true,
+        unsafe_comps: true,
+        unsafe_math: true,
+        unsafe_methods: true
+      },
+      mangle: {
+        safari10: true
       }
     },
     rollupOptions: {
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['framer-motion', 'lucide-react'],
+          'ui-vendor': ['lucide-react'],
           'radix-vendor': [
             '@radix-ui/react-toast',
             '@radix-ui/react-tooltip',
@@ -42,5 +50,7 @@ export default defineConfig(({ mode }) => ({
       }
     },
     chunkSizeWarningLimit: 1000,
+    target: 'es2015',
+    cssCodeSplit: true,
   }
 }));
