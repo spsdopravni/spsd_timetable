@@ -215,7 +215,7 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
             alt="Metro B"
             className="w-6 h-6 inline-block"
           />
-          <ArrowRight className="w-6 h-6 text-blue-600" />
+          <ArrowRight className="w-12 h-12 text-blue-600" />
           <span className="text-orange-600 font-medium">301/352</span>
         </div>
       );
