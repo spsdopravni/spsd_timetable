@@ -8,7 +8,9 @@
       "WebFetch(domain:golemioapi.docs.apiary.io)",
       "Bash(git checkout:*)",
       "Bash(npm install:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(npm run build:*)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []

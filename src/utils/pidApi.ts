@@ -263,15 +263,6 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
         const vehicleOperator = dep.vehicle?.operator;
         const vehicleType = dep.vehicle?.vehicle_type;
 
-        // Debug logování vehicle dat a trip_id
-        console.log({
-          'dep.vehicle': dep.vehicle,
-          'vehicleNumber': vehicleNumber,
-          'vehicleOperator': vehicleOperator,
-          'vehicleType': vehicleType,
-          'trip_id': dep.trip?.id,
-          'ALL_KEYS': Object.keys(dep)
-        });
         const vehicleModel = dep.vehicle?.sub_type || dep.vehicle?.model || dep.vehicle?.vehicle_type?.short_name;
         const vehicleAge = dep.vehicle?.production_year ? new Date().getFullYear() - dep.vehicle?.production_year : undefined;
 

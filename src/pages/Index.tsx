@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { Clock } from "lucide-react";
 import { TramDepartures } from "@/components/TramDepartures";
 import { WeatherWidget } from "@/components/WeatherWidget";
 import { RouteInfo } from "@/components/RouteInfo";
@@ -83,7 +82,6 @@ const Index = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentStationIndex, setCurrentStationIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [worldTime, setWorldTime] = useState<Date | null>(null);
 
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('tram-display-settings');
@@ -165,29 +163,6 @@ const Index = () => {
     });
   };
 
-  const fetchWorldTime = async (): Promise<Date> => {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-      const response = await fetch('https://worldtimeapi.org/api/timezone/Europe/Prague', {
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error(`API responded with status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const serverTime = new Date(data.datetime);
-      return serverTime;
-    } catch (error) {
-      return new Date();
-    }
-  };
-
   const calculateStationIndex = (time: Date) => {
     const totalSeconds = time.getHours() * 3600 + time.getMinutes() * 60 + time.getSeconds();
     const cyclePosition = totalSeconds % 20; // 20 sekundový cyklus (10s + 10s)
@@ -203,33 +178,14 @@ const Index = () => {
 
 
   useEffect(() => {
-    const initializeTime = async () => {
-      const serverTime = await fetchWorldTime();
-      setWorldTime(serverTime);
-      setCurrentTime(serverTime);
-
-      const stationIndex = calculateStationIndex(serverTime);
-      setCurrentStationIndex(stationIndex);
-    };
-
-    initializeTime();
-  }, []);
-
-  useEffect(() => {
-    if (!worldTime) return;
-
     const updateTimeAndStation = () => {
       const now = new Date();
-      const elapsed = now.getTime() - worldTime.getTime();
-      const currentWorldTime = new Date(worldTime.getTime() + elapsed);
-      
-      setCurrentTime(currentWorldTime);
-      
-      const newStationIndex = calculateStationIndex(currentWorldTime);
+      setCurrentTime(now);
+
+      const newStationIndex = calculateStationIndex(now);
 
       if (newStationIndex !== currentStationIndex) {
         setIsTransitioning(true);
-
         setCurrentStationIndex(newStationIndex);
 
         setTimeout(() => {
@@ -238,21 +194,16 @@ const Index = () => {
       }
     };
 
+    // Inicializace při prvním načtení
     updateTimeAndStation();
-    
-    const timer = setInterval(updateTimeAndStation, 1000);
-    
-    const syncTimer = setInterval(async () => {
-      const newWorldTime = await fetchWorldTime();
-      setWorldTime(newWorldTime);
-    }, 300000);
 
-    
+    // Update každou sekundu
+    const timer = setInterval(updateTimeAndStation, 1000);
+
     return () => {
       clearInterval(timer);
-      clearInterval(syncTimer);
     };
-  }, [worldTime, currentStationIndex]);
+  }, [currentStationIndex]);
 
   const motolStations = [
     stations[2],
