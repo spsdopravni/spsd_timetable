@@ -337,8 +337,8 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
     );
   }
 
-  // Limit departures to exactly 6 items
-  const limitedDepartures = departures.slice(0, 6);
+  // Limit departures to exactly 7 items
+  const limitedDepartures = departures.slice(0, 7);
 
   return (
     <Card className="shadow-lg bg-white/90 h-full border-2 border-gray-300 flex flex-col min-h-full overflow-hidden">
@@ -473,8 +473,8 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
                     <div className="flex items-center gap-2">
                       {/* Show "Stíháš" or "Nestíháš" to the left of time */}
                       {showTimesInMinutes && timeToArrival < 240 && (
-                        <div className="font-bold" style={{
-                          fontSize: `${Math.max(1.4, 2.4 * 1.0)}rem`,
+                        <div className="font-black" style={{
+                          fontSize: `${Math.max(2.2, 4.0 * 1.0)}rem`,
                           color: formatDisplayTime(departure).includes('Nestíháš') ? '#dc2626' : '#16a34a'
                         }}>
                           {formatDisplayTime(departure).includes('Stíháš') || formatDisplayTime(departure).includes('Nestíháš') ? formatDisplayTime(departure) : ''}
