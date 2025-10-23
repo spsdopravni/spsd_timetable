@@ -7,7 +7,7 @@ interface DailyRobotProps {
 }
 
 const DailyRobotComponent = ({ textSize = 1.0 }: DailyRobotProps) => {
-  // Robot jezdící zprava doleva
+  // Původní robot se všemi animacemi a funkcemi
   const getDayMessage = () => {
     const day = new Date().getDay();
     const messages = [
@@ -26,9 +26,9 @@ const DailyRobotComponent = ({ textSize = 1.0 }: DailyRobotProps) => {
 
   return (
     <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-50 to-pink-50 relative overflow-hidden">
-      {/* Modrá animovaná čára nahoře */}
+      {/* Modrá animovaná čára dole */}
       <motion.div
-        className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 via-blue-600 to-blue-400"
+        className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 via-blue-600 to-blue-400"
         animate={{
           scaleX: [1, 1.5, 1],
           opacity: [0.5, 1, 0.5]
