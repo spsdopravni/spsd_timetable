@@ -204,9 +204,10 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
   const getDirectionDisplay = (departure: Departure) => {
     const routeNumber = departure.route_short_name;
     const headsign = departure.headsign;
+    const headsignLower = headsign?.toLowerCase() || '';
 
     // Speciální logika pro linku 174 končící na "Luka"
-    if (routeNumber === "174" && headsign && headsign.toLowerCase().includes("luka")) {
+    if (routeNumber === "174" && headsign && headsignLower.includes("luka")) {
       return (
         <div className="flex items-center gap-2">
           <span>{headsign}</span>
@@ -218,6 +219,38 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
           />
           <ArrowRight style={{ width: `${Math.max(1.6, 2.8 * 1.0)}rem`, height: `${Math.max(1.6, 2.8 * 1.0)}rem` }} className="text-blue-600" />
           <span className="text-orange-600 font-medium">301/352</span>
+        </div>
+      );
+    }
+
+    // Logika pro Dejvickou - ikona metra A (zelená)
+    if (headsign && headsignLower.includes("dejvická")) {
+      return (
+        <div className="flex items-center gap-2">
+          <span>{headsign}</span>
+          <img
+            src="/pictures/metroA.svg"
+            alt="Metro A"
+            className="inline-block align-middle"
+            style={{ width: `${Math.max(1.6, 2.8 * 1.0)}rem`, height: `${Math.max(1.6, 2.8 * 1.0)}rem`, verticalAlign: 'middle' }}
+          />
+        </div>
+      );
+    }
+
+    // Logika pro Zličín - ikona metra B (žlutá), ALE NE pro Obchodní centrum Zličín
+    if (headsign && headsignLower.includes("zličín") &&
+        !headsignLower.includes("obchodní centrum") &&
+        !headsignLower.includes("obchodního centra")) {
+      return (
+        <div className="flex items-center gap-2">
+          <span>{headsign}</span>
+          <img
+            src="/pictures/metroB.svg"
+            alt="Metro B"
+            className="inline-block align-middle"
+            style={{ width: `${Math.max(1.6, 2.8 * 1.0)}rem`, height: `${Math.max(1.6, 2.8 * 1.0)}rem`, verticalAlign: 'middle' }}
+          />
         </div>
       );
     }
