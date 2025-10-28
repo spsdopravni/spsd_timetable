@@ -24,6 +24,9 @@ export const PreloadedTramDepartures = ({
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [error, setError] = useState<string | null>(null);
+  const [animationKey, setAnimationKey] = useState(0);
+  const [isFadingOut, setIsFadingOut] = useState(false);
+  const [previousStationId, setPreviousStationId] = useState<string | string[]>("");
 
   // Helper pro získání klíče
   const getStationKey = () => {
@@ -46,6 +49,7 @@ export const PreloadedTramDepartures = ({
           setDepartures(preloaded.data || []);
           setLastUpdate(new Date(preloaded.timestamp));
           setLoading(false);
+          setAnimationKey(prev => prev + 1); // Trigger animation
           return;
         }
       }
@@ -57,6 +61,7 @@ export const PreloadedTramDepartures = ({
       setDepartures(departuresData);
       setLastUpdate(new Date());
       setLoading(false);
+      setAnimationKey(prev => prev + 1); // Trigger animation
     } catch (error: any) {
       setError(error.message || 'Chyba při načítání odjezdů');
       setLoading(false);
@@ -64,7 +69,22 @@ export const PreloadedTramDepartures = ({
   };
 
   useEffect(() => {
-    fetchDepartures();
+    const stationChanged = JSON.stringify(previousStationId) !== JSON.stringify(stationId);
+
+    if (stationChanged && previousStationId !== "") {
+      // Station changed - fade out first
+      setIsFadingOut(true);
+      setPreviousStationId(stationId);
+
+      setTimeout(() => {
+        fetchDepartures();
+        setIsFadingOut(false);
+      }, 700);
+    } else {
+      // Initial load or refresh
+      setPreviousStationId(stationId);
+      fetchDepartures();
+    }
 
     // Refresh každých 60 sekund
     const interval = setInterval(() => fetchDepartures(), 60000);
@@ -205,7 +225,10 @@ export const PreloadedTramDepartures = ({
           const delayText = formatDelay(departure.delay);
 
           return (
-            <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+            <div
+              key={`${index}-${animationKey}`}
+              className={`departure-card-animation ${isFadingOut ? 'fade-out' : ''} flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0`}
+            >
               <div className="flex items-center gap-3">
                 <div
                   className={`rounded-lg text-white font-bold flex items-center justify-center ${routeColor}`}

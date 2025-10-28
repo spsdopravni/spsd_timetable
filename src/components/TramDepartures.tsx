@@ -10,11 +10,11 @@ interface TramDeparturesProps {
   maxItems?: number;
   customTitle?: string;
   showTimesInMinutes?: boolean;
-  lowPerformanceMode?: boolean;
   stationName?: string;
+  disableAnimations?: boolean;
 }
 
-const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTimesInMinutes = false, lowPerformanceMode = false, stationName = "" }: TramDeparturesProps) => {
+const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTimesInMinutes = false, stationName = "", disableAnimations = false }: TramDeparturesProps) => {
   const [departures, setDepartures] = useState<Departure[]>([]);
   const [loading, setLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -27,6 +27,8 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
   const [retryCount, setRetryCount] = useState(0);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [currentTime, setCurrentTime] = useState<number>(Math.floor(Date.now() / 1000));
+  const [animationKey, setAnimationKey] = useState(0);
+  const [isFadingOut, setIsFadingOut] = useState(false);
 
   const fetchDepartures = async (isRetry = false) => {
     try {
@@ -46,9 +48,10 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
       // Vždy bez animací pro úsporu RAM
       setDepartures(departuresData);
       setLastUpdate(new Date());
-      setRetryDelay(lowPerformanceMode ? 180000 : 120000); // 3 min vs 2 min
+      setRetryDelay(120000); // 2 min
       setRetryCount(0);
       setIsUpdating(false);
+      setAnimationKey(prev => prev + 1); // Trigger animation
     } catch (error: any) {
 
       if (error.message === 'RATE_LIMIT' || error.message === 'RATE_LIMIT_PROTECTION') {
@@ -98,19 +101,17 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
           }
 
           // Fade out -> změna dat -> fade in animace
-          // 1. Fade out (300ms)
-          setIsUpdating(true);
+          // 1. Fade out (700ms total - includes stagger)
+          setIsFadingOut(true);
 
           // 2. Po fade out změníme data
           setTimeout(() => {
             setDepartures(result.departures);
             setLastUpdate(new Date());
-
-            // 3. Fade in + layout animace
-            setTimeout(() => {
-              setIsUpdating(false);
-            }, 50);
-          }, 300);
+            setAnimationKey(prev => prev + 1);
+            setIsFadingOut(false);
+            setIsUpdating(false);
+          }, 700);
         } catch (error) {
           // If preload fails, fall back to normal fetch
           setIsUpdating(false);
@@ -396,7 +397,8 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
 
               return (
                 <div
-                  key={`departure-${departure.route_short_name}-${departure.trip_id}-${departure.departure_timestamp}`}
+                  key={`departure-${departure.route_short_name}-${departure.trip_id}-${departure.departure_timestamp}-${animationKey}`}
+                  className={disableAnimations ? '' : `departure-card-animation ${isFadingOut ? 'fade-out' : ''}`}
                 >
                   <div
                   className={`flex flex-col lg:flex-row items-start lg:items-center justify-between rounded-lg border relative flex-1 gap-1 sm:gap-2 lg:gap-0 ${

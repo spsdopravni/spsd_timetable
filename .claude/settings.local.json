@@ -3,7 +3,8 @@
     "allow": [
       "Bash(rm:*)",
       "Bash(mkdir:*)",
-      "Bash(npm run preview)"
+      "Bash(npm run preview)",
+      "Bash(node -e:*)"
     ],
     "deny": [],
     "ask": []

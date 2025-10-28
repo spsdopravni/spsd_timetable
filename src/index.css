@@ -102,21 +102,15 @@
     overflow: hidden;
   }
 
-  /* OPTIMALIZACE PRO LOW-END HARDWARE - Vypnout animace kromě robota */
-  *:not(.robot-animation):not(.robot-animation *),
-  *:not(.robot-animation)::before,
-  *:not(.robot-animation)::after {
+  /* OPTIMALIZACE PRO LOW-END HARDWARE - Vypnout všechny animace a transice */
+  * {
     animation-duration: 0s !important;
     animation-delay: 0s !important;
     transition-duration: 0s !important;
     transition-delay: 0s !important;
-    -webkit-animation-duration: 0s !important;
-    -webkit-animation-delay: 0s !important;
-    -webkit-transition-duration: 0s !important;
-    -webkit-transition-delay: 0s !important;
   }
 
-  /* Povolit animace pro robota */
+  /* Povolit animace pouze pro robota */
   .robot-animation, .robot-animation * {
     animation-duration: revert !important;
     animation-delay: revert !important;
@@ -322,4 +316,127 @@
   will-change: transform;
   transform: translateZ(0);
   backface-visibility: hidden;
+}
+
+/* Fade in up animation for departure cards */
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Fade out down animation for departure cards */
+@keyframes fadeOutDown {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+
+/* Apply animation to departure cards - override global disable */
+.departure-card-animation {
+  animation: fadeInUp 0.5s ease-out forwards !important;
+  animation-duration: 0.5s !important;
+  opacity: 0;
+}
+
+/* Fade out state */
+.departure-card-animation.fade-out {
+  animation: fadeOutDown 0.3s ease-in forwards !important;
+  animation-duration: 0.3s !important;
+}
+
+/* Stagger effect for cards */
+.departure-card-animation:nth-child(1) {
+  animation-delay: 0s !important;
+}
+.departure-card-animation:nth-child(2) {
+  animation-delay: 0.05s !important;
+}
+.departure-card-animation:nth-child(3) {
+  animation-delay: 0.1s !important;
+}
+.departure-card-animation:nth-child(4) {
+  animation-delay: 0.15s !important;
+}
+.departure-card-animation:nth-child(5) {
+  animation-delay: 0.2s !important;
+}
+.departure-card-animation:nth-child(6) {
+  animation-delay: 0.25s !important;
+}
+.departure-card-animation:nth-child(7) {
+  animation-delay: 0.3s !important;
+}
+.departure-card-animation:nth-child(8) {
+  animation-delay: 0.35s !important;
+}
+
+/* Fade out stagger - reverse order for smoother exit */
+.departure-card-animation.fade-out:nth-child(1) {
+  animation-delay: 0.35s !important;
+}
+.departure-card-animation.fade-out:nth-child(2) {
+  animation-delay: 0.3s !important;
+}
+.departure-card-animation.fade-out:nth-child(3) {
+  animation-delay: 0.25s !important;
+}
+.departure-card-animation.fade-out:nth-child(4) {
+  animation-delay: 0.2s !important;
+}
+.departure-card-animation.fade-out:nth-child(5) {
+  animation-delay: 0.15s !important;
+}
+.departure-card-animation.fade-out:nth-child(6) {
+  animation-delay: 0.1s !important;
+}
+.departure-card-animation.fade-out:nth-child(7) {
+  animation-delay: 0.05s !important;
+}
+.departure-card-animation.fade-out:nth-child(8) {
+  animation-delay: 0s !important;
+}
+
+/* Direction header animations */
+@keyframes slideInFromLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutToLeft {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+}
+
+.direction-header-animation {
+  animation: slideInFromLeft 0.5s ease-out forwards !important;
+  animation-duration: 0.5s !important;
+  opacity: 0;
+}
+
+.direction-header-animation.fade-out {
+  animation: slideOutToLeft 0.3s ease-in forwards !important;
+  animation-duration: 0.3s !important;
 }
