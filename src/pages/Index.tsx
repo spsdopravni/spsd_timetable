@@ -11,9 +11,9 @@ const Index = () => {
   const stations = [
     {
       id: "U865Z1P",
-      name: "Vozovna (Směr Centrum)",
-      displayName: "Vozovna Motol (Směr Centrum)",
-      textName: "Vozovna Motol (Směr Centrum)",
+      name: "Vozovna (Centrum)",
+      displayName: "Vozovna Motol (Centrum)",
+      textName: "Vozovna Motol (Centrum)",
       simpleName: "Vozovna Motol",
       direction: "Centrum",
       lat: 50.0755,
@@ -21,9 +21,9 @@ const Index = () => {
     },
     {
       id: "U865Z2P",
-      name: "Vozovna Motol (Směr Řepy)",
-      displayName: "Vozovna Motol (Směr Řepy)",
-      textName: "Vozovna Motol (Směr Řepy)",
+      name: "Vozovna Motol (Řepy)",
+      displayName: "Vozovna Motol (Řepy)",
+      textName: "Vozovna Motol (Řepy)",
       simpleName: "Vozovna Motol",
       direction: "Řepy",
       lat: 50.0755,
@@ -33,7 +33,7 @@ const Index = () => {
       id: ["U394Z3P", "U394Z3"],
       name: (
         <div className="inline-flex items-center gap-2" style={{ borderRadius: '0.5rem' }}>
-          Směr Zličín
+          Zličín
           <img src="/pictures/metroB.svg" alt="Metro B" className="flex-shrink-0" style={{ width: '1em', height: '1em', marginTop: '0.15em' }} onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.outerHTML = '<span class="inline-flex items-center justify-center bg-yellow-500 text-white font-bold rounded flex-shrink-0" style="width: 1em; height: 1em; font-size: 0.6em; margin-top: 0.15em" title="Metro B">B</span>';
@@ -47,7 +47,7 @@ const Index = () => {
         }} />
       ),
       direction: "Zličín",
-      textName: "Směr Zličín Metro B",
+      textName: "Zličín Metro B",
       simpleName: "Motol",
       lat: 50.0675,
       lon: 14.3365
@@ -56,7 +56,7 @@ const Index = () => {
       id: ["U394Z4P", "U394Z4"],
       name: (
         <div className="inline-flex items-center gap-2" style={{ borderRadius: '0.5rem' }}>
-          Směr Nemocnice Motol
+          Nemocnice Motol
           <img src="/pictures/metroA.svg" alt="Metro A" className="flex-shrink-0" style={{ width: '1em', height: '1em' }} onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.outerHTML = '<span class="inline-flex items-center justify-center bg-green-600 text-white font-bold rounded flex-shrink-0" style="width: 1em; height: 1em; font-size: 0.6em; margin-top: 0.15em" title="Metro A">A</span>';
@@ -65,7 +65,7 @@ const Index = () => {
       ),
       displayName: (
         <div className="inline-flex items-center gap-2" style={{ borderRadius: '0.5rem' }}>
-          Směr Nemocnice Motol
+          Nemocnice Motol
           <img src="/pictures/metroA.svg" alt="Metro A" className="flex-shrink-0" style={{ width: '1em', height: '1em'}} onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.outerHTML = '<span class="inline-flex items-center justify-center bg-green-600 text-white font-bold rounded flex-shrink-0" style="width: 1em; height: 1em; font-size: 0.6em; margin-top: 0.15em" title="Metro A">A</span>';
@@ -73,7 +73,7 @@ const Index = () => {
         </div>
       ),
       direction: "Nemocnice Motol",
-      textName: "Směr Nemocnice Motol Metro A",
+      textName: "Nemocnice Motol Metro A",
       simpleName: "Motol",
       lat: 50.0677,
       lon: 14.3357
@@ -301,7 +301,7 @@ const Index = () => {
                   <img
                     src={getLogoPath()}
                     alt="Logo školy"
-                    className="object-contain w-56 h-56 sm:w-64 md:w-80 lg:w-96 xl:w-[28rem] sm:h-56 md:h-64 lg:h-80 xl:h-96"
+                    className="object-contain w-56 h-40 sm:w-64 md:w-80 lg:w-96 xl:w-[28rem] sm:h-40 md:h-40 lg:h-40 xl:h-40"
                   />
                 </div>
 
@@ -347,10 +347,9 @@ const Index = () => {
             <div className={`${settings.disableAnimations ? '' : `direction-header-animation ${isDirectionFadingOut ? 'fade-out' : ''}`} bg-white/95 border-b-8 border-blue-600 text-gray-800 px-3 mb-2 shadow-lg flex items-center justify-center rounded-lg`} style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }} key={`left-header-${directionAnimationKey}`}>
               <div className="flex items-center justify-center gap-2 w-full h-full">
                 <h2 className="font-bold leading-none" style={{ fontSize: 'clamp(1.75rem, 3.5vh, 2.5rem)' }}>
-                  {React.isValidElement(leftStation.displayName) ? (
+                  {React.isValidElement(leftStation.name) ? (
                     <div className="flex items-center justify-center gap-2">
-                      <span className="flex-shrink-0">{leftStation.direction}</span>
-                      <div className="flex-shrink-0 flex items-center" style={{ maxHeight: '100%' }}>{leftStation.displayName}</div>
+                      {leftStation.name}
                     </div>
                   ) : leftStation.direction}
                 </h2>
@@ -377,10 +376,9 @@ const Index = () => {
             <div className={`${settings.disableAnimations ? '' : `direction-header-animation ${isDirectionFadingOut ? 'fade-out' : ''}`} bg-white/95 border-b-8 border-blue-600 text-gray-800 px-3 mb-2 shadow-lg flex items-center justify-center rounded-lg`} style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }} key={`right-header-${directionAnimationKey}`}>
               <div className="flex items-center justify-center gap-2 w-full h-full">
                 <h2 className="font-bold leading-none" style={{ fontSize: 'clamp(1.75rem, 3.5vh, 2.5rem)' }}>
-                  {React.isValidElement(rightStation.displayName) ? (
+                  {React.isValidElement(rightStation.name) ? (
                     <div className="flex items-center justify-center gap-2">
-                      <span className="flex-shrink-0">{rightStation.direction}</span>
-                      <div className="flex-shrink-0 flex items-center" style={{ maxHeight: '100%' }}>{rightStation.displayName}</div>
+                      {rightStation.name}
                     </div>
                   ) : rightStation.direction}
                 </h2>
