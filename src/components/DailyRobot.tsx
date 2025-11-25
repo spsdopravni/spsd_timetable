@@ -152,8 +152,8 @@ export const DailyRobot = () => {
     else if (hour < 17) greeting = 'Dobré poledne!';
     else greeting = 'Dobrý večer!';
 
-    // STŘÍDÁNÍ: 0 = pozdravi, 1 = fun fakty, 2 = svátek
-    const cyclePosition = messageCounter % 3;
+    // STŘÍDÁNÍ: 0 = pozdravi, 1 = fun fakty, 2 = svátek, 3 = promo rozvrhy
+    const cyclePosition = messageCounter % 4;
 
     if (cyclePosition === 0) {
       // POZDRAVI - různé podle situace včetně prázdnin
@@ -217,13 +217,23 @@ export const DailyRobot = () => {
     } else if (cyclePosition === 1) {
       // FUN FAKTY
       return getFunFacts();
-    } else {
+    } else if (cyclePosition === 2) {
       // SVÁTEK
       if (nameDay) {
         return `${greeting} Dnes má svátek ${nameDay}!`;
       } else {
         return `${greeting} Dnes je ${day}, přeji příjemný den!`;
       }
+    } else {
+      // PROMO ROZVRHY - propagace spsd-rozvrhy.vercel.app
+      const promoMessages = [
+        '📅 Bakaláři nefungují? Zkus spsd-rozvrhy.vercel.app — rozvrh, který nikdy nespí!',
+        '🚀 Rozvrh rychlejší než Bakaláři? spsd-rozvrhy.vercel.app — vyzkoušej a uvidíš!',
+        '💡 Tip pro studenty: spsd-rozvrhy.vercel.app — rozvrh bez čekání a výmluv!',
+        '⚡ Když Bakaláři padnou, spsd-rozvrhy.vercel.app tě zachrání!',
+        '📱 Rozvrh v kapse? spsd-rozvrhy.vercel.app — funguje vždy a všude!'
+      ];
+      return promoMessages[Math.floor(Math.random() * promoMessages.length)];
     }
   };
 
