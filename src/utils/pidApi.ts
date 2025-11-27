@@ -21,6 +21,7 @@ if (forceMockData !== undefined) {
 const API_KEY_1 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzcwNCwiaWF0IjoxNzYwNzkxMjUwLCJleHAiOjExNzYwNzkxMjUwLCJpc3MiOiJnb2xlbWlvIiwianRpIjoiM2Y4MWJiMjItM2YxNC00ODgxLThlMDYtYjQ1YmRlOTYzZjk3In0.BR0653y2bfG0zxdkOYvDgvywRR9Z9nXB4NlatJXR38A";
 const API_KEY_2 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzcwNywiaWF0IjoxNzYwNzkxMjc4LCJleHAiOjExNzYwNzkxMjc4LCJpc3MiOiJnb2xlbWlvIiwianRpIjoiN2U2ZTViOWMtYjkyOS00NzZlLTk0MmItYTY4NzdkM2M2MjNjIn0._K4k4Mrfy1_cWiy3Za_DRrCOX4gfbrz8p0rVZypVFq8";
 let API_KEY_3 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDA0NiwiaWF0IjoxNzYwNzk0NjU3LCJleHAiOjExNzYwNzk0NjU3LCJpc3MiOiJnb2xlbWlvIiwianRpIjoiNzAwZmNkOGYtMzYyOS00MjZjLThmYTgtNTU2YTJlZmE1YmFlIn0.r6hVewQXnk8TaowFb7s7lDveyA6XYYGnxe_qlzUbhZM"; // Třetí API klíč pro rozšířené údaje
+const API_KEY_PRAGENSIS = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDI0MiwiaWF0IjoxNzY0MjQxNTA2LCJleHAiOjExNzY0MjQxNTA2LCJpc3MiOiJnb2xlbWlvIiwianRpIjoiNzJkZDIzMjktODZmNy00ZTQ5LTljMWUtZDBmMjMzMjY4MTE4In0.sqKPVMufNSNTPYXVyE4gBKcHLUoUdgutbXdbD3vkSNU"; // API klíč pro Pragensis
 
 // Mapování stanic na API klíče
 const STATION_API_MAPPING: {[key: string]: string} = {
@@ -34,17 +35,17 @@ const STATION_API_MAPPING: {[key: string]: string} = {
   "U394Z4P": API_KEY_2,
   "U394Z4": API_KEY_2,
 
-  // Vyšehrad metro C - API klíč 1
-  "U527Z101P": API_KEY_1,
-  "U527Z102P": API_KEY_1,
+  // Vyšehrad metro C - API klíč Pragensis
+  "U527Z101P": API_KEY_PRAGENSIS,
+  "U527Z102P": API_KEY_PRAGENSIS,
 
-  // Vyšehrad bus (noční) - API klíč 1
-  "U527Z1P": API_KEY_1,
-  "U527Z2P": API_KEY_1,
+  // Vyšehrad bus (noční) - API klíč Pragensis
+  "U527Z1P": API_KEY_PRAGENSIS,
+  "U527Z2P": API_KEY_PRAGENSIS,
 
-  // Svatoplukova tram - API klíč 2
-  "U724Z1P": API_KEY_2,
-  "U724Z2P": API_KEY_2,
+  // Svatoplukova tram - API klíč Pragensis
+  "U724Z1P": API_KEY_PRAGENSIS,
+  "U724Z2P": API_KEY_PRAGENSIS,
 };
 
 // Funkce pro nastavení třetího API klíče
@@ -217,15 +218,16 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
     let allDepartures: any[] = [];
     let allAlerts: any[] = [];
 
-    // Spojíme všechna IDs do jednoho requestu - API podporuje více IDs oddělených čárkou
-    const idsParam = ids.join(',');
-
+    // Použij API klíč podle první stanice v seznamu
+    const apiKey = getApiKeyForStation(ids[0]);
     const extendedHeaders = {
-      "X-Access-Token": API_KEY_3,
+      "X-Access-Token": apiKey,
       "Content-Type": "application/json"
     };
 
-    const url = `${API_BASE}/v2/pid/departureboards/?ids=${idsParam}&limit=20&minutesBefore=0&minutesAfter=30`;
+    // API podporuje více IDs jako separate params: ?ids=ID1&ids=ID2
+    const idsParams = ids.map(id => `ids=${id}`).join('&');
+    const url = `${API_BASE}/v2/pid/departureboards/?${idsParams}&limit=20&minutesBefore=0&minutesAfter=30`;
 
     const response = await fetch(url, { headers: extendedHeaders });
 

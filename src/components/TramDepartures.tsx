@@ -83,11 +83,11 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
     fetchDepartures();
   }, [stationId]);
 
-  // Pravidelný refresh dat každých 20 sekund
+  // Pravidelný refresh dat každých 60 sekund
   useEffect(() => {
     const interval = setInterval(() => {
       fetchDepartures();
-    }, 20000); // 20 sekund
+    }, 60000); // 60 sekund
 
     return () => clearInterval(interval);
   }, [stationId]);
