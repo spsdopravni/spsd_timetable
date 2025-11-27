@@ -76,64 +76,23 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
     }
   };
 
+  // Prvotní načtení dat
   useEffect(() => {
     // Přidáme globální funkci pro nastavení třetího API klíče (pokud není nastaven)
     (window as any).setThirdApiKey = setThirdApiKey;
 
-    const stationChanged = JSON.stringify(previousStationId) !== JSON.stringify(stationId);
-
-    if (stationChanged) {
-      setRetryCount(0);
-      setPreviousStationId(stationId);
-
-      // Preload data first - načteme data na pozadí
-      const preloadData = async () => {
-        try {
-          const result = await getDepartures(stationId);
-          setNextDepartures(result.departures);
-
-          // Při prvním načtení žádná animace
-          if (isInitialLoad || departures.length === 0) {
-            setDepartures(result.departures);
-            setLastUpdate(new Date());
-            setLoading(false);
-            setIsInitialLoad(false);
-            return;
-          }
-
-          // Fade out -> změna dat -> fade in animace
-          // 1. Fade out (700ms total - includes stagger)
-          setIsFadingOut(true);
-
-          // 2. Po fade out změníme data
-          setTimeout(() => {
-            setDepartures(result.departures);
-            setLastUpdate(new Date());
-            setAnimationKey(prev => prev + 1);
-            setIsFadingOut(false);
-            setIsUpdating(false);
-          }, 700);
-        } catch (error) {
-          // If preload fails, fall back to normal fetch
-          setIsUpdating(false);
-          setLoading(false);
-          fetchDepartures();
-        }
-      };
-
-      preloadData();
-    }
+    // Načteme data při prvním renderování nebo změně stanice
+    fetchDepartures();
   }, [stationId]);
 
+  // Pravidelný refresh dat každých 10 sekund
   useEffect(() => {
-    if (JSON.stringify(previousStationId) === JSON.stringify(stationId)) {
-      const interval = setInterval(() => {
-        fetchDepartures();
-      }, retryDelay);
+    const interval = setInterval(() => {
+      fetchDepartures();
+    }, 10000); // 10 sekund
 
-      return () => clearInterval(interval);
-    }
-  }, [stationId, retryDelay, previousStationId]);
+    return () => clearInterval(interval);
+  }, [stationId]);
 
   // Aktualizace času každou sekundu pro kontinuální countdown
   useEffect(() => {
