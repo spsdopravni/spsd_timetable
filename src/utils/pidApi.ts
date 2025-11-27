@@ -216,49 +216,37 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
 
     let allDepartures: any[] = [];
     let allAlerts: any[] = [];
-    let workingStations: string[] = [];
 
-    // Zkusíme načíst odjezdy postupně pro každé ID s příslušným API klíčem
-    for (const stationId of ids) {
-      try {
-        const headers = getHeadersForStation(stationId);
-        const apiKey = getApiKeyForStation(stationId);
+    // Spojíme všechna IDs do jednoho requestu - API podporuje více IDs oddělených čárkou
+    const idsParam = ids.join(',');
 
-        // Používáme třetí API klíč pro rozšířená data o vozidlech
-        const extendedHeaders = {
-          "X-Access-Token": API_KEY_3,
-          "Content-Type": "application/json"
-        };
+    const extendedHeaders = {
+      "X-Access-Token": API_KEY_3,
+      "Content-Type": "application/json"
+    };
 
-        const url = `${API_BASE}/v2/pid/departureboards/?ids=${stationId}&limit=20&minutesBefore=0&minutesAfter=30`;
+    const url = `${API_BASE}/v2/pid/departureboards/?ids=${idsParam}&limit=20&minutesBefore=0&minutesAfter=30`;
 
-        const response = await fetch(url, { headers: extendedHeaders });
+    const response = await fetch(url, { headers: extendedHeaders });
 
-        if (response.status === 429) {
-          continue; // Pokračujeme s dalšími stanicemi
-        }
+    if (response.status === 429) {
+      throw new Error('RATE_LIMIT');
+    }
 
-        if (response.status === 401) {
-          continue; // Pokračujeme s dalšími stanicemi
-        }
+    if (response.status === 401) {
+      throw new Error('Unauthorized');
+    }
 
-        if (response.ok) {
-          const data = await response.json();
+    if (response.ok) {
+      const data = await response.json();
 
-          if (data.departures && Array.isArray(data.departures) && data.departures.length > 0) {
-            allDepartures = [...allDepartures, ...data.departures];
-            workingStations.push(stationId);
-          } else {
-          }
+      if (data.departures && Array.isArray(data.departures) && data.departures.length > 0) {
+        allDepartures = [...allDepartures, ...data.departures];
+      }
 
-          // Shromažďujeme alerts/infotexts
-          if (data.infotexts && Array.isArray(data.infotexts) && data.infotexts.length > 0) {
-            allAlerts = [...allAlerts, ...data.infotexts];
-          }
-        } else {
-        }
-      } catch (stationError: any) {
-        continue;
+      // Shromažďujeme alerts/infotexts
+      if (data.infotexts && Array.isArray(data.infotexts) && data.infotexts.length > 0) {
+        allAlerts = [...allAlerts, ...data.infotexts];
       }
     }
     
