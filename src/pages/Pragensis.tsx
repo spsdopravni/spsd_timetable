@@ -57,7 +57,7 @@ const Pragensis = () => {
       showWeatherInHeader: false,
       showTimesInMinutes: true,
       testAlert: false,
-      snowyLogo: false,
+      snowyLogo: true,
       disableAnimations: false
     };
 
@@ -78,9 +78,17 @@ const Pragensis = () => {
   });
 
   const getLogoPath = () => {
-    return settings.snowyLogo
-      ? "/pictures/snow_spsd.png"
-      : "/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png";
+    const today = new Date();
+    const month = today.getMonth() + 1;
+    const day = today.getDate();
+
+    // Sněžné logo fixně od 27.11 do 1.1
+    const isWinterPeriod = (month === 11 && day >= 27) || month === 12 || (month === 1 && day === 1);
+
+    if (isWinterPeriod || settings.snowyLogo) {
+      return "/pictures/snow_spsd.png";
+    }
+    return "/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png";
   };
 
   const [showSettings, setShowSettings] = useState(false);

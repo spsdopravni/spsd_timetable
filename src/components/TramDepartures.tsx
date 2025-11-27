@@ -187,11 +187,11 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
     }
   };
 
-  const getRouteColor = (routeType: number) => {
+  const getRouteColor = (routeType: number, routeName?: string) => {
     switch (routeType) {
       case 0: return "bg-red-100 text-red-800";
       case 3: return "bg-blue-100 text-blue-800";
-      case 1: return "bg-green-100 text-green-800";
+      case 1: return "bg-red-100 text-red-800"; // Metro - červená
       case 2: return "bg-purple-100 text-purple-800";
       default: return "bg-red-100 text-red-800";
     }
@@ -255,6 +255,7 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
         </div>
       );
     }
+
 
     return headsign;
   };
@@ -361,6 +362,22 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
       else if ((station.includes('motol') && !station.includes('vozovna')) && timeToArrival < 60) {
         return 'Nestíháš';
       }
+      // Vyšehrad metro - pod 60s nestíháš, pod 120s stíháš
+      else if (station.includes('vyšehrad') || station.includes('vysehrad')) {
+        if (timeToArrival < 60) {
+          return 'Nestíháš';
+        } else if (timeToArrival < 120) {
+          return 'Stíháš';
+        }
+      }
+      // Svatoplukova tramvaje - pod 60s nestíháš, pod 120s stíháš
+      else if (station.includes('svatoplukova')) {
+        if (timeToArrival < 60) {
+          return 'Nestíháš';
+        } else if (timeToArrival < 120) {
+          return 'Stíháš';
+        }
+      }
       // Ostatní stanice
       else if (timeToArrival < 60) {
         return '<1 min';
@@ -452,7 +469,7 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
                 >
 
                   <div className="flex items-center w-full lg:w-auto" style={{ gap: `${Math.max(0.6, 1.0 * 1.0)}rem` }}>
-                    <div className={`rounded-lg flex items-center justify-center ${getRouteColor(departure.route_type)}`}
+                    <div className={`rounded-lg flex items-center justify-center ${getRouteColor(departure.route_type, departure.route_short_name)}`}
                          style={{
                            width: departure.route_short_name.length > 2 ?
                              `${Math.max(3.5, 5.25 * 1.0)}rem` :

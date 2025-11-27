@@ -4,7 +4,8 @@
       "Bash(rm:*)",
       "Bash(mkdir:*)",
       "Bash(npm run preview)",
-      "Bash(node -e:*)"
+      "Bash(node -e:*)",
+      "Bash(dir \"C:\\xampp\\htdocs\\spsd_timetable\\public\\pictures\\robot*.png\")"
     ],
     "deny": [],
     "ask": []

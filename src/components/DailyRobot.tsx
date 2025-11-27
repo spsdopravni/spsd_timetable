@@ -22,6 +22,8 @@ export const DailyRobot = () => {
     const month = today.getMonth() + 1; // 1-12
     const day = today.getDate();
 
+    console.log('Robot theme check:', { month, day });
+
     // Silvestr a Nový rok (25.12 - 2.1) - NEJVYŠŠÍ PRIORITA
     if ((month === 12 && day >= 27) || (month === 1 && day <= 2)) {
       return {
@@ -30,16 +32,16 @@ export const DailyRobot = () => {
       };
     }
 
-    // Vánoční téma (1. prosince - 24. prosince)
-    if (month === 12 && day < 27) {
+    // Vánoční téma (20. - 26. prosince)
+    if (month === 12 && day >= 20 && day < 27) {
       return {
         image: '/pictures/robot-christmas.png',
         theme: 'christmas'
       };
     }
 
-    // Halloween téma (20. října - 1. listopadu)
-    if ((month === 10 && day >= 20) || (month === 11 && day <= 1)) {
+    // Halloween téma (20. října - 26. listopadu)
+    if ((month === 10 && day >= 20) || (month === 11 && day <= 26)) {
       return {
         image: '/pictures/robot-halloween.png',
         theme: 'halloween'
@@ -79,8 +81,8 @@ export const DailyRobot = () => {
       };
     }
 
-    // Zimní téma (3. ledna - 28. února)
-    if ((month === 1 && day > 2) || month === 2) {
+    // Zimní téma (27. listopadu - 28. února, kromě vánoc a silvestru)
+    if ((month === 11 && day >= 27) || (month === 12 && day < 20) || (month === 1 && day > 2) || month === 2) {
       return {
         image: '/pictures/robot-winter.png',
         theme: 'winter'
@@ -227,11 +229,6 @@ export const DailyRobot = () => {
     } else {
       // PROMO ROZVRHY - propagace spsd-rozvrhy.vercel.app
       const promoMessages = [
-        '📅 Bakaláři nefungují? Zkus spsd-rozvrhy.vercel.app — rozvrh, který nikdy nespí!',
-        '🚀 Rozvrh rychlejší než Bakaláři? spsd-rozvrhy.vercel.app — vyzkoušej a uvidíš!',
-        '💡 Tip pro studenty: spsd-rozvrhy.vercel.app — rozvrh bez čekání a výmluv!',
-        '⚡ Když Bakaláři padnou, spsd-rozvrhy.vercel.app tě zachrání!',
-        '📱 Rozvrh v kapse? spsd-rozvrhy.vercel.app — funguje vždy a všude!'
       ];
       return promoMessages[Math.floor(Math.random() * promoMessages.length)];
     }
@@ -387,7 +384,7 @@ export const DailyRobot = () => {
               alt={`Robot ${robotTheme.theme}`}
               className="w-auto object-contain"
               style={{
-                height: `${Math.max(5, 12 * 1.0)}rem`,
+                height: '16rem',
                 filter: 'drop-shadow(4px 4px 12px rgba(0,0,0,0.4))',
                 // Zrcadlově otočit doprava, když jede zprava doleva
                 transform: (robotPhase === 'movingRight' || robotPhase === 'atRight' || robotPhase === 'movingAway')
