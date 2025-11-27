@@ -74,20 +74,18 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
     }
   };
 
-  // Prvotní načtení dat
+  // Prvotní načtení dat a pravidelný refresh každých 60 sekund
   useEffect(() => {
     // Přidáme globální funkci pro nastavení třetího API klíče (pokud není nastaven)
     (window as any).setThirdApiKey = setThirdApiKey;
 
-    // Načteme data při prvním renderování nebo změně stanice
+    // Načteme data při prvním renderování
     fetchDepartures();
-  }, [stationId]);
 
-  // Pravidelný refresh dat každých 60 sekund
-  useEffect(() => {
+    // Pak refreshujeme každých 60 sekund
     const interval = setInterval(() => {
       fetchDepartures();
-    }, 60000); // 60 sekund
+    }, 60000);
 
     return () => clearInterval(interval);
   }, [stationId]);
