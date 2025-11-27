@@ -374,6 +374,7 @@ const Index = () => {
                 showTimesInMinutes={settings.showTimesInMinutes}
                 stationName={leftStation.simpleName || leftStation.textName || mainStationName}
                 disableAnimations={settings.disableAnimations}
+                timeOffset={timeOffset}
               />
             </div>
           </div>
@@ -403,6 +404,7 @@ const Index = () => {
                 showTimesInMinutes={settings.showTimesInMinutes}
                 stationName={rightStation.simpleName || rightStation.textName || mainStationName}
                 disableAnimations={settings.disableAnimations}
+                timeOffset={timeOffset}
               />
             </div>
           </div>

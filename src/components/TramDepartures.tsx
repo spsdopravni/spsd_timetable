@@ -12,9 +12,10 @@ interface TramDeparturesProps {
   showTimesInMinutes?: boolean;
   stationName?: string;
   disableAnimations?: boolean;
+  timeOffset?: number;
 }
 
-const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTimesInMinutes = false, stationName = "", disableAnimations = false }: TramDeparturesProps) => {
+const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTimesInMinutes = false, stationName = "", disableAnimations = false, timeOffset = 0 }: TramDeparturesProps) => {
   const [departures, setDepartures] = useState<Departure[]>([]);
   const [loading, setLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -136,12 +137,18 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
 
   // Aktualizace času každou sekundu pro kontinuální countdown
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(Math.floor(Date.now() / 1000));
-    }, 1000);
+    const updateTime = () => {
+      const localTime = Date.now();
+      const adjustedTime = localTime + timeOffset;
+      setCurrentTime(Math.floor(adjustedTime / 1000));
+    };
+
+    updateTime(); // Okamžitě nastavit správný čas
+
+    const timer = setInterval(updateTime, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [timeOffset]);
 
   const formatTime = (seconds: number) => {
     if (seconds < 60) return `${seconds}s`;
