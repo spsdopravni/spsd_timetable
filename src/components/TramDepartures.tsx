@@ -338,7 +338,7 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
             <AlertTriangle className={`w-12 h-12 mx-auto mb-2 ${isRateLimited ? 'text-orange-500' : 'text-red-500'}`} />
             <p className="text-gray-700 mb-2 text-lg" style={{ fontSize: `${1.25 * 1.0}rem` }}>{error}</p>
             <p className="text-gray-600 text-base" style={{ fontSize: `${1 * 1.0}rem` }}>
-              Další pokus za {Math.round(retryDelay / 1000)} sekund
+              Další pokus za chvíli
             </p>
             {isRateLimited && (
               <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
@@ -364,7 +364,7 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
         style={{ paddingTop: `${0.5 * 1.0}rem` }}
       >
         <div className="flex-1 flex flex-col">
-        {limitedDepartures.length === 0 && !isUpdating && !loading ? (
+        {limitedDepartures.length === 0 && !loading ? (
           <div className="text-center py-8 text-gray-600 flex-1 flex items-center justify-center">
             <div>
               <Info className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 mx-auto mb-2 sm:mb-4 text-gray-400" style={{ width: `${Math.max(3, 4 * 1.0)}rem`, height: `${Math.max(3, 4 * 1.0)}rem` }} />
@@ -372,7 +372,7 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
               <p style={{ fontSize: `${Math.max(1.4, 2.2 * 1.0)}rem` }}>Zkontrolujte později</p>
             </div>
           </div>
-        ) : (limitedDepartures.length > 0 || isUpdating || loading) ? (
+        ) : (limitedDepartures.length > 0 || loading) ? (
           <div className="flex-1 flex flex-col space-y-1" style={{ minHeight: 0 }}>
             {limitedDepartures.map((departure, index) => {
               const delay = departure.delay || 0;
@@ -383,8 +383,8 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
 
               return (
                 <div
-                  key={`departure-${departure.route_short_name}-${departure.trip_id}-${departure.departure_timestamp}-${animationKey}`}
-                  className={disableAnimations ? '' : `departure-card-animation ${isFadingOut ? 'fade-out' : ''}`}
+                  key={`departure-${departure.route_short_name}-${departure.trip_id}-${departure.departure_timestamp}`}
+                  className={disableAnimations ? '' : 'departure-card-animation'}
                 >
                   <div
                   className={`flex flex-col lg:flex-row items-start lg:items-center justify-between rounded-lg border relative flex-1 gap-1 sm:gap-2 lg:gap-0 ${
