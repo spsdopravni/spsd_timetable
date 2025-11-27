@@ -27,12 +27,24 @@ const STATION_API_MAPPING: {[key: string]: string} = {
   // Vozovna Motol - API klíč 1
   "U865Z1P": API_KEY_1,
   "U865Z2P": API_KEY_1,
-  
+
   // Motol nástupiště C a D - API klíč 2
   "U394Z3P": API_KEY_2,
   "U394Z3": API_KEY_2,
   "U394Z4P": API_KEY_2,
   "U394Z4": API_KEY_2,
+
+  // Vyšehrad metro C - API klíč 1
+  "U527Z101P": API_KEY_1,
+  "U527Z102P": API_KEY_1,
+
+  // Vyšehrad bus (noční) - API klíč 1
+  "U527Z1P": API_KEY_1,
+  "U527Z2P": API_KEY_1,
+
+  // Svatoplukova tram - API klíč 2
+  "U724Z1P": API_KEY_2,
+  "U724Z2P": API_KEY_2,
 };
 
 // Funkce pro nastavení třetího API klíče
