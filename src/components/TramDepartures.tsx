@@ -46,13 +46,11 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
         return;
       }
 
-      // Vždy bez animací pro úsporu RAM
+      // Tiché update bez animací
       setDepartures(departuresData);
       setLastUpdate(new Date());
-      setRetryDelay(120000); // 2 min
       setRetryCount(0);
       setIsUpdating(false);
-      setAnimationKey(prev => prev + 1); // Trigger animation
     } catch (error: any) {
 
       if (error.message === 'RATE_LIMIT' || error.message === 'RATE_LIMIT_PROTECTION') {
