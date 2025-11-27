@@ -8,60 +8,48 @@ import { DailyRobot } from "@/components/DailyRobot";
 import { AlertBanner } from "@/components/AlertBanner";
 
 const Pragensis = () => {
-  const stations = [
-    {
-      id: ["U527Z101P", "U527Z102P"],
-      name: (
-        <div className="inline-flex items-center gap-2" style={{ borderRadius: '0.5rem' }}>
-          Vyšehrad
-          <img src="/pictures/metroC.svg" alt="Metro C" className="flex-shrink-0" style={{ width: '1em', height: '1em', marginTop: '0.15em' }} onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.outerHTML = '<span class="inline-flex items-center justify-center bg-red-600 text-white font-bold rounded flex-shrink-0" style="width: 1em; height: 1em; font-size: 0.6em; margin-top: 0.15em" title="Metro C">C</span>';
-          }} />
-        </div>
-      ),
-      displayName: (
-        <div className="inline-flex items-center gap-2" style={{ borderRadius: '0.5rem' }}>
-          Vyšehrad
-          <img src="/pictures/metroC.svg" alt="Metro C" className="flex-shrink-0" style={{ width: '1em', height: '1em', marginTop: '0.15em' }} onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.outerHTML = '<span class="inline-flex items-center justify-center bg-red-600 text-white font-bold rounded flex-shrink-0" style="width: 1em; height: 1em; font-size: 0.6em; margin-top: 0.15em" title="Metro C">C</span>';
-          }} />
-        </div>
-      ),
-      direction: "Vyšehrad Metro",
-      textName: "Vyšehrad Metro C",
-      simpleName: "Vyšehrad",
-      lat: 50.06116,
-      lon: 14.4305353
-    },
-    {
-      id: ["U527Z1P", "U527Z2P"],
-      name: "Vyšehrad (noční autobusy)",
-      displayName: "Vyšehrad (noční autobusy)",
-      textName: "Vyšehrad noční autobusy",
-      simpleName: "Vyšehrad",
-      direction: "Vyšehrad Bus",
-      lat: 50.06116,
-      lon: 14.4305353
-    },
-    {
-      id: ["U724Z1P", "U724Z2P"],
-      name: "Svatoplukova",
-      displayName: "Svatoplukova",
-      textName: "Svatoplukova",
-      simpleName: "Svatoplukova",
-      direction: "Svatoplukova",
-      lat: 50.06506,
-      lon: 14.4296026
-    }
-  ];
+  // Left station: Vyšehrad Metro C
+  const vysehradMetro = {
+    id: ["U527Z101P", "U527Z102P"],
+    name: (
+      <div className="inline-flex items-center gap-2" style={{ borderRadius: '0.5rem' }}>
+        Vyšehrad
+        <img src="/pictures/metroC.svg" alt="Metro C" className="flex-shrink-0" style={{ width: '1em', height: '1em', marginTop: '0.15em' }} onError={(e) => {
+          const target = e.target as HTMLImageElement;
+          target.outerHTML = '<span class="inline-flex items-center justify-center bg-red-600 text-white font-bold rounded flex-shrink-0" style="width: 1em; height: 1em; font-size: 0.6em; margin-top: 0.15em" title="Metro C">C</span>';
+        }} />
+      </div>
+    ),
+    displayName: (
+      <div className="inline-flex items-center gap-2" style={{ borderRadius: '0.5rem' }}>
+        Vyšehrad
+        <img src="/pictures/metroC.svg" alt="Metro C" className="flex-shrink-0" style={{ width: '1em', height: '1em', marginTop: '0.15em' }} onError={(e) => {
+          const target = e.target as HTMLImageElement;
+          target.outerHTML = '<span class="inline-flex items-center justify-center bg-red-600 text-white font-bold rounded flex-shrink-0" style="width: 1em; height: 1em; font-size: 0.6em; margin-top: 0.15em" title="Metro C">C</span>';
+        }} />
+      </div>
+    ),
+    direction: "Vyšehrad Metro",
+    textName: "Vyšehrad Metro C",
+    simpleName: "Vyšehrad",
+    lat: 50.06116,
+    lon: 14.4305353
+  };
+
+  // Right station: Svatoplukova tram
+  const svatoplukova = {
+    id: ["U724Z1P", "U724Z2P"],
+    name: "Svatoplukova",
+    displayName: "Svatoplukova",
+    textName: "Svatoplukova",
+    simpleName: "Svatoplukova",
+    direction: "Svatoplukova",
+    lat: 50.06506,
+    lon: 14.4296026
+  };
 
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [currentStationIndex, setCurrentStationIndex] = useState(0);
   const [timeOffset, setTimeOffset] = useState(0);
-  const [isDirectionFadingOut, setIsDirectionFadingOut] = useState(false);
-  const [directionAnimationKey, setDirectionAnimationKey] = useState(0);
 
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('tram-display-settings');
@@ -150,18 +138,6 @@ const Pragensis = () => {
     }
   };
 
-  const calculateStationIndex = (time: Date) => {
-    const totalSeconds = time.getHours() * 3600 + time.getMinutes() * 60 + time.getSeconds();
-    const cyclePosition = totalSeconds % 30;
-
-    // 0 = Vyšehrad Metro (0-15 sekund)
-    // 1 = Svatoplukova + Vyšehrad Bus (15-30 sekund)
-    if (cyclePosition < 15) {
-      return 0;
-    } else {
-      return 1;
-    }
-  };
 
   useEffect(() => {
     const initializeTime = async () => {
@@ -193,38 +169,25 @@ const Pragensis = () => {
   }, []);
 
   useEffect(() => {
-    const updateTimeAndStation = () => {
+    const updateTime = () => {
       const localTime = new Date();
       const adjustedTime = new Date(localTime.getTime() + timeOffset);
       setCurrentTime(adjustedTime);
-
-      const newStationIndex = calculateStationIndex(adjustedTime);
-
-      if (newStationIndex !== currentStationIndex) {
-        setIsDirectionFadingOut(true);
-
-        setTimeout(() => {
-          setCurrentStationIndex(newStationIndex);
-          setDirectionAnimationKey(prev => prev + 1);
-          setIsDirectionFadingOut(false);
-        }, 400);
-      }
     };
 
-    updateTimeAndStation();
+    updateTime();
 
-    const timer = setInterval(updateTimeAndStation, 1000);
+    const timer = setInterval(updateTime, 1000);
 
     return () => {
       clearInterval(timer);
     };
-  }, [currentStationIndex, timeOffset]);
+  }, [timeOffset]);
 
-  // View 0: Vyšehrad Metro (both directions shown on both sides)
-  // View 1: Svatoplukova (left) + Vyšehrad Bus (right)
-  const leftStation = currentStationIndex === 0 ? stations[0] : stations[2]; // Metro or Svatoplukova
-  const rightStation = currentStationIndex === 0 ? stations[0] : stations[1]; // Metro or Vyšehrad Bus
-  const mainStationName = currentStationIndex === 0 ? "Vyšehrad Metro" : "Pragensis";
+  // Simple split view: Vyšehrad Metro (left) + Svatoplukova (right)
+  const leftStation = vysehradMetro;
+  const rightStation = svatoplukova;
+  const mainStationName = "Pragensis";
 
   return (
       <>
@@ -261,7 +224,7 @@ const Pragensis = () => {
               </div>
 
               <div className="text-center">
-                <h1 className="font-bold leading-tight text-6xl" key={`main-station-${currentStationIndex}`}>
+                <h1 className="font-bold leading-tight text-6xl">
                   {mainStationName}
                 </h1>
               </div>
@@ -287,7 +250,7 @@ const Pragensis = () => {
 
         <div className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0">
           <div className="flex-1 p-2 overflow-hidden flex flex-col min-h-0">
-            <div className={`${settings.disableAnimations ? '' : `direction-header-animation ${isDirectionFadingOut ? 'fade-out' : ''}`} bg-white/95 border-b-8 border-blue-600 text-gray-800 px-3 mb-2 shadow-lg flex items-center justify-center rounded-lg`} style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }} key={`left-header-${directionAnimationKey}`}>
+            <div className="bg-white/95 border-b-8 border-blue-600 text-gray-800 px-3 mb-2 shadow-lg flex items-center justify-center rounded-lg" style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }}>
               <div className="flex items-center justify-center gap-2 w-full h-full">
                 <h2 className="font-bold leading-none" style={{ fontSize: 'clamp(1.75rem, 3.5vh, 2.5rem)' }}>
                   {React.isValidElement(leftStation.name) ? (
@@ -301,7 +264,6 @@ const Pragensis = () => {
 
             <div className={`flex-1`}>
               <TramDepartures
-                key={`left-${Array.isArray(leftStation.id) ? leftStation.id.join(',') : leftStation.id}-${currentStationIndex}`}
                 stationId={leftStation.id}
                 maxItems={7}
                 showTimesInMinutes={settings.showTimesInMinutes}
@@ -312,7 +274,7 @@ const Pragensis = () => {
           </div>
 
           <div className="flex-1 p-2 overflow-hidden flex flex-col min-h-0">
-            <div className={`${settings.disableAnimations ? '' : `direction-header-animation ${isDirectionFadingOut ? 'fade-out' : ''}`} bg-white/95 border-b-8 border-blue-600 text-gray-800 px-3 mb-2 shadow-lg flex items-center justify-center rounded-lg`} style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }} key={`right-header-${directionAnimationKey}`}>
+            <div className="bg-white/95 border-b-8 border-blue-600 text-gray-800 px-3 mb-2 shadow-lg flex items-center justify-center rounded-lg" style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }}>
               <div className="flex items-center justify-center gap-2 w-full h-full">
                 <h2 className="font-bold leading-none" style={{ fontSize: 'clamp(1.75rem, 3.5vh, 2.5rem)' }}>
                   {React.isValidElement(rightStation.name) ? (
@@ -326,7 +288,6 @@ const Pragensis = () => {
 
             <div className={`flex-1`}>
               <TramDepartures
-                key={`right-${Array.isArray(rightStation.id) ? rightStation.id.join(',') : rightStation.id}-${currentStationIndex}`}
                 stationId={rightStation.id}
                 maxItems={7}
                 showTimesInMinutes={settings.showTimesInMinutes}
