@@ -18,59 +18,33 @@ interface TramDeparturesProps {
 const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTimesInMinutes = false, stationName = "", disableAnimations = false, timeOffset = 0 }: TramDeparturesProps) => {
   const [departures, setDepartures] = useState<Departure[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [nextDepartures, setNextDepartures] = useState<Departure[]>([]);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [error, setError] = useState<string | null>(null);
-  const [retryDelay, setRetryDelay] = useState(60000);
   const [isRateLimited, setIsRateLimited] = useState(false);
-  const [previousStationId, setPreviousStationId] = useState<string | string[]>("");
-  const [retryCount, setRetryCount] = useState(0);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [currentTime, setCurrentTime] = useState<number>(Math.floor(Date.now() / 1000));
-  const [animationKey, setAnimationKey] = useState(0);
-  const [isFadingOut, setIsFadingOut] = useState(false);
 
-  const fetchDepartures = async (isRetry = false) => {
+  const fetchDepartures = async () => {
     try {
       setError(null);
       setIsRateLimited(false);
 
-      // Předčítání dat na pozadí
       const result = await getDepartures(stationId);
       const { departures: departuresData } = result;
-
-      if (departuresData.length === 0 && retryCount < 3) {
-        setRetryCount(prev => prev + 1);
-        setTimeout(() => fetchDepartures(true), 5000);
-        return;
-      }
 
       // Tiché update bez animací
       setDepartures(departuresData);
       setLastUpdate(new Date());
-      setRetryCount(0);
-      setIsUpdating(false);
     } catch (error: any) {
-
-      if (error.message === 'RATE_LIMIT' || error.message === 'RATE_LIMIT_PROTECTION') {
-        setError("API limit dosažen - čekám déle...");
+      if (error.message === 'RATE_LIMIT' || error.message?.includes('429')) {
+        setError("API limit - čekám...");
         setIsRateLimited(true);
-        setRetryDelay(120000);
-      } else if (error.message?.includes('429') || error.message?.includes('too many')) {
-        setError("Příliš mnoho požadavků - čekám déle...");
-        setIsRateLimited(true);
-        setRetryDelay(prev => Math.min(prev * 2, 300000));
-      } else if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
-        setError("Chyba autentifikace - zkontrolujte API klíče");
-        setRetryDelay(300000); // 5 minut
+      } else if (error.message?.includes('401')) {
+        setError("Chyba API klíče");
       } else {
-        setError("Chyba při načítání odjezdů");
-        setRetryDelay(120000);
+        setError("Chyba načítání");
       }
     } finally {
       setLoading(false);
-      setIsUpdating(false);
     }
   };
 
