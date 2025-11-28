@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { TramDepartures } from "@/components/TramDepartures";
+import { TramDeparturesConnected } from "@/components/TramDeparturesConnected";
 import { WeatherWidget } from "@/components/WeatherWidget";
 import { RouteInfo } from "@/components/RouteInfo";
 import { Settings } from "@/components/Settings";
 import { WeatherHeader } from "@/components/WeatherHeader";
 import { DailyRobot } from "@/components/DailyRobot";
 import { AlertBanner } from "@/components/AlertBanner";
+import { Snowfall } from "@/components/Snowfall";
+import { useDataContext } from "@/context/DataContext";
 
 const Pragensis = () => {
+  const { time, isWinterPeriod } = useDataContext();
+  const currentTime = time.currentTime;
+
   // Left station: Vyšehrad Metro C
   const vysehradMetro = {
     id: ["U527Z101P", "U527Z102P"],
@@ -48,8 +53,6 @@ const Pragensis = () => {
     lon: 14.4296026
   };
 
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [timeOffset, setTimeOffset] = useState(0);
 
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('tram-display-settings');
@@ -123,74 +126,6 @@ const Pragensis = () => {
     }));
   };
 
-  const fetchWorldTime = async (): Promise<Date | null> => {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-
-      const response = await fetch('https://worldtimeapi.org/api/timezone/Europe/Prague', {
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        return null;
-      }
-
-      const data = await response.json();
-      const serverTime = new Date(data.datetime);
-      return serverTime;
-    } catch (error) {
-      return null;
-    }
-  };
-
-
-  useEffect(() => {
-    const initializeTime = async () => {
-      const serverTime = await fetchWorldTime();
-
-      if (serverTime) {
-        const localTime = new Date();
-        const offset = serverTime.getTime() - localTime.getTime();
-        setTimeOffset(offset);
-      } else {
-        setTimeOffset(0);
-      }
-    };
-
-    initializeTime();
-
-    const syncInterval = setInterval(async () => {
-      const serverTime = await fetchWorldTime();
-      if (serverTime) {
-        const localTime = new Date();
-        const offset = serverTime.getTime() - localTime.getTime();
-        setTimeOffset(offset);
-      }
-    }, 600000);
-
-    return () => {
-      clearInterval(syncInterval);
-    };
-  }, []);
-
-  useEffect(() => {
-    const updateTime = () => {
-      const localTime = new Date();
-      const adjustedTime = new Date(localTime.getTime() + timeOffset);
-      setCurrentTime(adjustedTime);
-    };
-
-    updateTime();
-
-    const timer = setInterval(updateTime, 1000);
-
-    return () => {
-      clearInterval(timer);
-    };
-  }, [timeOffset]);
 
   // Simple split view: Vyšehrad Metro (left) + Svatoplukova (right)
   const leftStation = vysehradMetro;
@@ -271,13 +206,12 @@ const Pragensis = () => {
             </div>
 
             <div className={`flex-1`}>
-              <TramDepartures
-                stationId={leftStation.id}
+              <TramDeparturesConnected
+                stationKey="vysehrad"
                 maxItems={7}
                 showTimesInMinutes={settings.showTimesInMinutes}
                 stationName={leftStation.simpleName || leftStation.textName || mainStationName}
                 disableAnimations={settings.disableAnimations}
-                timeOffset={timeOffset}
               />
             </div>
           </div>
@@ -296,13 +230,12 @@ const Pragensis = () => {
             </div>
 
             <div className={`flex-1`}>
-              <TramDepartures
-                stationId={rightStation.id}
+              <TramDeparturesConnected
+                stationKey="svatoplukova"
                 maxItems={7}
                 showTimesInMinutes={settings.showTimesInMinutes}
                 stationName={rightStation.simpleName || rightStation.textName || mainStationName}
                 disableAnimations={settings.disableAnimations}
-                timeOffset={timeOffset}
               />
             </div>
           </div>
@@ -319,6 +252,9 @@ const Pragensis = () => {
       <div className="fixed bottom-0 left-0 right-0 z-50 w-full">
         <DailyRobot />
       </div>
+
+      {/* Sněžení v zimním období */}
+      {(isWinterPeriod || settings.snowyLogo) && <Snowfall />}
       </>
     );
 };

@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { TramDepartures } from "@/components/TramDepartures";
+import { TramDeparturesConnected } from "@/components/TramDeparturesConnected";
 import { WeatherWidget } from "@/components/WeatherWidget";
 import { RouteInfo } from "@/components/RouteInfo";
 import { Settings } from "@/components/Settings";
 import { WeatherHeader } from "@/components/WeatherHeader";
 import { DailyRobot } from "@/components/DailyRobot";
 import { AlertBanner } from "@/components/AlertBanner";
+import { Snowfall } from "@/components/Snowfall";
+import { useDataContext } from "@/context/DataContext";
 
 const Index = () => {
+  const { time, isWinterPeriod } = useDataContext();
+
   const stations = [
     {
       id: "U865Z1P",
@@ -80,9 +84,9 @@ const Index = () => {
     }
   ];
 
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const currentTime = time.currentTime;
+  const timeOffset = time.timeOffset;
   const [currentStationIndex, setCurrentStationIndex] = useState(0);
-  const [timeOffset, setTimeOffset] = useState(0); // Offset mezi serverovým a lokálním časem
   const [isDirectionFadingOut, setIsDirectionFadingOut] = useState(false);
   const [directionAnimationKey, setDirectionAnimationKey] = useState(0);
 
@@ -160,31 +164,6 @@ const Index = () => {
     }));
   };
 
-  // Synchronizace času s WorldTimeAPI
-  const fetchWorldTime = async (): Promise<Date | null> => {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s timeout
-
-      const response = await fetch('https://worldtimeapi.org/api/timezone/Europe/Prague', {
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        return null;
-      }
-
-      const data = await response.json();
-      const serverTime = new Date(data.datetime);
-      return serverTime;
-    } catch (error) {
-      // Fallback na lokální čas
-      return null;
-    }
-  };
-
   const calculateStationIndex = (time: Date) => {
     const totalSeconds = time.getHours() * 3600 + time.getMinutes() * 60 + time.getSeconds();
     const cyclePosition = totalSeconds % 30; // 30 sekundový cyklus (15s + 15s)
@@ -198,73 +177,22 @@ const Index = () => {
     }
   };
 
-  // Inicializace a synchronizace času
+  // Station switching based on time from context
   useEffect(() => {
-    const initializeTime = async () => {
-      const serverTime = await fetchWorldTime();
+    const newStationIndex = calculateStationIndex(currentTime);
 
-      if (serverTime) {
-        const localTime = new Date();
-        const offset = serverTime.getTime() - localTime.getTime();
-        setTimeOffset(offset);
-        // setWorldTime(serverTime);
-      } else {
-        // Fallback na lokální čas
-        setTimeOffset(0);
-        // setWorldTime(new Date());
-      }
-    };
+    if (newStationIndex !== currentStationIndex) {
+      // Start fade out animation
+      setIsDirectionFadingOut(true);
 
-    initializeTime();
-
-    // Re-synchronizace každých 10 minut (600000 ms) - optimalizováno pro 1 GB RAM
-    const syncInterval = setInterval(async () => {
-      const serverTime = await fetchWorldTime();
-      if (serverTime) {
-        const localTime = new Date();
-        const offset = serverTime.getTime() - localTime.getTime();
-        setTimeOffset(offset);
-        // setWorldTime(serverTime);
-      }
-    }, 600000); // 10 minut
-
-    return () => {
-      clearInterval(syncInterval);
-    };
-  }, []);
-
-  useEffect(() => {
-    const updateTimeAndStation = () => {
-      // Použij offset pro přesný čas
-      const localTime = new Date();
-      const adjustedTime = new Date(localTime.getTime() + timeOffset);
-      setCurrentTime(adjustedTime);
-
-      const newStationIndex = calculateStationIndex(adjustedTime);
-
-      if (newStationIndex !== currentStationIndex) {
-        // Start fade out animation
-        setIsDirectionFadingOut(true);
-
-        // After fade out, change station
-        setTimeout(() => {
-          setCurrentStationIndex(newStationIndex);
-          setDirectionAnimationKey(prev => prev + 1);
-          setIsDirectionFadingOut(false);
-        }, 400); // 300ms fade out + 100ms buffer
-      }
-    };
-
-    // Inicializace při prvním načtení
-    updateTimeAndStation();
-
-    // Update každou sekundu
-    const timer = setInterval(updateTimeAndStation, 1000);
-
-    return () => {
-      clearInterval(timer);
-    };
-  }, [currentStationIndex, timeOffset]);
+      // After fade out, change station
+      setTimeout(() => {
+        setCurrentStationIndex(newStationIndex);
+        setDirectionAnimationKey(prev => prev + 1);
+        setIsDirectionFadingOut(false);
+      }, 400); // 300ms fade out + 100ms buffer
+    }
+  }, [currentTime, currentStationIndex]);
 
   const motolStations = [
     stations[2],
@@ -283,6 +211,10 @@ const Index = () => {
   const leftStation = currentStationIndex === 0 ? vozovnaStations[1] : motolStations[0]; // Řepy nebo Zličín
   const rightStation = currentStationIndex === 0 ? vozovnaStations[0] : motolStations[1]; // Centrum nebo Nemocnice
   const mainStationName = currentStationIndex === 0 ? "Vozovna Motol" : "Motol";
+
+  // Station keys pro DataContext
+  const leftStationKey = currentStationIndex === 0 ? 'vozovnaRepy' : 'motolZlicin';
+  const rightStationKey = currentStationIndex === 0 ? 'vozovnaCentrum' : 'motolNemocnice';
 
   return (
       <>
@@ -367,14 +299,13 @@ const Index = () => {
             <div
               className={`flex-1`}
             >
-              <TramDepartures
-                key={`left-${Array.isArray(leftStation.id) ? leftStation.id.join(',') : leftStation.id}-${currentStationIndex}`}
-                stationId={leftStation.id}
-                  maxItems={7}
+              <TramDeparturesConnected
+                key={`left-${leftStationKey}-${currentStationIndex}`}
+                stationKey={leftStationKey}
+                maxItems={7}
                 showTimesInMinutes={settings.showTimesInMinutes}
                 stationName={leftStation.simpleName || leftStation.textName || mainStationName}
                 disableAnimations={settings.disableAnimations}
-                timeOffset={timeOffset}
               />
             </div>
           </div>
@@ -397,14 +328,13 @@ const Index = () => {
             <div
               className={`flex-1`}
             >
-              <TramDepartures
-                key={`right-${Array.isArray(rightStation.id) ? rightStation.id.join(',') : rightStation.id}-${currentStationIndex}`}
-                stationId={rightStation.id}
-                  maxItems={7}
+              <TramDeparturesConnected
+                key={`right-${rightStationKey}-${currentStationIndex}`}
+                stationKey={rightStationKey}
+                maxItems={7}
                 showTimesInMinutes={settings.showTimesInMinutes}
                 stationName={rightStation.simpleName || rightStation.textName || mainStationName}
                 disableAnimations={settings.disableAnimations}
-                timeOffset={timeOffset}
               />
             </div>
           </div>
@@ -422,6 +352,9 @@ const Index = () => {
       <div className="fixed bottom-0 left-0 right-0 z-50 w-full">
         <DailyRobot />
       </div>
+
+      {/* Sněžení v zimním období */}
+      {(isWinterPeriod || settings.snowyLogo) && <Snowfall />}
       </>
     );
 };
