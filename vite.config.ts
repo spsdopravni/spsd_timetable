@@ -26,26 +26,29 @@ export default defineConfig(({ mode }) => ({
         drop_console: true,
         drop_debugger: true,
         pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn'],
-        passes: 3,
-        unsafe: true,
-        unsafe_comps: true,
-        unsafe_math: true,
-        unsafe_methods: true
+        passes: 2,
+        ecma: 2020,
       },
       mangle: {
         safari10: true
+      },
+      format: {
+        comments: false,
       }
     },
     rollupOptions: {
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['lucide-react', 'clsx', 'tailwind-merge']
+          'ui-vendor': ['lucide-react', 'clsx', 'tailwind-merge'],
+          'animation': ['framer-motion'],
         }
       }
     },
     chunkSizeWarningLimit: 1000,
-    target: 'es2015',
+    target: 'es2020',
     cssCodeSplit: true,
+    sourcemap: false,
+    reportCompressedSize: false,
   }
 }));

@@ -4,7 +4,7 @@ import SnowfallLib from 'react-snowfall';
 const SnowfallComponent = () => {
   return (
     <SnowfallLib
-      snowflakeCount={150}
+      snowflakeCount={40}
       style={{
         position: 'fixed',
         top: 0,
@@ -14,9 +14,9 @@ const SnowfallComponent = () => {
         zIndex: 9999,
         pointerEvents: 'none',
       }}
-      speed={[0.5, 2.0]}
-      wind={[-0.5, 1.0]}
-      radius={[1, 5]}
+      speed={[0.3, 1.5]}
+      wind={[-0.3, 0.5]}
+      radius={[1, 4]}
     />
   );
 };

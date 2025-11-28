@@ -259,13 +259,13 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     initialize();
   }, [fetchWorldTime, fetchStationDepartures, fetchWeatherData]);
 
-  // Update current time every second
+  // Update current time every 2 seconds (reduces CPU load on slow PCs)
   useEffect(() => {
     const timer = setInterval(() => {
       const localTime = new Date();
       const adjustedTime = new Date(localTime.getTime() + time.timeOffset);
       setTime(prev => ({ ...prev, currentTime: adjustedTime }));
-    }, 1000);
+    }, 2000);
 
     return () => clearInterval(timer);
   }, [time.timeOffset]);

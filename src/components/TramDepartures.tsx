@@ -64,7 +64,7 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
     return () => clearInterval(interval);
   }, [stationId]);
 
-  // Aktualizace času každou sekundu pro kontinuální countdown
+  // Aktualizace času každé 2 sekundy pro kontinuální countdown (snížená zátěž CPU)
   useEffect(() => {
     const updateTime = () => {
       const localTime = Date.now();
@@ -74,7 +74,7 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
 
     updateTime(); // Okamžitě nastavit správný čas
 
-    const timer = setInterval(updateTime, 1000);
+    const timer = setInterval(updateTime, 2000);
 
     return () => clearInterval(timer);
   }, [timeOffset]);
