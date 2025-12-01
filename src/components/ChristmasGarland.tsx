@@ -6,7 +6,7 @@ const ChristmasGarlandComponent = () => {
   const month = today.getMonth() + 1;
   const day = today.getDate();
 
-  const isChristmasPeriod = month === 12 && day >= 20 && day < 27;
+  const isChristmasPeriod = month === 12 && day >= 1 && day <= 26;
 
   if (!isChristmasPeriod) {
     return null;
