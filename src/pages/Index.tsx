@@ -7,6 +7,7 @@ import { WeatherHeader } from "@/components/WeatherHeader";
 import { DailyRobot } from "@/components/DailyRobot";
 import { AlertBanner } from "@/components/AlertBanner";
 import { Snowfall } from "@/components/Snowfall";
+import { ChristmasGarland } from "@/components/ChristmasGarland";
 import { useDataContext } from "@/context/DataContext";
 
 const Index = () => {
@@ -277,6 +278,9 @@ const Index = () => {
               </div>
             </div>
           </div>
+
+          {/* Vánoční girlanda */}
+          <ChristmasGarland />
         </div>
 
         {/* Content area */}
@@ -284,7 +288,7 @@ const Index = () => {
           {/* Left panel - Směr Řepy nebo Směr Zličín */}
           <div className="flex-1 p-2 overflow-hidden flex flex-col min-h-0">
             {/* Direction header - elegant style */}
-            <div className={`${settings.disableAnimations ? '' : `direction-header-animation ${isDirectionFadingOut ? 'fade-out' : ''}`} bg-white/95 border-b-8 border-blue-600 text-gray-800 px-3 mb-2 shadow-lg flex items-center justify-center rounded-lg`} style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }} key={`left-header-${directionAnimationKey}`}>
+            <div className={`${settings.disableAnimations ? '' : `direction-header-animation ${isDirectionFadingOut ? 'fade-out' : ''}`} bg-white/95 border-b-8 border-blue-600 text-gray-800 px-3 shadow-lg flex items-center justify-center rounded-lg`} style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }} key={`left-header-${directionAnimationKey}`}>
               <div className="flex items-center justify-center gap-2 w-full h-full">
                 <h2 className="font-bold leading-none" style={{ fontSize: 'clamp(1.75rem, 3.5vh, 2.5rem)' }}>
                   {React.isValidElement(leftStation.name) ? (
@@ -313,7 +317,7 @@ const Index = () => {
           {/* Right panel - Směr Centrum nebo Směr Nemocnice Motol */}
           <div className="flex-1 p-2 overflow-hidden flex flex-col min-h-0">
             {/* Direction header - elegant style */}
-            <div className={`${settings.disableAnimations ? '' : `direction-header-animation ${isDirectionFadingOut ? 'fade-out' : ''}`} bg-white/95 border-b-8 border-blue-600 text-gray-800 px-3 mb-2 shadow-lg flex items-center justify-center rounded-lg`} style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }} key={`right-header-${directionAnimationKey}`}>
+            <div className={`${settings.disableAnimations ? '' : `direction-header-animation ${isDirectionFadingOut ? 'fade-out' : ''}`} bg-white/95 border-b-8 border-blue-600 text-gray-800 px-3 shadow-lg flex items-center justify-center rounded-lg`} style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }} key={`right-header-${directionAnimationKey}`}>
               <div className="flex items-center justify-center gap-2 w-full h-full">
                 <h2 className="font-bold leading-none" style={{ fontSize: 'clamp(1.75rem, 3.5vh, 2.5rem)' }}>
                   {React.isValidElement(rightStation.name) ? (
