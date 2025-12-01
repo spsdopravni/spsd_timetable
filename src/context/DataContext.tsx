@@ -14,12 +14,24 @@ export const ALL_STATIONS = {
   // Pragensis.tsx stanice
   vysehrad: { id: ['U527Z101P', 'U527Z102P'], name: 'Vyšehrad Metro C' },
   svatoplukova: { id: ['U724Z1P', 'U724Z2P'], name: 'Svatoplukova' },
+  // Moravska.tsx stanice
+  janaMasarykaA: { id: ['U200Z1P'], name: 'Jana Masaryka A' },
+  janaMasarykaB: { id: ['U200Z2P'], name: 'Jana Masaryka B' },
+  namestiMiruA: { id: ['U201Z1P'], name: 'Náměstí Míru A' },
+  namestiMiruB: { id: ['U201Z2P'], name: 'Náměstí Míru B' },
+  sumavskaA: { id: ['U202Z1P'], name: 'Šumavská A' },
+  sumavskaB: { id: ['U202Z2P'], name: 'Šumavská B' },
+  // Kosire.tsx stanice
+  kosireLeft: { id: ['U000Z002P'], name: 'Kosire Left Station' },
+  kosireRight: { id: ['U000Z003P'], name: 'Kosire Right Station' },
 };
 
 // Weather lokace
 export const WEATHER_LOCATIONS = {
   vozovnaMotol: { lat: 50.0755, lon: 14.4378, name: 'Vozovna Motol' },
   pragensis: { lat: 50.06506, lon: 14.4296026, name: 'Pragensis' },
+  moravska: { lat: 50.0875, lon: 14.4378, name: 'Moravska' },
+  kosire: { lat: 50.0900, lon: 14.4400, name: 'Kosire' },
 };
 
 interface StationDepartures {

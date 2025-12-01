@@ -8,6 +8,8 @@ import { DataProvider } from "@/context/DataContext";
 // Lazy load pages
 const Index = lazy(() => import("./pages/Index"));
 const Pragensis = lazy(() => import("./pages/Pragensis"));
+const Moravska = lazy(() => import("./pages/Moravska"));
+const Kosire = lazy(() => import("./pages/Kosire"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const App = () => (
@@ -20,6 +22,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/pragensis" element={<Pragensis />} />
+            <Route path="/moravska" element={<Moravska />} />
+            <Route path="/kosire" element={<Kosire />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
