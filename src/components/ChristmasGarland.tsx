@@ -1,12 +1,12 @@
 import { memo } from 'react';
 
 const ChristmasGarlandComponent = () => {
-  // Stejná logika jako vánoční robot - 20. až 26. prosince
+  // Vánoční období - 20. až 26. prosince
   const today = new Date();
   const month = today.getMonth() + 1;
   const day = today.getDate();
 
-  const isChristmasPeriod = month === 12 && day >= 1 && day <= 26;
+  const isChristmasPeriod = month === 12 && day >= 20 && day <= 26;
 
   if (!isChristmasPeriod) {
     return null;

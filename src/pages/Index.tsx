@@ -97,7 +97,6 @@ const Index = () => {
       showWeatherInHeader: false,
       showTimesInMinutes: true,
       testAlert: false,
-      snowyLogo: true,
       disableAnimations: false
     };
 
@@ -119,14 +118,8 @@ const Index = () => {
 
   // Helper funkce pro získání správné cesty k logu
   const getLogoPath = () => {
-    const today = new Date();
-    const month = today.getMonth() + 1;
-    const day = today.getDate();
-
-    // Sněžné logo fixně od 27.11 do 1.1
-    const isWinterPeriod = (month === 11 && day >= 27) || month === 12 || (month === 1 && day === 1);
-
-    if (isWinterPeriod || settings.snowyLogo) {
+    // Používáme isWinterPeriod z kontextu (27.11 - 26.12)
+    if (isWinterPeriod) {
       return "/pictures/snow_spsd.png";
     }
     return "/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png";
@@ -357,8 +350,8 @@ const Index = () => {
         <DailyRobot />
       </div>
 
-      {/* Sněžení v zimním období */}
-      {(isWinterPeriod || settings.snowyLogo) && <Snowfall />}
+      {/* Sněžení v zimním období (27.11 - 26.12) */}
+      {isWinterPeriod && <Snowfall />}
       </>
     );
 };

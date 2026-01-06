@@ -24,8 +24,8 @@ export const DailyRobot = () => {
 
     console.log('Robot theme check:', { month, day });
 
-    // Silvestr a Nový rok (25.12 - 2.1) - NEJVYŠŠÍ PRIORITA
-    if ((month === 12 && day >= 27) || (month === 1 && day <= 2)) {
+    // Silvestr a Nový rok (27.12 - 6.1) - NEJVYŠŠÍ PRIORITA
+    if ((month === 12 && day >= 27) || (month === 1 && day <= 6)) {
       return {
         image: '/pictures/robot-newyear.png',
         theme: 'newyear'
@@ -81,8 +81,8 @@ export const DailyRobot = () => {
       };
     }
 
-    // Zimní téma (27. listopadu - 28. února, kromě vánoc a silvestru)
-    if ((month === 11 && day >= 27) || (month === 12 && day < 20) || (month === 1 && day > 2) || month === 2) {
+    // Zimní téma (27. listopadu - 19. prosince, před vánocemi)
+    if ((month === 11 && day >= 27) || (month === 12 && day < 20)) {
       return {
         image: '/pictures/robot-winter.png',
         theme: 'winter'
@@ -116,9 +116,14 @@ export const DailyRobot = () => {
 
     // Prázdniny a speciální dny
     const holidays = {
-      // Vánoční prázdniny
-      'beforeChristmas': (month === 12 && day >= 22) || (month === 1 && day <= 2),
-      'afterChristmas': month === 1 && day === 3,
+      // Vánoční období (20.12. - 26.12.)
+      'christmas': month === 12 && day >= 20 && day <= 26,
+
+      // Novoroční období (27.12. - 6.1.)
+      'newYear': (month === 12 && day >= 27) || (month === 1 && day <= 6),
+
+      // První den po novém roce (7.1.)
+      'afterNewYear': month === 1 && day === 7,
 
       // Jarní prázdniny (březen)
       'beforeSpring': month === 3 && day >= 25 && day <= 31,
@@ -160,10 +165,22 @@ export const DailyRobot = () => {
     if (cyclePosition === 0) {
       // POZDRAVI - různé podle situace včetně prázdnin
 
-      // První školní den po prázdninách
-      if (holidays.afterChristmas) {
-        return `${greeting} Vítejte zpátky po vánočních prázdninách! Přejeme úspěšný školní rok!`;
+      // Novoroční období (27.12. - 6.1.)
+      if (holidays.newYear) {
+        const year = new Date().getFullYear();
+        const newYearMessages = [
+          `${greeting} Šťastný nový rok ${year}! Přejeme vám úspěšný rok!`,
+          `${greeting} Vítejte v roce ${year}! Ať se vám daří!`,
+          `${greeting} Přejeme krásný nový rok ${year}!`,
+        ];
+        return newYearMessages[Math.floor(Math.random() * newYearMessages.length)];
       }
+
+      // První den po novém roce (7.1.)
+      if (holidays.afterNewYear) {
+        return `${greeting} Vítejte zpátky po novoročních prázdninách! Přejeme úspěšný rok!`;
+      }
+
       if (holidays.afterSpring) {
         return `${greeting} Vítejte zpátky po jarních prázdninách! Doufáme, že jste si odpočinuli!`;
       }
@@ -177,9 +194,9 @@ export const DailyRobot = () => {
         return `${greeting} Vítejte zpátky po podzimních prázdninách! Pokračujeme ve studiu!`;
       }
 
-      // Před prázdninami
-      if (holidays.beforeChristmas) {
-        return `${greeting} Užijte si vánoční prázdniny! Uvidíme se po Novém roce!`;
+      // Vánoční období (20. - 26.12.)
+      if (holidays.christmas) {
+        return `${greeting} Přejeme vám krásné Vánoce! Užijte si svátky!`;
       }
       if (holidays.beforeSpring) {
         return `${greeting} Užijte si jarní prázdniny! Odpočiňte si a naberte síly!`;

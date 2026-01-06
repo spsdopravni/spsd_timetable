@@ -243,11 +243,11 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     return weatherData[locationKey] || defaultWeatherState;
   }, [weatherData]);
 
-  // Detekce zimního období (27.11 - 1.1)
+  // Detekce vánočního období (20.12 - 26.12) - sněžení a zimní logo
   const isWinterPeriod = (() => {
     const month = time.currentTime.getMonth() + 1;
     const day = time.currentTime.getDate();
-    return (month === 11 && day >= 27) || month === 12 || (month === 1 && day === 1);
+    return month === 12 && day >= 20 && day <= 26;
   })();
 
   // Initialize - load all data on mount
