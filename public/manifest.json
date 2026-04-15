@@ -1,27 +1,89 @@
 
 {
-  "name": "Odjezdová tabule Praha Motol",
-  "short_name": "Praha Motol",
-  "description": "Živá odjezdová tabule pro zastávky v oblasti Praha Motol s real-time informacemi o tramvajích a autobusech",
+  "name": "SPSD Timetable - Tramvajové odjezdy Praha",
+  "short_name": "SPSD Rozvrh",
+  "description": "Webová aplikace pro sledování odjezdů tramvají v Praze s aktuálním počasím pro školu SPSD",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1f2937",
-  "theme_color": "#1f2937",
-  "orientation": "landscape-primary",
-  "categories": ["transport", "utilities", "productivity"],
+  "background_color": "#3b82f6",
+  "theme_color": "#1e40af",
+  "orientation": "any",
+  "categories": ["education", "transportation", "utilities"],
   "lang": "cs",
+  "dir": "ltr",
   "icons": [
+    {
+      "src": "/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png",
+      "sizes": "48x48",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
-  ]
+  ],
+  "shortcuts": [
+    {
+      "name": "Vozovna Motol",
+      "short_name": "Vozovna",
+      "description": "Odjezdy z Vozovny Motol",
+      "url": "/",
+      "icons": [{ "src": "/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Pragensis",
+      "short_name": "Pragensis",
+      "description": "Odjezdy z Vyšehradu a Svatoplukovej",
+      "url": "/pragensis",
+      "icons": [{ "src": "/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Moravská",
+      "short_name": "Moravská",
+      "description": "Odjezdy z Moravské oblasti",
+      "url": "/moravska",
+      "icons": [{ "src": "/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Košíře",
+      "short_name": "Košíře",
+      "description": "Odjezdy z Košířské oblasti",
+      "url": "/kosire",
+      "icons": [{ "src": "/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png", "sizes": "96x96" }]
+    }
+  ],
+  "prefer_related_applications": false
 }

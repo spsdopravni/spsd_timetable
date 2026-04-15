@@ -1,7 +1,26 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(npm install --save-dev vite-plugin-pwa workbox-window)",
+      "Bash(npm run preview)",
+      "Bash(python:*)",
+      "Bash(npx --yes puppeteer browsers install chrome)",
+      "Bash(npm install:*)",
+      "Bash(node -e ':*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm ls:*)",
+      "Bash(rm -rf node_modules/.vite)",
+      "Bash(npm run:*)",
+      "Bash(curl -s -H \"X-Access-Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzcwNCwiaWF0IjoxNzYwNzkxMjUwLCJleHAiOjExNzYwNzkxMjUwLCJpc3MiOiJnb2xlbWlvIiwianRpIjoiM2Y4MWJiMjItM2YxNC00ODgxLThlMDYtYjQ1YmRlOTYzZjk3In0.BR0653y2bfG0zxdkOYvDgvywRR9Z9nXB4NlatJXR38A\" \"https://api.golemio.cz/v2/pid/gtfs/stops?names=Jana%20Masaryka&limit=10\")",
+      "Bash(node -e \"const d=require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\);const j=JSON.parse\\(d\\);\\(j.stops||[]\\).forEach\\(s=>console.log\\(s.stop_id, s.stop_name, s.platform_code||''\\)\\)\")",
+      "Bash(node -e \"const j=JSON.parse\\(require\\('fs'\\).readFileSync\\('/tmp/jm.json','utf8'\\)\\);\\(j.stops||[]\\).forEach\\(s=>console.log\\(s.stop_id, s.stop_name, s.platform_code||''\\)\\)\")",
+      "Bash(curl -s -o \"C:/Users/brozb/Desktop/spsd_timetable/public/pictures/bikefest-logo.png\" \"https://praguebikefest.cz/wp-content/uploads/2024/05/PBF_logo-1536x380.png\")",
+      "Bash(curl -s -o \"C:/Users/brozb/Desktop/spsd_timetable/public/pictures/bikefest-logo.svg\" \"https://praguebikefest.cz/wp-content/themes/template-prague-bike-fest/assets/img/logo.svg\")",
+      "WebFetch(domain:ctrlv.cz)",
+      "Bash(curl -sL \"https://www.scholapragensis.cz/visual/img/logo-sp.svg\" -o \"C:/Users/brozb/Desktop/spsd_timetable/public/pictures/schola-pragensis-logo.svg\")",
+      "Bash(curl:*)",
+      "WebFetch(domain:www.scholapragensis.cz)"
     ],
     "deny": [],
     "ask": []

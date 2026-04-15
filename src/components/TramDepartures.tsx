@@ -1,7 +1,8 @@
-import { useState, useEffect, memo } from "react";
+import { useState, useEffect, memo, useMemo, useCallback } from "react";
 import { Clock, AlertTriangle, Info, Snowflake, Car, MapPin, Wrench, Bus, Wind, Accessibility, Calendar, ArrowRight, Moon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { DepartureListSkeleton } from "@/components/DepartureListSkeleton";
 import { getDepartures, setThirdApiKey } from "@/utils/pidApi";
 import type { Departure } from "@/types/pid";
 
@@ -23,7 +24,7 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
   const [isRateLimited, setIsRateLimited] = useState(false);
   const [currentTime, setCurrentTime] = useState<number>(Math.floor(Date.now() / 1000));
 
-  const fetchDepartures = async () => {
+  const fetchDepartures = useCallback(async () => {
     try {
       setError(null);
       setIsRateLimited(false);
@@ -46,7 +47,7 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
     } finally {
       setLoading(false);
     }
-  };
+  }, [stationId]);
 
   // Prvotní načtení dat a pravidelný refresh každých 60 sekund
   useEffect(() => {
@@ -79,41 +80,41 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
     return () => clearInterval(timer);
   }, [timeOffset]);
 
-  const formatTime = (seconds: number) => {
+  const formatTime = useCallback((seconds: number) => {
     if (seconds < 60) return `${seconds}s`;
     const minutes = Math.floor(seconds / 60);
     return `${minutes} min`;
-  };
+  }, []);
 
-  const formatVehicleNumber = (vehicleNumber: string, routeNumber: string, tripNumber: string) => {
+  const formatVehicleNumber = useCallback((vehicleNumber: string, routeNumber: string, tripNumber: string) => {
     // Formát: #9418 na 9/18 (vozidlo na lince/číslo spoje)
     if (vehicleNumber && routeNumber && tripNumber) {
       // Použijeme extrahované číslo spoje z GTFS trip_id
       return `#${vehicleNumber} na ${routeNumber}/${tripNumber}`;
     }
     return `#${vehicleNumber}`;
-  };
+  }, []);
 
-  const getDelayBadge = (delay: number) => {
+  const getDelayBadge = useCallback((delay: number) => {
     if (delay <= 0) return { text: "Včas", color: "bg-green-100 text-green-800" };
     const minutes = Math.floor(delay / 60);
     if (minutes === 0) return { text: "Včas", color: "bg-green-100 text-green-800" };
     if (delay <= 60) return { text: `+${minutes} min`, color: "bg-yellow-100 text-yellow-800" };
     return { text: `+${minutes} min`, color: "bg-red-100 text-red-800" };
-  };
+  }, []);
 
-  const getVehicleTypeInfo = (departure: Departure) => {
+  const getVehicleTypeInfo = useCallback((departure: Departure) => {
     const timeToArrival = departure.arrival_timestamp - currentTime;
 
     if (timeToArrival <= 120 && timeToArrival > 0) {
       const vehicleType = getVehicleType(departure.route_type);
-      return `${vehicleType} se blíži do stanice`;
+      return `${vehicleType} se blíží do stanice`;
     }
 
     return null;
-  };
+  }, [currentTime]);
 
-  const getVehicleType = (routeType: number) => {
+  const getVehicleType = useCallback((routeType: number) => {
     switch (routeType) {
       case 0: return "Tramvaj";
       case 1: return "Metro";
@@ -121,9 +122,9 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
       case 3: return "Autobus";
       default: return "Vozidlo";
     }
-  };
+  }, []);
 
-  const getRouteColor = (routeType: number, routeName?: string) => {
+  const getRouteColor = useCallback((routeType: number, routeName?: string) => {
     switch (routeType) {
       case 0: return "bg-red-100 text-red-800";
       case 3: return "bg-blue-100 text-blue-800";
@@ -131,7 +132,7 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
       case 2: return "bg-purple-100 text-purple-800";
       default: return "bg-red-100 text-red-800";
     }
-  };
+  }, []);
 
   const hasAirConditioning = (departure: Departure) => {
     // Stejně jako low_floor - používá departure.air_conditioning
@@ -209,7 +210,7 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
     return false;
   };
 
-  const getServiceAlerts = (departure: Departure) => {
+  const getServiceAlerts = useCallback((departure: Departure) => {
     const alerts = [];
 
     const headsign = departure.headsign?.toLowerCase() || '';
@@ -253,9 +254,9 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
     }
 
     return alerts;
-  };
+  }, []);
 
-  const formatDisplayTime = (departure: Departure) => {
+  const formatDisplayTime = useCallback((departure: Departure) => {
     const timeToArrival = departure.arrival_timestamp - currentTime;
 
     if (showTimesInMinutes) {
@@ -326,9 +327,12 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
         minute: '2-digit'
       });
     }
-  };
+  }, [currentTime, showTimesInMinutes, stationName]);
 
-  // Removed loading state to prevent layout disruption
+  // Show skeleton during initial loading
+  if (loading && departures.length === 0) {
+    return <DepartureListSkeleton itemCount={maxItems || 7} />;
+  }
 
   if (error) {
     return (
@@ -354,8 +358,25 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
     );
   }
 
-  // Limit departures to exactly 7 items
-  const limitedDepartures = departures.slice(0, 7);
+  // Memoized processing of departures for better performance
+  const processedDepartures = useMemo(() => {
+    return departures.slice(0, maxItems || 7).map(departure => {
+      const timeToArrival = departure.arrival_timestamp - currentTime;
+      const delay = departure.delay || 0;
+      return {
+        ...departure,
+        timeToArrival,
+        delay,
+        delayInfo: getDelayBadge(delay),
+        serviceAlerts: getServiceAlerts(departure),
+        formattedTime: formatDisplayTime(departure),
+        routeColor: getRouteColor(departure.route_type, departure.route_short_name)
+      };
+    }).filter(dep => dep.timeToArrival > 0);
+  }, [departures, currentTime, maxItems, getDelayBadge, formatDisplayTime, getRouteColor]);
+
+  // Legacy compatibility
+  const limitedDepartures = processedDepartures;
 
   return (
     <Card className="shadow-lg bg-white/90 h-full border-2 border-gray-300 flex flex-col overflow-hidden">

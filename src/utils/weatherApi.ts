@@ -1,5 +1,6 @@
 
 import type { WeatherData } from "@/types/weather";
+import { apiCache } from "./apiCache";
 
 const WEATHER_API_KEY = "8877ab34e77243f995a161549251806";
 const WEATHER_BASE = "https://api.weatherapi.com/v1";
@@ -93,8 +94,15 @@ const mapWeatherApiToOpenWeather = (data: any): WeatherData => {
 };
 
 export const getWeather = async (lat: number, lon: number): Promise<WeatherData> => {
+  const cacheKey = `weather_${lat}_${lon}`;
+
+  // Zkus získat z cache
+  const cached = apiCache.get<WeatherData>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
   try {
-    
     const response = await fetch(
       `${WEATHER_BASE}/forecast.json?key=${WEATHER_API_KEY}&q=${lat},${lon}&days=1&aqi=no&alerts=no&lang=cs`
     );
@@ -104,8 +112,12 @@ export const getWeather = async (lat: number, lon: number): Promise<WeatherData>
     }
 
     const data = await response.json();
-    
-    return mapWeatherApiToOpenWeather(data);
+    const weatherData = mapWeatherApiToOpenWeather(data);
+
+    // Ulož do cache
+    apiCache.set(cacheKey, weatherData, 'weather');
+
+    return weatherData;
   } catch (error) {
     
     // Fallback na mock data při chybě
@@ -149,7 +161,10 @@ export const getWeather = async (lat: number, lon: number): Promise<WeatherData>
       gust: undefined,
       rainChance: 25
     };
-    
+
+    // Ulož mock data do cache s kratším TTL
+    apiCache.set(cacheKey, mockWeather, 'weather');
+
     return mockWeather;
   }
 };

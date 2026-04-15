@@ -182,6 +182,15 @@ const TramDeparturesConnectedComponent = ({
       });
     }
 
+    // Linka 6 směr Nádraží Holešovice na Výstavišti pokračuje jako 14 směr Spořilov
+    if (departure.route_short_name === '6' && stationName.toLowerCase().includes('výstaviště') && departure.headsign?.toLowerCase().includes('holešovic')) {
+      alerts.push({
+        icon: <ArrowRight className="w-5 h-5 text-purple-600" style={{ width: `${1.5 * 1.0}rem`, height: `${1.5 * 1.0}rem` }} />,
+        text: "Pokračuje jako 14 → Spořilov",
+        color: "bg-purple-100 text-purple-800"
+      });
+    }
+
     if (departure.alert_hash) {
       if (departure.alert_hash === 'canceled') {
         alerts.push({
@@ -249,6 +258,22 @@ const TramDeparturesConnectedComponent = ({
         if (timeToArrival < 60) {
           return 'Nestíháš';
         } else if (timeToArrival < 120) {
+          return 'Stíháš';
+        }
+      }
+      // Jana Masaryka - 2 min chůze (120s)
+      else if (station.includes('jana masaryka')) {
+        if (timeToArrival < 120) {
+          return 'Nestíháš';
+        } else if (timeToArrival < 180) {
+          return 'Stíháš';
+        }
+      }
+      // Šumavská - 4 min chůze (240s)
+      else if (station.includes('šumavská') || station.includes('sumavska')) {
+        if (timeToArrival < 240) {
+          return 'Nestíháš';
+        } else if (timeToArrival < 300) {
           return 'Stíháš';
         }
       }

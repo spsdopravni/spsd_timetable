@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import funFacts from '@/data/fun_facts.json';
 import nameDays from '@/data/name_days.json';
-
-export const DailyRobot = () => {
+import { useDataContext } from '@/context/DataContext';
+const DailyRobotComponent = ({ barColor, customMessages = [], robotImage }: { barColor?: string; customMessages?: string[]; robotImage?: string }) => {
+  const { seasonalTheme } = useDataContext();
   const [currentMessage, setCurrentMessage] = useState('');
   const [isVisible, setIsVisible] = useState(false);
   const [robotPhase, setRobotPhase] = useState('hidden'); // 'hidden', 'movingLeft', 'atLeft', 'movingRight', 'atRight', 'movingAway'
@@ -12,89 +13,11 @@ export const DailyRobot = () => {
   const [messageCounter, setMessageCounter] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  const getDayName = () => {
+  const getDayName = useCallback(() => {
     const days = ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota'];
     return days[new Date().getDay()];
-  };
+  }, []);
 
-  const getRobotTheme = () => {
-    const today = new Date();
-    const month = today.getMonth() + 1; // 1-12
-    const day = today.getDate();
-
-    console.log('Robot theme check:', { month, day });
-
-    // Silvestr a Nový rok (27.12 - 6.1) - NEJVYŠŠÍ PRIORITA
-    if ((month === 12 && day >= 27) || (month === 1 && day <= 6)) {
-      return {
-        image: '/pictures/robot-newyear.png',
-        theme: 'newyear'
-      };
-    }
-
-    // Vánoční téma (20. - 26. prosince)
-    if (month === 12 && day >= 20 && day < 27) {
-      return {
-        image: '/pictures/robot-christmas.png',
-        theme: 'christmas'
-      };
-    }
-
-    // Halloween téma (20. října - 26. listopadu)
-    if ((month === 10 && day >= 20) || (month === 11 && day <= 26)) {
-      return {
-        image: '/pictures/robot-halloween.png',
-        theme: 'halloween'
-      };
-    }
-
-    // Velikonoce (pohyblivý svátek - přibližně březen/duben)
-    // Zjednodušená detekce: kolem velikonoc v dubnu (10-20.4)
-    if (month === 4 && day >= 10 && day <= 20) {
-      return {
-        image: '/pictures/robot-easter.png',
-        theme: 'easter'
-      };
-    }
-
-    // Jarní téma (1. března - 31. května, kromě velikonoc)
-    if (month >= 3 && month <= 5) {
-      return {
-        image: '/pictures/robot-spring.png',
-        theme: 'spring'
-      };
-    }
-
-    // Letní téma (1. června - 31. srpna)
-    if (month >= 6 && month <= 8) {
-      return {
-        image: '/pictures/robot-summer.png',
-        theme: 'summer'
-      };
-    }
-
-    // Podzimní téma (1. září - 19. října)
-    if (month === 9 || (month === 10 && day < 20)) {
-      return {
-        image: '/pictures/robot-autumn.png',
-        theme: 'autumn'
-      };
-    }
-
-    // Zimní téma (27. listopadu - 19. prosince, před vánocemi)
-    if ((month === 11 && day >= 27) || (month === 12 && day < 20)) {
-      return {
-        image: '/pictures/robot-winter.png',
-        theme: 'winter'
-      };
-    }
-
-    // Výchozí klasický robot
-    return {
-      image: '/pictures/robotz.png',
-      theme: 'classic'
-    };
-  };
 
   const getNameDayInfo = () => {
     const today = new Date();
@@ -146,6 +69,11 @@ export const DailyRobot = () => {
   };
 
   const generateMessage = () => {
+    // Pokud jsou custom messages, zobrazuj jen ty
+    if (customMessages.length > 0) {
+      return customMessages[messageCounter % customMessages.length];
+    }
+
     const day = getDayName();
     const nameDay = getNameDayInfo();
     const hour = new Date().getHours();
@@ -244,19 +172,13 @@ export const DailyRobot = () => {
         return `${greeting} Dnes je ${day}, přeji příjemný den!`;
       }
     } else {
-      // PROMO ROZVRHY - propagace spsd-rozvrhy.vercel.app
-      const promoMessages = [
-      ];
-      return promoMessages[Math.floor(Math.random() * promoMessages.length)];
+      // Fallback na fun fact
+      return getFunFacts();
     }
   };
 
-  const [robotTheme, setRobotTheme] = useState(() => getRobotTheme());
-
   useEffect(() => {
     setCurrentMessage(generateMessage());
-    // Aktualizovat téma robota při každé změně zprávy
-    setRobotTheme(getRobotTheme());
   }, [messageCounter]);
 
   // Postupná animace - robot jede z prava doleva a zpět
@@ -326,10 +248,11 @@ export const DailyRobot = () => {
         <>
           {/* Pozadí s textem */}
           <motion.div
-            className="robot-animation fixed bottom-0 left-0 right-0 h-24 z-40 bg-gradient-to-l from-blue-900 via-blue-800 to-blue-900/95 shadow-lg"
+            className={`robot-animation fixed bottom-0 left-0 right-0 h-24 z-40 shadow-lg ${barColor ? '' : 'bg-gradient-to-l from-blue-900 via-blue-800 to-blue-900/95'}`}
             style={{
               willChange: 'opacity',
-              transform: 'translateZ(0)'
+              transform: 'translateZ(0)',
+              ...(barColor ? { background: barColor } : {})
             }}
             initial={{ opacity: 0 }}
             animate={{
@@ -391,8 +314,8 @@ export const DailyRobot = () => {
             }}
           >
             <motion.img
-              src={robotTheme.image}
-              alt={`Robot ${robotTheme.theme}`}
+              src={robotImage || seasonalTheme.robotTheme.image}
+              alt={robotImage ? 'Robot' : `Robot ${seasonalTheme.robotTheme.theme}`}
               className="w-auto object-contain"
               style={{
                 height: '16rem',
@@ -417,3 +340,5 @@ export const DailyRobot = () => {
     </AnimatePresence>
   );
 };
+
+export const DailyRobot = memo(DailyRobotComponent);

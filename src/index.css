@@ -99,6 +99,9 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+
+  body.tram-display {
     overflow: hidden;
   }
 

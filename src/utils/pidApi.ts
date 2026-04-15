@@ -1,5 +1,6 @@
 import type { Station, Departure } from "@/types/pid";
 import { getMockDepartures } from "./mockData";
+import { apiCache, cached } from "./apiCache";
 
 const API_BASE = "https://api.golemio.cz";
 
@@ -46,6 +47,33 @@ const STATION_API_MAPPING: {[key: string]: string} = {
   // Svatoplukova tram - API klíč Pragensis
   "U724Z1P": API_KEY_PRAGENSIS,
   "U724Z2P": API_KEY_PRAGENSIS,
+
+  // Jana Masaryka - API klíč 3
+  "U354Z1P": API_KEY_3,
+  "U354Z2P": API_KEY_3,
+
+  // Šumavská - API klíč 3
+  "U744Z1P": API_KEY_3,
+  "U744Z2P": API_KEY_3,
+
+  // Náměstí Míru metro A - API klíč Pragensis
+  "U476Z101P": API_KEY_PRAGENSIS,
+  "U476Z102P": API_KEY_PRAGENSIS,
+
+  // Výstaviště - API klíč Pragensis
+  "U532Z1P": API_KEY_PRAGENSIS,
+  "U532Z2P": API_KEY_PRAGENSIS,
+  "U532Z3P": API_KEY_PRAGENSIS,
+  "U532Z301": API_KEY_PRAGENSIS,
+
+  // Metro C — Vltavská + Nádraží Holešovice
+  "U100Z101P": API_KEY_PRAGENSIS,
+  "U100Z102P": API_KEY_PRAGENSIS,
+  "U115Z101P": API_KEY_PRAGENSIS,
+  "U115Z102P": API_KEY_PRAGENSIS,
+
+  // Praha-Bubny
+  "U100Z301": API_KEY_PRAGENSIS,
 };
 
 // Funkce pro nastavení třetího API klíče
@@ -54,15 +82,9 @@ export const setThirdApiKey = (key: string) => {
 };
 
 const getApiKeyForStation = (stationId: string): string => {
-  // Používáme jen API_KEY_1 a API_KEY_2 pro departures, ne třetí klíč!
   const key = STATION_API_MAPPING[stationId] || API_KEY_1;
-  // Pokud je klíč prázdný, vraťme placeholder - API nebude fungovat
   if (!key || key.trim() === '') {
     return 'MISSING_API_KEY';
-  }
-  // NIKDY nepoužívej API_KEY_3 pro departures!
-  if (key === API_KEY_3) {
-    return API_KEY_1;
   }
   return key;
 };
@@ -77,24 +99,36 @@ const getHeadersForStation = (stationId: string) => ({
 // Vehicle enrichment funkce odstraněna
 
 export const searchStations = async (query: string): Promise<Station[]> => {
+  const cacheKey = `stations_${query.toLowerCase()}`;
+
+  // Zkus získat z cache
+  const cached = apiCache.get<Station[]>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
   try {
     const headers = {
       "X-Access-Token": API_KEY_1,
       "Content-Type": "application/json"
     };
-    
+
     const response = await fetch(
       `${API_BASE}/pid/gtfs/stops?names=${encodeURIComponent(query)}&limit=20`,
       { headers }
     );
-    
+
     if (!response.ok) {
       return [];
     }
-    
+
     const data = await response.json();
-    
-    return data.stops || [];
+    const stations = data.stops || [];
+
+    // Ulož do cache
+    apiCache.set(cacheKey, stations, 'stations');
+
+    return stations;
   } catch (error) {
     return [];
   }
@@ -202,13 +236,25 @@ export const getRouteTransfers = async (routeId: string): Promise<{[key: string]
   }
 };
 
-export const getDepartures = async (stationIds: string | string[]): Promise<Departure[]> => {
+export const getDepartures = async (stationIds: string | string[]): Promise<{ departures: Departure[]; alerts: any[] }> => {
+  // Cache key pro departures
+  const ids = Array.isArray(stationIds) ? stationIds : [stationIds];
+  const cacheKey = `departures_${ids.sort().join('_')}`;
+
+  // Zkus získat z cache
+  const cached = apiCache.get<{ departures: Departure[]; alerts: any[] }>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
   // 🔧 DEV MODE: Použij mock data místo API
   if (USE_MOCK_DATA) {
     console.log('🎭 DEV MODE: Returning mock data instead of calling API');
     // Simuluj malé zpoždění jako u API
     await new Promise(resolve => setTimeout(resolve, 300));
-    return getMockDepartures();
+    const mockData = { departures: getMockDepartures(), alerts: [] };
+    apiCache.set(cacheKey, mockData, 'departures');
+    return mockData;
   }
 
   // 🌐 PROD MODE: Volej skutečné API
@@ -437,14 +483,23 @@ export const getDepartures = async (stationIds: string | string[]): Promise<Depa
 
     // Enrichment odstraněn
 
-    return {
+    const result = {
       departures: processedDepartures,
       alerts: allAlerts
     };
+
+    // Ulož do cache
+    apiCache.set(cacheKey, result, 'departures');
+
+    return result;
   } catch (error: any) {
-    return {
-      departures: [],
-      alerts: []
-    };
+    // V případě chyby zkus vrátit stará data z cache
+    const staleData = apiCache.get<{ departures: Departure[]; alerts: any[] }>(cacheKey);
+    if (staleData) {
+      console.warn('Using stale cache data due to API error');
+      return staleData;
+    }
+
+    throw error;
   }
 };
