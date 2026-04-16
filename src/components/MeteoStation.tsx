@@ -178,7 +178,10 @@ function Metric({ icon, label, value, unit, accent = "text-white", sub, trend }:
 /* ── main component ────────────────────────────────────────── */
 
 function MeteoStationComponent() {
-  const { data, extras, connected, lastUpdate } = useMeteoStation();
+  const { data, extras, connected, available, lastUpdate } = useMeteoStation();
+
+  // On HTTPS (Vercel) — meteostation not reachable, hide completely
+  if (!available) return null;
 
   const hasData = data.teplota !== null;
 
