@@ -1,10 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
-// In dev, Vite proxy rewrites /meteo → http://10.0.10.208
-// In production on HTTPS (Vercel) we can't reach local HTTP — meteostation disabled
-// In production on HTTP (school network TV) — direct IP works
-const IS_HTTPS = typeof window !== "undefined" && window.location.protocol === "https:";
-const BASE = import.meta.env.DEV ? "/meteo" : "http://10.0.10.208";
+// /meteo proxy works in both dev (Vite proxy) and production (server proxy)
+const BASE = "/meteo";
 
 export interface MeteoData {
   teplota: number | null;
@@ -183,7 +180,7 @@ export function useMeteoStation() {
   const [data, setData] = useState<MeteoData>(INITIAL_DATA);
   const [extras, setExtras] = useState<MeteoExtras>(INITIAL_EXTRAS);
   const [connected, setConnected] = useState(false);
-  const [available, setAvailable] = useState(!IS_HTTPS);
+  const [available, setAvailable] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -195,8 +192,6 @@ export function useMeteoStation() {
   const minMax = useRef<{ min: number; max: number; day: number } | null>(null);
 
   const fetchAll = useCallback(async () => {
-    // HTTPS can't reach local HTTP meteostation — skip entirely
-    if (IS_HTTPS) return;
     try {
       const results = await Promise.allSettled([
         ...SENSORS.map(async (s) => {
