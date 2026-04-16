@@ -20,7 +20,8 @@
       "WebFetch(domain:ctrlv.cz)",
       "Bash(curl -sL \"https://www.scholapragensis.cz/visual/img/logo-sp.svg\" -o \"C:/Users/brozb/Desktop/spsd_timetable/public/pictures/schola-pragensis-logo.svg\")",
       "Bash(curl:*)",
-      "WebFetch(domain:www.scholapragensis.cz)"
+      "WebFetch(domain:www.scholapragensis.cz)",
+      "WebFetch(domain:10.0.10.208)"
     ],
     "deny": [],
     "ask": []

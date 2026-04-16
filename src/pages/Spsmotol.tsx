@@ -6,6 +6,7 @@ import { Settings } from "@/components/Settings";
 import { WeatherHeader } from "@/components/WeatherHeader";
 import { DailyRobot } from "@/components/DailyRobot";
 import { AlertBanner } from "@/components/AlertBanner";
+import { MeteoStation } from "@/components/MeteoStation";
 import { Snowfall } from "@/components/Snowfall";
 import { ChristmasGarland } from "@/components/ChristmasGarland";
 import { useDataContext } from "@/context/DataContext";
@@ -271,6 +272,9 @@ const Spsmotol = () => {
           {/* Vanocni girlanda */}
           <ChristmasGarland />
         </div>
+
+        {/* Meteostanice */}
+        <MeteoStation />
 
         {/* Content area */}
         <div className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0">

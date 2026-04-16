@@ -9,6 +9,13 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    proxy: {
+      '/meteo': {
+        target: 'http://10.0.10.208',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/meteo/, ''),
+      },
+    },
   },
   plugins: [
     react(),
