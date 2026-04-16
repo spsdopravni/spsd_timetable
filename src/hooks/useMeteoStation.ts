@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
-// /meteo proxy works in both dev (Vite proxy) and production (server proxy)
+// Dev: Vite proxy, Prod: Nginx proxy — both on /meteo
 const BASE = "/meteo";
 
 export interface MeteoData {
@@ -181,6 +181,7 @@ export function useMeteoStation() {
   const [extras, setExtras] = useState<MeteoExtras>(INITIAL_EXTRAS);
   const [connected, setConnected] = useState(false);
   const [available, setAvailable] = useState(true);
+  const failCount = useRef(0);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -259,21 +260,27 @@ export function useMeteoStation() {
 
         setConnected(true);
         setLastUpdate(new Date());
+        failCount.current = 0;
       } else {
+        failCount.current++;
         setConnected(false);
+        if (failCount.current >= 3) setAvailable(false);
       }
     } catch {
+      failCount.current++;
       setConnected(false);
+      if (failCount.current >= 3) setAvailable(false);
     }
   }, []);
 
   useEffect(() => {
+    if (!available) return;
     fetchAll();
     intervalRef.current = setInterval(fetchAll, POLL_INTERVAL);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [fetchAll]);
+  }, [fetchAll, available]);
 
   return { data, extras, connected, available, lastUpdate };
 }
