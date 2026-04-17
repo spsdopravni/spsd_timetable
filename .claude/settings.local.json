@@ -36,7 +36,14 @@
       "Bash(python3 -m json.tool echo \"\" echo \"=== NÁŠ manifest ===\" cat /Users/brozovec/Documents/GitHub/spsd_timetable/public/manifest.json)",
       "WebFetch(domain:caniuse.com)",
       "WebFetch(domain:webkit.org)",
-      "Bash(sips *)"
+      "Bash(sips *)",
+      "Bash(npx supabase *)",
+      "Bash(mkdir -p /Users/brozovec/Documents/GitHub/route-comparison)",
+      "Bash(cp /Users/brozovec/.claude/image-cache/3bbe6eaf-3ca0-43e0-a401-6c271068b1ab/1.png /Users/brozovec/Documents/GitHub/route-comparison/mapycz.png)",
+      "Read(//Users/brozovec/Documents/GitHub/**)",
+      "Bash(python3 -m venv /Users/brozovec/Documents/GitHub/route-comparison/.venv)",
+      "Bash(/Users/brozovec/Documents/GitHub/route-comparison/.venv/bin/pip install *)",
+      "Bash(.venv/bin/python build_route.py)"
     ],
     "deny": [],
     "ask": []

@@ -3,7 +3,7 @@ import { useDataContext } from "@/context/DataContext";
 import { Clock, MapPin, AlertTriangle, Moon, Wrench, Info, ArrowRight, Bell, BellRing } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { DepartureTracker } from "@/components/DepartureTracker";
-import { getActiveNotifications, requestPushPermission } from "@/utils/notificationService";
+import { getActiveTripIds, requestPushPermission } from "@/utils/notificationService";
 import type { Departure } from "@/types/pid";
 
 /* ── types ─────────────────────────────────────────────────── */
@@ -358,20 +358,9 @@ export function MobileDepartures({ building }: { building: MobileBuildingDef }) 
   const t = building.theme || DEFAULT_THEME;
   const logoPath = t.logoSrc || seasonalTheme.logoPath;
 
-  // Load active notifications from Supabase
+  // Load active notifications for this device only — single round-trip.
   useEffect(() => {
-    const checkNotified = async () => {
-      const deps = getDeparturesForStation(station.key).departures;
-      const ids = new Set<string>();
-      for (const dep of deps) {
-        if (dep.trip_id) {
-          const active = await getActiveNotifications(dep.trip_id);
-          if (active.length > 0) ids.add(dep.trip_id);
-        }
-      }
-      setNotifiedTripIds(ids);
-    };
-    checkNotified();
+    getActiveTripIds().then(setNotifiedTripIds);
   }, [station.key, trackedDeparture]); // re-check when tracker closes
 
   const stationData = getDeparturesForStation(station.key);

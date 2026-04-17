@@ -5,8 +5,8 @@ const BUILDING: MobileBuildingDef = {
   stations: [
     { key: "vystavisteA", name: "Výstaviště", direction: "Nástupiště A", simpleName: "Výstaviště", walkMinutes: 2 },
     { key: "vystavisteB", name: "Výstaviště", direction: "Nástupiště B", simpleName: "Výstaviště", walkMinutes: 2 },
-    { key: "vystavisteVlak", name: "Praha-Výstaviště", direction: "Vlak", simpleName: "Praha-Výstaviště", walkMinutes: 3 },
-    { key: "prahaBubny", name: "Praha-Bubny", direction: "Vlak", simpleName: "Praha-Bubny", walkMinutes: 5 },
+    { key: "vystavisteVlak", name: "Praha-Výstaviště", direction: "Praha-Výstaviště", simpleName: "Praha-Výstaviště", walkMinutes: 3 },
+    { key: "prahaBubny", name: "Praha-Bubny", direction: "Praha-Bubny", simpleName: "Praha-Bubny", walkMinutes: 5 },
   ],
   metro: [
     { stationKey: "vltavskaMetro", name: "Vltavská", line: "C" },

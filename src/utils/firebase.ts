@@ -1,6 +1,6 @@
 // Firebase Cloud Messaging — uses compat SDK loaded via script tags in index.html
 
-const VAPID_KEY = "Uid_9XoC8-R26YDuw3JOPJTnPgt052yClZy_f7L-Jt0";
+const VAPID_KEY = "BM5sK6iycOKeDUSSdjOYJRhpodZy3KEEdSvDZFLDbPvPVrIChjZAE47u51AGsGE_8R1iBjs36GD55tRlle2ssik";
 
 let messaging: any = null;
 

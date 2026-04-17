@@ -21,6 +21,8 @@ create table if not exists notification_subscriptions (
 
   -- Pro typ 'stop' — na jaké zastávce upozornit
   notify_stop_name text,
+  notify_stop_id text,           -- GTFS stop_id, robustnější než název
+  notify_stop_sequence int,      -- pořadí zastávky v trip-u → server porovnává přímo s last_stop.sequence
 
   -- Pro typ 'minutes' — kolik minut před příjezdem
   notify_minutes int,
@@ -34,8 +36,12 @@ create table if not exists notification_subscriptions (
 );
 
 -- Index pro rychlé hledání aktivních subscriptions
-create index idx_active_subs on notification_subscriptions (notified, expires_at)
+create index if not exists idx_active_subs on notification_subscriptions (notified, expires_at)
   where notified = false;
+
+-- Migrace pro existující deploy (idempotentní):
+alter table notification_subscriptions add column if not exists notify_stop_id text;
+alter table notification_subscriptions add column if not exists notify_stop_sequence int;
 
 -- Auto-cleanup starých záznamů (starších než 1 hodina)
 -- Supabase pg_cron extension

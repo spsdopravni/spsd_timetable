@@ -1,22 +1,22 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, Bell, BellOff, BellRing, MapPin, Clock, Wind, Accessibility,
   Snowflake, Wifi, Usb, BatteryCharging, Bike,
 } from "lucide-react";
 import { getTripStops, type TripStop } from "@/utils/pidApi";
-import { saveNotification, getActiveNotifications, requestPushPermission } from "@/utils/notificationService";
+import { saveNotification, getActiveNotifications, requestPushPermission, cancelNotificationById } from "@/utils/notificationService";
 import type { Departure } from "@/types/pid";
 
 /* ── local notification (confirmation) ─────────────────────── */
 
 async function sendLocalNotification(title: string, body: string) {
   try {
+    const iconUrl = `${window.location.origin}/pictures/robotz-192.png`;
     const options = {
       body,
-      icon: "/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png",
-      badge: "/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png",
-      image: "/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png",
+      icon: iconUrl,
+      badge: iconUrl,
       vibrate: [200, 100, 200],
       tag: "spsd-confirm-" + Date.now(),
       renotify: true,
@@ -74,6 +74,9 @@ function RouteDiagram({
   accentColor,
   notifyStopId,
   onStopTap,
+  delaySeconds,
+  liveLastStopSeq,
+  fractionalProgress,
 }: {
   stops: TripStop[];
   currentStopId: string | null;
@@ -81,11 +84,26 @@ function RouteDiagram({
   accentColor: string;
   notifyStopId: string | null;
   onStopTap: (stop: TripStop) => void;
+  delaySeconds: number;
+  liveLastStopSeq: number | null;
+  fractionalProgress: number;
 }) {
   if (stops.length === 0) return null;
 
-  const currentIdx = currentStopId ? stops.findIndex(s => s.stopId === currentStopId) : -1;
+  const currentIdx = liveLastStopSeq !== null
+    ? stops.findIndex(s => s.stopSequence === liveLastStopSeq)
+    : currentStopId ? stops.findIndex(s => s.stopId === currentStopId) : -1;
   const targetIdx = stops.findIndex(s => s.stopId === targetStopId);
+
+  // Add delay to scheduled times
+  function getAdjustedTime(scheduledTime: string): string {
+    if (delaySeconds === 0) return scheduledTime.slice(0, 5);
+    const [h, m] = scheduledTime.split(":").map(Number);
+    const totalMin = h * 60 + m + Math.round(delaySeconds / 60);
+    const newH = Math.floor(totalMin / 60) % 24;
+    const newM = totalMin % 60;
+    return `${newH.toString().padStart(2, "0")}:${newM.toString().padStart(2, "0")}`;
+  }
 
   return (
     <div className="mt-4">
@@ -100,6 +118,17 @@ function RouteDiagram({
           const isTarget = stop.stopId === targetStopId;
           const isNotify = stop.stopId === notifyStopId;
 
+          // Fractional fill for current segment (between currentIdx and currentIdx+1)
+          // Each segment = "line below row N" (upper half) + "line above row N+1" (lower half)
+          const lineAboveFill =
+            idx <= currentIdx ? 100 :
+            idx === currentIdx + 1 ? Math.max(0, (fractionalProgress - 0.5) * 200) :
+            0;
+          const lineBelowFill =
+            idx < currentIdx ? 100 :
+            idx === currentIdx ? Math.min(100, fractionalProgress * 200) :
+            0;
+
           return (
             <div
               key={`${stop.stopId}-${idx}`}
@@ -110,10 +139,12 @@ function RouteDiagram({
               <div className="flex flex-col items-center flex-shrink-0 w-5">
                 {/* Line above */}
                 {idx > 0 && (
-                  <div
-                    className="w-0.5 h-3"
-                    style={{ backgroundColor: isPast ? accentColor : "#d1d5db" }}
-                  />
+                  <div className="w-0.5 h-3 relative overflow-hidden" style={{ backgroundColor: "#d1d5db" }}>
+                    <div
+                      className="absolute top-0 left-0 right-0 transition-all duration-1000 ease-linear"
+                      style={{ backgroundColor: accentColor, height: `${lineAboveFill}%` }}
+                    />
+                  </div>
                 )}
                 {/* Dot */}
                 <div
@@ -135,10 +166,12 @@ function RouteDiagram({
                 </div>
                 {/* Line below */}
                 {idx < stops.length - 1 && (
-                  <div
-                    className="w-0.5 h-3"
-                    style={{ backgroundColor: isPast && idx < currentIdx ? accentColor : "#d1d5db" }}
-                  />
+                  <div className="w-0.5 h-3 relative overflow-hidden" style={{ backgroundColor: "#d1d5db" }}>
+                    <div
+                      className="absolute top-0 left-0 right-0 transition-all duration-1000 ease-linear"
+                      style={{ backgroundColor: accentColor, height: `${lineBelowFill}%` }}
+                    />
+                  </div>
                 )}
               </div>
 
@@ -157,7 +190,10 @@ function RouteDiagram({
 
               {/* Time */}
               <div className={`text-xs flex-shrink-0 ${isPast ? "text-gray-300" : "text-gray-400"}`}>
-                {stop.departureTime.slice(0, 5)}
+                {getAdjustedTime(stop.departureTime)}
+                {delaySeconds > 30 && !isPast && (
+                  <span className="text-red-400 ml-1">+{Math.round(delaySeconds / 60)}</span>
+                )}
               </div>
             </div>
           );
@@ -181,18 +217,35 @@ export function DepartureTracker({ departure, currentTime, stationName, walkMinu
   const [stops, setStops] = useState<TripStop[]>([]);
   const [notifyStopId, setNotifyStopId] = useState<string | null>(null);
   const [notifyStopName, setNotifyStopName] = useState<string>("");
+  const [notifySubId, setNotifySubId] = useState<string | null>(null);
   const [notified, setNotified] = useState(false);
-  // Minute-based notification
   const [notifyMinutes, setNotifyMinutes] = useState<number | null>(null);
+  const [notifyMinutesSubId, setNotifyMinutesSubId] = useState<string | null>(null);
   const [minuteNotified, setMinuteNotified] = useState(false);
 
-  const timeToArrival = departure.arrival_timestamp - currentTime;
-  const minutes = Math.floor(timeToArrival / 60);
-  const seconds = timeToArrival % 60;
+  // Live vehicle data
+  const [liveCurrentStop, setLiveCurrentStop] = useState(departure.current_stop || "");
+  const [liveDelay, setLiveDelay] = useState(departure.delay || 0);
+  const [liveLastStopSeq, setLiveLastStopSeq] = useState<number | null>(null);
+
+  // Track when we noticed the vehicle reach its current stop, so we can
+  // smoothly interpolate position between this stop and the next one.
+  const lastSeqRef = useRef<number | null>(null);
+  const [lastStopArrivedAt, setLastStopArrivedAt] = useState(Date.now());
+  useEffect(() => {
+    if (liveLastStopSeq !== null && liveLastStopSeq !== lastSeqRef.current) {
+      setLastStopArrivedAt(Date.now());
+      lastSeqRef.current = liveLastStopSeq;
+    }
+  }, [liveLastStopSeq]);
+
+  const delaySeconds = liveDelay;
+  const timeToArrival = departure.arrival_timestamp - currentTime + delaySeconds;
+  const minutes = Math.max(0, Math.floor(timeToArrival / 60));
+  const seconds = Math.max(0, timeToArrival % 60);
   const accentColor = getRouteAccent(departure.route_type);
   const vehicleType = getVehicleType(departure.route_type);
-  const delay = departure.delay || 0;
-  const delayMin = Math.floor(delay / 60);
+  const delayMin = Math.floor(delaySeconds / 60);
 
   // Load trip stops + active notifications from DB
   useEffect(() => {
@@ -202,20 +255,58 @@ export function DepartureTracker({ departure, currentTime, stationName, walkMinu
       getActiveNotifications(departure.trip_id).then((active) => {
         for (const n of active) {
           if (n.notifyType === "stop" && n.notifyStopName) {
-            setNotifyStopId("db-" + n.id);
+            // Use real stop_id when available so the user can tap-to-toggle off.
+            setNotifyStopId(n.notifyStopId || "db-" + n.id);
             setNotifyStopName(n.notifyStopName);
+            setNotifySubId(n.id);
           }
           if (n.notifyType === "minutes" && n.notifyMinutes) {
             setNotifyMinutes(n.notifyMinutes);
+            setNotifyMinutesSubId(n.id);
           }
         }
       });
     }
   }, [departure.trip_id]);
 
+  // Live poll vehicle position every 5s
+  useEffect(() => {
+    if (!departure.trip_id) return;
+    const routeNum = departure.trip_id.split("_")[0];
+
+    const poll = async () => {
+      try {
+        const res = await fetch(
+          `https://api.golemio.cz/v2/vehiclepositions?routeShortName=${routeNum}&limit=30`,
+          { headers: { "X-Access-Token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzcwNCwiaWF0IjoxNzYwNzkxMjUwLCJleHAiOjExNzYwNzkxMjUwLCJpc3MiOiJnb2xlbWlvIiwianRpIjoiM2Y4MWJiMjItM2YxNC00ODgxLThlMDYtYjQ1YmRlOTYzZjk3In0.BR0653y2bfG0zxdkOYvDgvywRR9Z9nXB4NlatJXR38A" } }
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        for (const f of (data.features || [])) {
+          if (f.properties?.trip?.gtfs?.trip_id === departure.trip_id) {
+            const lp = f.properties.last_position;
+            setLiveLastStopSeq(lp?.last_stop?.sequence || null);
+            setLiveDelay(lp?.delay?.actual || 0);
+
+            // Find stop name from our stops list
+            if (lp?.last_stop?.id && stops.length > 0) {
+              const found = stops.find(s => s.stopId === lp.last_stop.id);
+              if (found) setLiveCurrentStop(found.stopName);
+            }
+            break;
+          }
+        }
+      } catch {}
+    };
+
+    poll();
+    const interval = setInterval(poll, 5000);
+    return () => clearInterval(interval);
+  }, [departure.trip_id, stops]);
+
   // Find current stop in the stop list
-  const currentStopId = departure.current_stop
-    ? stops.find(s => s.stopName === departure.current_stop)?.stopId || null
+  const currentStopId = liveCurrentStop
+    ? stops.find(s => s.stopName === liveCurrentStop)?.stopId || null
     : null;
 
   // Find our target stop
@@ -223,17 +314,41 @@ export function DepartureTracker({ departure, currentTime, stationName, walkMinu
   const targetStopId = targetStop?.stopId || "";
 
   // Progress calculation from stop positions
-  const currentIdx = currentStopId ? stops.findIndex(s => s.stopId === currentStopId) : -1;
+  const currentIdx = liveLastStopSeq !== null
+    ? stops.findIndex(s => s.stopSequence === liveLastStopSeq)
+    : currentStopId ? stops.findIndex(s => s.stopId === currentStopId) : -1;
   const targetIdx = targetStopId ? stops.findIndex(s => s.stopId === targetStopId) : stops.length - 1;
+
+  // Fractional progress between currentIdx and currentIdx+1 based on scheduled segment time.
+  // Drives smooth movement between API polls (which only refresh every 5s).
+  const fractionalProgress = (() => {
+    if (currentIdx < 0 || currentIdx >= stops.length - 1) return 0;
+    const cur = stops[currentIdx];
+    const nxt = stops[currentIdx + 1];
+    if (!cur || !nxt) return 0;
+    const [ch, cm] = cur.departureTime.split(":").map(Number);
+    const [nh, nm] = nxt.departureTime.split(":").map(Number);
+    let segMin = (nh * 60 + nm) - (ch * 60 + cm);
+    if (segMin <= 0) segMin += 24 * 60;
+    if (segMin <= 0) return 0;
+    const elapsedSec = (Date.now() - lastStopArrivedAt) / 1000;
+    return Math.min(1, Math.max(0, elapsedSec / (segMin * 60)));
+  })();
+
   const progress = currentIdx >= 0 && targetIdx > 0
-    ? Math.min(1, Math.max(0, currentIdx / targetIdx))
+    ? Math.min(1, Math.max(0, (currentIdx + fractionalProgress) / targetIdx))
     : Math.min(1, Math.max(0, 1 - timeToArrival / (30 * 60)));
 
   const handleStopTap = useCallback(async (stop: TripStop) => {
+    // Toggle off → cancel the existing DB row.
     if (notifyStopId === stop.stopId) {
       setNotifyStopId(null);
       setNotifyStopName("");
       setNotified(false);
+      if (notifySubId) {
+        await cancelNotificationById(notifySubId);
+        setNotifySubId(null);
+      }
       return;
     }
 
@@ -241,11 +356,20 @@ export function DepartureTracker({ departure, currentTime, stationName, walkMinu
     setNotifyStopName(stop.stopName);
     setNotified(false);
 
-    // Request OneSignal push permission
-    await requestPushPermission();
+    // Ensure FCM token / push permission BEFORE save — otherwise sub gets stored
+    // with a "local-..." endpoint and the server skips it forever.
+    const token = await requestPushPermission();
+    if (!token) {
+      await sendLocalNotification(
+        `Oznámení nejsou povolená`,
+        `Klikni v hlavičce na "Zapnout oznámení o příjezdech" a zkus to znovu.`,
+      );
+      setNotifyStopId(null);
+      setNotifyStopName("");
+      return;
+    }
 
-    // Save to Supabase
-    await saveNotification({
+    const result = await saveNotification({
       tripId: departure.trip_id || "",
       routeShortName: departure.route_short_name,
       headsign: departure.headsign,
@@ -253,30 +377,56 @@ export function DepartureTracker({ departure, currentTime, stationName, walkMinu
       arrivalTimestamp: departure.arrival_timestamp,
       type: "stop",
       stopName: stop.stopName,
+      stopId: stop.stopId,
+      stopSequence: stop.stopSequence,
     });
+
+    if (!result.ok) {
+      await sendLocalNotification(
+        `Chyba`,
+        result.reason === "no_token"
+          ? `Nejprve zapni oznámení (modré tlačítko nahoře).`
+          : `Nepovedlo se uložit upozornění. Zkus to znovu.`,
+      );
+      setNotifyStopId(null);
+      setNotifyStopName("");
+      return;
+    }
 
     // Confirmation notification
     await sendLocalNotification(
-      `🔔 ${departure.route_short_name} → ${departure.headsign}`,
-      `Upozorníme tě až ${vehicleType.toLowerCase()} projede zastávkou ${stop.stopName}.\nPříjezd na ${stationName} za ${minutes} min ${seconds}s.`,
+      `Sledování zapnuto`,
+      `${vehicleType} ${departure.route_short_name} → ${departure.headsign}\nUpozorníme tě na zastávce ${stop.stopName}\nPříjezd: ${stationName} za ${minutes} min`,
     );
 
     onClose();
-  }, [notifyStopId, vehicleType, departure, stationName, minutes, seconds, onClose]);
+  }, [notifyStopId, notifySubId, vehicleType, departure, stationName, minutes, seconds, onClose]);
 
   const handleMinuteNotify = useCallback(async (mins: number) => {
     if (notifyMinutes === mins) {
       setNotifyMinutes(null);
       setMinuteNotified(false);
+      if (notifyMinutesSubId) {
+        await cancelNotificationById(notifyMinutesSubId);
+        setNotifyMinutesSubId(null);
+      }
       return;
     }
 
     setNotifyMinutes(mins);
     setMinuteNotified(false);
 
-    await requestPushPermission();
+    const token = await requestPushPermission();
+    if (!token) {
+      await sendLocalNotification(
+        `Oznámení nejsou povolená`,
+        `Klikni v hlavičce na "Zapnout oznámení o příjezdech" a zkus to znovu.`,
+      );
+      setNotifyMinutes(null);
+      return;
+    }
 
-    await saveNotification({
+    const result = await saveNotification({
       tripId: departure.trip_id || "",
       routeShortName: departure.route_short_name,
       headsign: departure.headsign,
@@ -286,25 +436,45 @@ export function DepartureTracker({ departure, currentTime, stationName, walkMinu
       minutes: mins,
     });
 
+    if (!result.ok) {
+      setNotifyMinutes(null);
+      return;
+    }
+
     await sendLocalNotification(
-      `⏰ ${departure.route_short_name} → ${departure.headsign}`,
-      `Upozorníme tě ${mins} min před příjezdem na ${stationName}.\nAktuálně za ${minutes} min ${seconds}s.`,
+      `Sledování zapnuto`,
+      `${vehicleType} ${departure.route_short_name} → ${departure.headsign}\nUpozornění ${mins} min před příjezdem\nPříjezd: ${stationName} za ${minutes} min`,
     );
 
     onClose();
-  }, [notifyMinutes, vehicleType, departure, stationName, minutes, seconds, onClose]);
+  }, [notifyMinutes, notifyMinutesSubId, vehicleType, departure, stationName, minutes, seconds, onClose]);
 
   // Fire minute notification (local, when app is open)
   useEffect(() => {
     if (notifyMinutes === null || minuteNotified) return;
     if (minutes <= notifyMinutes && minutes > 0) {
       sendLocalNotification(
-        `🚨 ${departure.route_short_name} → ${departure.headsign} za ${minutes} min!`,
-        `Vyraz na ${stationName}!`,
+        `${vehicleType} ${departure.route_short_name} za ${minutes} min!`,
+        `${departure.headsign} → ${stationName}\nVyraz ze školy!`,
       );
       setMinuteNotified(true);
     }
   }, [notifyMinutes, minuteNotified, minutes, vehicleType, departure.route_short_name, departure.headsign]);
+
+  // Fire stop-arrival notification (local, when app is open) — mirrors server-side trigger.
+  // Fires once when the vehicle reaches or passes the chosen stop.
+  useEffect(() => {
+    if (!notifyStopId || notified) return;
+    const notifyIdx = stops.findIndex(s => s.stopId === notifyStopId);
+    if (notifyIdx < 0) return;
+    if (currentIdx >= 0 && currentIdx >= notifyIdx) {
+      sendLocalNotification(
+        `${vehicleType} ${departure.route_short_name} projíždí ${notifyStopName}!`,
+        `${departure.headsign} → ${stationName}\nBlíží se!`,
+      );
+      setNotified(true);
+    }
+  }, [notifyStopId, notifyStopName, notified, currentIdx, stops, vehicleType, departure.route_short_name, departure.headsign, stationName]);
 
   // Auto close when departed
   useEffect(() => {
@@ -391,16 +561,16 @@ export function DepartureTracker({ departure, currentTime, stationName, walkMinu
                 />
               </div>
               <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-                <span>{departure.current_stop || "Na trase"}</span>
+                <span>{liveCurrentStop || "Na trase"}</span>
                 <span>{stationName}</span>
               </div>
             </div>
 
             {/* Vehicle info */}
-            {departure.current_stop && (
+            {liveCurrentStop && (
               <div className="flex items-center gap-2 mt-3 text-sm text-gray-600">
                 <MapPin className="w-4 h-4 text-gray-400" />
-                Právě u <strong>{departure.current_stop}</strong>
+                Právě u <strong>{liveCurrentStop}</strong>
               </div>
             )}
             {departure.current_speed !== undefined && departure.current_speed > 0 && (
@@ -437,6 +607,9 @@ export function DepartureTracker({ departure, currentTime, stationName, walkMinu
               accentColor={accentColor}
               notifyStopId={notifyStopId}
               onStopTap={handleStopTap}
+              delaySeconds={delaySeconds}
+              liveLastStopSeq={liveLastStopSeq}
+              fractionalProgress={fractionalProgress}
             />
 
             {/* Minute-based notification */}
