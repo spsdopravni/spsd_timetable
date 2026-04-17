@@ -98,6 +98,53 @@ const getHeadersForStation = (stationId: string) => ({
 
 // Vehicle enrichment funkce odstraněna
 
+/* ── Trip stop times ────────────────────────────────────────── */
+
+export interface TripStop {
+  stopId: string;
+  stopName: string;
+  arrivalTime: string;  // "HH:mm:ss"
+  departureTime: string;
+  stopSequence: number;
+  lat: number;
+  lon: number;
+}
+
+export const getTripStops = async (tripId: string): Promise<TripStop[]> => {
+  if (USE_MOCK_DATA || !tripId) return [];
+
+  const cacheKey = `trip_stops_${tripId}`;
+  const cachedData = apiCache.get<TripStop[]>(cacheKey);
+  if (cachedData) return cachedData;
+
+  try {
+    const response = await fetch(
+      `${API_BASE}/v2/gtfs/trips/${encodeURIComponent(tripId)}?includeStopTimes=true&includeStops=true`,
+      { headers: { "X-Access-Token": API_KEY_1, "Content-Type": "application/json" } }
+    );
+
+    if (!response.ok) return [];
+
+    const data = await response.json();
+    const stopTimes = data.stop_times || [];
+
+    const stops: TripStop[] = stopTimes.map((st: any) => ({
+      stopId: st.stop_id,
+      stopName: st.stop?.properties?.stop_name || st.stop_id,
+      arrivalTime: st.arrival_time,
+      departureTime: st.departure_time,
+      stopSequence: st.stop_sequence,
+      lat: st.stop?.geometry?.coordinates?.[1] || 0,
+      lon: st.stop?.geometry?.coordinates?.[0] || 0,
+    }));
+
+    apiCache.set(cacheKey, stops, 'routes');
+    return stops;
+  } catch {
+    return [];
+  }
+};
+
 export const searchStations = async (query: string): Promise<Station[]> => {
   const cacheKey = `stations_${query.toLowerCase()}`;
 

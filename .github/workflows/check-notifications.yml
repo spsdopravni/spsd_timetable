@@ -1,0 +1,16 @@
+name: Check Notifications
+
+on:
+  schedule:
+    - cron: '* * * * *'  # every minute (GitHub minimum)
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call Supabase Edge Function
+        run: |
+          curl -s -X POST \
+            "https://yfcjsfuqeonmkjgetqsy.supabase.co/functions/v1/check-notifications" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json"

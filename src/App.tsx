@@ -24,6 +24,18 @@ const Bikefest = lazy(() =>
 const Menu = lazy(() =>
   import("./pages/Menu").then(module => ({ default: module.default }))
 );
+const Mobile = lazy(() =>
+  import("./pages/Mobile").then(module => ({ default: module.default }))
+);
+const MobileMotol = lazy(() =>
+  import("./pages/MobileMotol").then(module => ({ default: module.default }))
+);
+const MobileMoravska = lazy(() =>
+  import("./pages/MobileMoravska").then(module => ({ default: module.default }))
+);
+const MobileBikefest = lazy(() =>
+  import("./pages/MobileBikefest").then(module => ({ default: module.default }))
+);
 const NotFound = lazy(() =>
   import("./pages/NotFound").then(module => ({ default: module.default }))
 );
@@ -47,6 +59,10 @@ const App = () => (
                 <Route path="/spsmoravska" element={<SpsMoravska />} />
                 <Route path="/bikefest" element={<Bikefest />} />
                 <Route path="/menu" element={<Menu />} />
+                <Route path="/m" element={<Mobile />} />
+                <Route path="/m/motol" element={<MobileMotol />} />
+                <Route path="/m/moravska" element={<MobileMoravska />} />
+                <Route path="/m/bikefest" element={<MobileBikefest />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

@@ -1,4 +1,12 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+
+function useIsMobile() {
+  return useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      || window.innerWidth < 768;
+  }, []);
+}
 
 const TECH = [
   "React 18", "TypeScript", "Vite", "Tailwind CSS",
@@ -31,6 +39,9 @@ const PROBLEMS = [
 
 
 const Index = () => {
+  const isMobile = useIsMobile();
+  const boardLink = isMobile ? "/m" : "/menu";
+
   useEffect(() => {
     document.body.style.overflow = 'auto';
     return () => { document.body.style.overflow = ''; };
@@ -52,7 +63,7 @@ const Index = () => {
               <i className="fa-brands fa-github"></i>
               <span className="hidden sm:inline">GitHub</span>
             </a>
-            <a href="/menu"
+            <a href={boardLink}
                className="bg-blue-600 hover:bg-blue-500 transition-colors text-white text-sm font-semibold px-4 py-1.5 rounded-lg flex items-center gap-2">
               <i className="fa-solid fa-train-tram"></i>
               Otevřít tabuli
@@ -87,7 +98,7 @@ const Index = () => {
                 Webová aplikace zobrazující real-time odjezdy tramvají PID na velkoplošném displeji u vstupu do školy. Žádná obsluha, žádná instalace — jen prohlížeč.
               </p>
               <div className="flex flex-wrap gap-3">
-                <a href="/menu"
+                <a href={boardLink}
                    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 transition-colors text-white font-bold px-6 py-3 rounded-xl shadow-lg shadow-blue-900/40">
                   <i className="fa-solid fa-train-tram"></i>
                   Tabule SPŠD Motol
@@ -327,7 +338,7 @@ const Index = () => {
           <h2 className="text-4xl font-black mb-4">Vyzkoušejte si to</h2>
           <p className="text-gray-400 mb-8 text-lg">Běží na <span className="text-white font-semibold">timetable.brozovec.eu</span> · 24/7 · bez obsluhy</p>
           <div className="flex flex-wrap gap-4 justify-center">
-            <a href="/menu"
+            <a href={boardLink}
                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 transition-colors text-white font-bold px-8 py-4 rounded-xl shadow-lg shadow-blue-900/40 text-lg">
               <i className="fa-solid fa-train-tram"></i>
               Tabule SPŠD Motol

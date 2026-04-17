@@ -5,8 +5,9 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" href="/pictures/robotz.png" />
-    <link rel="apple-touch-icon" href="/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=0.75, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
+    <link rel="apple-touch-icon" href="/pictures/robotz-180.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/pictures/robotz-180.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
     
     <!-- Základní meta tagy -->
     <title>Odjezdová tabule Praha Motol - Tramvaje a Autobusy</title>
@@ -33,8 +34,8 @@
     <meta name="msapplication-TileColor" content="#1e40af" />
     <meta name="application-name" content="SPSD Rozvrh" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="SPSD Rozvrh" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="SPŠD Odjezdy" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="msapplication-starturl" content="/" />
     <meta name="msapplication-config" content="/browserconfig.xml" />
@@ -49,6 +50,21 @@
     
     <!-- Manifest pro PWA support -->
     <link rel="manifest" href="/manifest.json" />
+
+    <!-- Firebase SDK (loaded in HTML for iOS PWA compatibility) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js"></script>
+    <script>
+      window.firebaseConfig = {
+        apiKey: "AIzaSyBw9fYvEkAJRmeD8QO23G3uRw5LXp_v3b0",
+        authDomain: "spsdodjezdovka.firebaseapp.com",
+        projectId: "spsdodjezdovka",
+        storageBucket: "spsdodjezdovka.firebasestorage.app",
+        messagingSenderId: "471719692247",
+        appId: "1:471719692247:web:87ec4d504bb77239c12d92"
+      };
+      if (!firebase.apps.length) firebase.initializeApp(window.firebaseConfig);
+    </script>
   </head>
   <body>
     <div id="root"></div>

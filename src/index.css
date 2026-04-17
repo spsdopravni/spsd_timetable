@@ -433,6 +433,24 @@
   }
 }
 
+@keyframes mobileExitLeft {
+  0% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(-80px); }
+}
+
+@keyframes mobileExitRight {
+  0% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(80px); }
+}
+
+.mobile-slide-left {
+  animation: mobileExitLeft 0.15s ease-in forwards;
+}
+
+.mobile-slide-right {
+  animation: mobileExitRight 0.15s ease-in forwards;
+}
+
 .direction-header-animation {
   animation: slideInFromLeft 0.5s ease-out forwards !important;
   animation-duration: 0.5s !important;

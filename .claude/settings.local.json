@@ -21,7 +21,22 @@
       "Bash(curl -sL \"https://www.scholapragensis.cz/visual/img/logo-sp.svg\" -o \"C:/Users/brozb/Desktop/spsd_timetable/public/pictures/schola-pragensis-logo.svg\")",
       "Bash(curl:*)",
       "WebFetch(domain:www.scholapragensis.cz)",
-      "WebFetch(domain:10.0.10.208)"
+      "WebFetch(domain:10.0.10.208)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); dep=d['departures'][0]; print\\('trip_id:', dep.get\\('trip',{}\\).get\\('id'\\)\\); print\\('route:', dep['route']['short_name']\\); print\\('headsign:', dep['trip']['headsign']\\)\")",
+      "Bash(python3 -c ' *)",
+      "Bash(python3 -m json.tool)",
+      "WebFetch(domain:api.golemio.cz)",
+      "Bash(xxd /Users/brozovec/Documents/GitHub/spsd_timetable/src/components/DepartureTracker.tsx)",
+      "Bash(node *)",
+      "Bash(npx web-push *)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('version:', d['version']\\); print\\('main:', d.get\\('main',''\\)\\); print\\('exports:', list\\(d.get\\('exports',{}\\).keys\\(\\)\\)[:5]\\)\")",
+      "Bash(ls /Users/brozovec/Documents/GitHub/spsd_timetable/public/sw*)",
+      "Bash(ls /Users/brozovec/Documents/GitHub/spsd_timetable/dist/sw*)",
+      "Bash(npm uninstall *)",
+      "Bash(python3 -m json.tool echo \"\" echo \"=== NÁŠ manifest ===\" cat /Users/brozovec/Documents/GitHub/spsd_timetable/public/manifest.json)",
+      "WebFetch(domain:caniuse.com)",
+      "WebFetch(domain:webkit.org)",
+      "Bash(sips *)"
     ],
     "deny": [],
     "ask": []
