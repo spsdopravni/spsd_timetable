@@ -39,9 +39,6 @@ const MobileBikefest = lazy(() =>
 const Share = lazy(() =>
   import("./pages/Share").then(module => ({ default: module.default }))
 );
-const MobileMap = lazy(() =>
-  import("./pages/MobileMap").then(module => ({ default: module.default }))
-);
 const MobileProfile = lazy(() =>
   import("./pages/MobileProfile").then(module => ({ default: module.default }))
 );
@@ -72,7 +69,6 @@ const App = () => (
                 <Route path="/m/motol" element={<MobileMotol />} />
                 <Route path="/m/moravska" element={<MobileMoravska />} />
                 <Route path="/m/bikefest" element={<MobileBikefest />} />
-                <Route path="/m/map" element={<MobileMap />} />
                 <Route path="/m/profile" element={<MobileProfile />} />
                 <Route path="/share" element={<Share />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

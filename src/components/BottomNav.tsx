@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { Train, Map, Settings } from "lucide-react";
+import { Train, Settings } from "lucide-react";
 
 interface NavItem {
   to: string;
@@ -13,13 +13,7 @@ const items: NavItem[] = [
     to: "/m",
     label: "Odjezdy",
     icon: <Train className="w-[18px] h-[18px]" />,
-    match: (p) => p === "/m" || p.startsWith("/m/") && !p.startsWith("/m/map") && !p.startsWith("/m/profile"),
-  },
-  {
-    to: "/m/map",
-    label: "Mapa",
-    icon: <Map className="w-[18px] h-[18px]" />,
-    match: (p) => p.startsWith("/m/map"),
+    match: (p) => p === "/m" || p.startsWith("/m/") && !p.startsWith("/m/profile"),
   },
   {
     to: "/m/profile",
