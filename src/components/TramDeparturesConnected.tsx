@@ -12,6 +12,9 @@ interface TramDeparturesConnectedProps {
   showTimesInMinutes?: boolean;
   stationName?: string;
   disableAnimations?: boolean;
+  // Volitelný walk time v sekundách (z GPS) — pokud je dán, používá se pro
+  // stíháš/nestíháš místo hardcoded heuristic per stanice.
+  walkSeconds?: number;
 }
 
 const TramDeparturesConnectedComponent = ({
@@ -20,7 +23,8 @@ const TramDeparturesConnectedComponent = ({
   customTitle,
   showTimesInMinutes = false,
   stationName = "",
-  disableAnimations = false
+  disableAnimations = false,
+  walkSeconds,
 }: TramDeparturesConnectedProps) => {
   const { getDeparturesForStation, time } = useDataContext();
   const stationData = getDeparturesForStation(stationKey);
@@ -209,6 +213,13 @@ const TramDeparturesConnectedComponent = ({
 
     if (showTimesInMinutes) {
       const minutes = Math.floor(timeToArrival / 60);
+
+      // GPS-based stíháš/nestíháš — má přednost před hardcoded heuristikou.
+      if (walkSeconds !== undefined && walkSeconds > 0) {
+        if (timeToArrival < walkSeconds) return 'Nestíháš';
+        if (timeToArrival < walkSeconds + 60) return 'Stíháš';
+        return `${minutes} min`;
+      }
 
       const station = stationName.toLowerCase();
       if ((station.includes('motol') && !station.includes('vozovna')) && minutes < 4) {

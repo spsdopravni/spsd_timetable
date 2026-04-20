@@ -353,8 +353,20 @@ const Index = () => {
       </div>
 
       {/* FOOTER */}
-      <footer className="border-t border-white/10 py-8 text-center text-gray-600 text-sm">
-        <p>© 2026 Adam Brož & Štefan Barát · SPŠD Praha · Data: PID Golemio API · Hosting: Vercel</p>
+      <footer className="border-t border-white/10 py-8 text-center text-gray-600 text-sm space-y-1">
+        <p>
+          © 2026{" "}
+          <a href="https://brozovec.eu" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-400 transition-colors">
+            Adam &quot;Brozovec&quot; Brož
+          </a>
+          {" & "}Štefan Barát · SPŠD Praha · Data: PID Golemio API · Hosting: Vercel
+        </p>
+        <p className="text-gray-700 text-xs">
+          Created and designed by{" "}
+          <a href="https://brozovec.eu" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-blue-400 transition-colors font-semibold">
+            Adam &quot;Brozovec&quot; Brož
+          </a>
+        </p>
       </footer>
 
     </div>

@@ -43,7 +43,8 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  // x-fcm-token přidává klientský supabase fetch wrapper (kvůli RLS) — musí být allowed.
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-fcm-token",
 };
 
 /* ── FCM V1 OAuth2 ─────────────────────────────────────────── */
@@ -209,6 +210,10 @@ Deno.serve(async (req) => {
 
     console.log(`check-notifications: ${subs.length} active subs`);
 
+    // Cooldown per FCM token within tento běh — ať jeden uživatel nedostane víc
+    // než 1 push v jednom check cyklu (např. pokud se sejde minute + stop trigger).
+    const firedTokens = new Set<string>();
+
     for (const sub of subs) {
       let shouldNotify = false;
       const title = `${sub.route_short_name} \u2192 ${sub.headsign}`;
@@ -288,9 +293,13 @@ Deno.serve(async (req) => {
           console.warn(`sub ${sub.id}: shouldNotify but endpoint is "${sub.push_endpoint}" → skipping FCM, marking notified`);
           // Mark notified so we stop re-evaluating this dead sub each poll.
           await supabase.from("notification_subscriptions").update({ notified: true }).eq("id", sub.id);
+        } else if (firedTokens.has(sub.push_endpoint)) {
+          console.log(`sub ${sub.id}: cooldown — FCM token už dostal push v tomhle běhu, mark notified bez send`);
+          await supabase.from("notification_subscriptions").update({ notified: true }).eq("id", sub.id);
         } else {
           const sent = await sendFCM(sub.push_endpoint, title, body);
           if (sent) {
+            firedTokens.add(sub.push_endpoint);
             await supabase.from("notification_subscriptions").update({ notified: true }).eq("id", sub.id);
             notifiedCount++;
           } else {

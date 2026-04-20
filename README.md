@@ -1,357 +1,237 @@
 # SPŠD Odjezdová tabule
 
-Webová aplikace zobrazující odjezdové tabule MHD pro budovy Střední průmyslové školy dopravní v Praze. Zobrazuje odjezdy tramvají a autobusů v reálném čase, aktuální počasí a zprávy od správců.
+<p align="center">
+  <img src="public/pictures/robotz.png" alt="SPŠD Odjezdy maskot" width="180" />
+</p>
 
-Vytvořeno pro SPŠD — Adam "Brozovec" Brož
+<p align="center">
+  <strong>Verze 3.0</strong> · Desktop tabule + plnohodnotná mobilní webová aplikace
+</p>
 
-## Popis projektu
+<p align="center">
+  <img src="https://img.shields.io/badge/version-3.0-blue" alt="verze" />
+  <img src="https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white" alt="react" />
+  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" alt="ts" />
+  <img src="https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white" alt="vite" />
+  <img src="https://img.shields.io/badge/PWA-ready-5A0FC8?logo=pwa&logoColor=white" alt="pwa" />
+  <img src="https://img.shields.io/badge/mobile-ready-16A34A" alt="mobile" />
+</p>
 
-Aplikace slouží jako digitální odjezdová tabule umístěná na displejích v budovách školy. Zobrazuje živé odjezdy MHD ze zastávek v okolí daného pracoviště, přizpůsobená sezonními tématy (Vánoce, jaro apod.) a zobrazuje vlastní zprávy od administrátorů (oznámení, novinky, zajímavosti).
+---
 
-**Škola:** Střední průmyslová škola dopravní, Praha  
-**Hlavní budova:** Motolská 3, Praha 5 — Motol
+## Co to je
 
-## Funkce
+**SPŠD Odjezdová tabule** je real-time informační systém pro studenty Střední průmyslové školy dopravní v Praze. Zobrazuje aktuální odjezdy MHD z okolí školních budov — tramvaje, autobusy, metro i vlaky — a řeší tak každodenní problém "kdy mi to jede a jestli to stihnu".
 
-- Živé odjezdy tramvají a autobusů (API Golemio / PID)
-- Automatické střídání zastávek (Vozovna Motol / Motol, každých 15 sekund)
-- Robot s animovanými zprávami (pozdravy, novinky, zajímavosti, svátky)
-- Sezonní témata (Vánoce, Velikonoce, léto...)
-- Počasí v reálném čase
-- Admin panel pro správu zpráv a tabulí
-- Podpora více budov / tabulí
-- Role-based přístup (admin / správce tabule)
-- PWA — instalovatelné jako aplikace
+Projekt běží **24/7** ve dvou režimech:
 
-## Tech stack
+1. 🖥️ **Desktop / TV tabule** — fullscreen displej u vchodu školy (původní účel projektu, 55" TV)
+2. 📱 **Mobilní web app** — kompletní PWA s live trackingem spojů, notifikacemi, mapou a personalizací (nová verze 3.0)
 
-| Technologie | Verze / Popis |
-|---|---|
-| React | 18 |
-| TypeScript | 5 |
-| Vite | 5 |
-| Tailwind CSS | 3 |
-| Supabase | Backend, auth, databáze (PostgreSQL) |
-| React Router | v6 — routování |
-| Framer Motion | Animace robota |
-| Font Awesome | 6.5 — ikony (CDN) |
-| Golemio API | Odjezdy MHD Praha |
-| WeatherAPI | Aktuální počasí |
+<p align="center">
+  <img src="public/pictures/tabule-screenshot.png" alt="Screenshot tabule" width="80%" />
+</p>
 
-## Architektura
+**Škola:** Střední průmyslová škola dopravní, Praha
+**Budovy:** Motol · Moravská · Bikefest (akce)
 
-```
-Prohlížeč (React SPA)
-    ├── /            → Index (výběr tabule nebo přechod na Motol)
-    ├── /menu        → Menu výběru tabule (načítá tabule ze Supabase)
-    ├── /spsmotol    → Odjezdová tabule Motol (Golemio API)
-    └── /admin       → Admin panel (Supabase auth + DB)
+---
 
-Supabase (PostgreSQL + Auth)
-    ├── boards         → Tabule (budovy školy)
-    ├── profiles       → Uživatelé s rolemi
-    ├── board_managers → Přiřazení správců k tabulím
-    ├── messages       → Vlastní zprávy (zobrazují se v robotovi)
-    └── fun_facts      → Zajímavosti (zobrazují se v robotovi)
-```
+## ✨ Co přináší verze 3.0
 
-## Instalace a spuštění
+### 🎉 Mobilní web app — READY
 
-### Požadavky
+Kompletně nová mobilní verze dostupná na `/m`. Postavená jako PWA — přidáš si ji na plochu a chová se jako nativní aplikace.
 
-- Node.js 18+
-- npm nebo pnpm
-- Účet na [Supabase](https://supabase.com) (free tier stačí)
-- Klíč API pro [Golemio](https://api.golemio.cz) (pro odjezdy)
-- Klíč API pro [WeatherAPI](https://www.weatherapi.com) (pro počasí, volitelné)
+**Co umí:**
 
-### Kroky
+- 📍 **Live GPS walk-time** — vypočítá v reálném čase, kolik minut ti zabere dojít na zastávku podle tvé aktuální polohy. Kliknutím se otevře Apple Maps / Google Maps s pěší navigací
+- 🔔 **Push notifikace** přes Firebase Cloud Messaging (FCM v1) — upozornění typu "spoj za 5 min" nebo "spoj projíždí zastávkou X". Funguje i když je appka zavřená
+- 🚋 **Detailní tracker spoje** — otevřeš odjezd a vidíš celou trasu s animovanou pozicí vozidla, zpoždění, příslušenství (klima, bezbariérovost, USB, WiFi, držáky kol), pokračování linky bez přestupu a historická data o zpožděních
+- 🗺️ **Mapa vozidel** — live pozice všech vozidel linek, které jedou ke škole (Leaflet + Golemio vehicle positions API)
+- ⚙️ **Nastavení** — světlý / tmavý / automatický režim, perzistentní přes `localStorage`, bez záblesku při startu
+- 🔗 **Sdílení spoje** — URL `?openTrip=…`, příjemce vidí přesně ten samý spoj s trackerem
+- ⤵️ **Pull-to-refresh** na seznamu odjezdů
+- ↔️ **Swipe** mezi zastávkami (Nástupiště A ↔ B ↔ vlakové nádraží atd.)
+- 📶 **Offline-first UI** — při výpadku API se drží poslední platná data s upozorněním
+- 🍎 **iOS PWA support** — banner, který iPhone uživatele nauče appku přidat na plochu
+
+**Mobilní routy:**
+
+| Cesta | Popis |
+|-------|-------|
+| `/m` | Výběr budovy (Motol / Moravská / Bikefest) |
+| `/m/motol` | Odjezdy u budovy Motol (Vozovna Motol, metro Motol) |
+| `/m/moravska` | Odjezdy u budovy Moravská (Jana Masaryka, Šumavská) |
+| `/m/bikefest` | Odjezdy během akce Bikefest (Výstaviště, Praha-Bubny) |
+| `/m/map` | Live mapa vozidel |
+| `/m/profile` | Nastavení |
+| `/share?d=…` | Otevření sdíleného spoje |
+
+### 🖥️ Desktop / TV tabule
+
+Původní desktop verze — běží fullscreen na 55" TV u vchodu školy:
+
+- Real-time odjezdy s automatickou rotací zastávek každých 15 s
+- Počasí (teplota, vlhkost, vítr, UV) z WeatherAPI.com
+- Návěstidla u vlakových zastávek
+- Info o výlukách, zkrácených jízdách, pokračování linek
+- Ikony příslušenství vozidel
+- Záložní data při výpadku API (fallback s upozorněním)
+- Vysoký kontrast a velké písmo navržené pro čitelnost z dálky
+
+Routy: `/spsmotol` · `/spsmoravska` · `/bikefest` · `/menu` (výběr)
+
+### 🎭 Sezónní maskot
+
+8 variant robota, který se automaticky přepíná podle ročního období:
+
+<p align="center">
+  <img src="public/pictures/robot-spring.png" alt="jaro" width="90" />
+  <img src="public/pictures/robot-summer.png" alt="léto" width="90" />
+  <img src="public/pictures/robot-autumn.png" alt="podzim" width="90" />
+  <img src="public/pictures/robot-winter.png" alt="zima" width="90" />
+</p>
+<p align="center">
+  <img src="public/pictures/robot-christmas.png" alt="vánoce" width="90" />
+  <img src="public/pictures/robot-halloween.png" alt="halloween" width="90" />
+  <img src="public/pictures/robot-easter.png" alt="velikonoce" width="90" />
+  <img src="public/pictures/robot-bikefest.png" alt="bikefest" width="90" />
+</p>
+
+Jaro · Léto · Podzim · Zima · Vánoce · Halloween · Velikonoce · Bikefest
+
+---
+
+## 🛠️ Technologie
+
+| Oblast | Stack |
+|--------|-------|
+| **Frontend** | React 18 · TypeScript 5 · Vite 5 · Tailwind CSS 3 |
+| **UI** | Framer Motion · Lucide Icons · Font Awesome · shadcn/ui primitivy |
+| **Routing** | React Router v6 (lazy-loaded routy) |
+| **Mapa** | Leaflet + React-Leaflet |
+| **Data MHD** | [PID Golemio API v2](https://api.golemio.cz) (departure boards, vehicle positions, trip stops) |
+| **Počasí** | WeatherAPI.com |
+| **Backend** | Supabase (PostgreSQL + Edge Functions) |
+| **Push** | Firebase Cloud Messaging (FCM v1 API) |
+| **PWA** | `vite-plugin-pwa` + Workbox |
+| **Hosting** | Vercel |
+
+---
+
+## 🚀 Spuštění lokálně
 
 ```bash
-# 1. Naklonujte repozitář
+# 1. Naklonuj repo
 git clone <url-repozitare>
 cd spsd_timetable
 
-# 2. Nainstalujte závislosti
+# 2. Instalace
 npm install
 
-# 3. Vytvořte soubor .env.local a vyplňte proměnné (viz níže)
+# 3. Vytvoř .env.local (viz sekce níže)
 
-# 4. Nastavte Supabase databázi (viz sekce Supabase nastavení)
-
-# 5. Spusťte vývojový server
-npm run dev
+# 4. Dev server
+npm run dev:watch        # vite dev server (hot reload)
+# nebo
+npm run build            # produkční build → dist/
+npm run preview          # preview produkčního buildu
 ```
 
 Aplikace poběží na `http://localhost:5173`.
 
-## Supabase nastavení
+### ENV proměnné
 
-### 1. Vytvoření projektu
-
-1. Přejděte na [app.supabase.com](https://app.supabase.com)
-2. Vytvořte nový projekt
-3. Zkopírujte **Project URL** a **anon public** klíč do `.env.local`
-
-### 2. Spuštění SQL schématu
-
-V Supabase dashboardu otevřete **SQL Editor** a spusťte následující SQL:
-
-```sql
--- Boards (tabule)
-CREATE TABLE boards (
-  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  name text NOT NULL,
-  slug text UNIQUE NOT NULL,
-  address text,
-  stops text[] DEFAULT '{}',
-  route text,
-  active boolean DEFAULT true,
-  created_at timestamptz DEFAULT now()
-);
-
--- User profiles with roles
-CREATE TABLE profiles (
-  id uuid REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
-  email text,
-  full_name text,
-  role text NOT NULL DEFAULT 'manager' CHECK (role IN ('admin', 'manager')),
-  created_at timestamptz DEFAULT now()
-);
-
--- Which managers manage which boards
-CREATE TABLE board_managers (
-  user_id uuid REFERENCES profiles(id) ON DELETE CASCADE,
-  board_id uuid REFERENCES boards(id) ON DELETE CASCADE,
-  PRIMARY KEY (user_id, board_id)
-);
-
--- Messages
-CREATE TABLE messages (
-  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  content text NOT NULL,
-  type text NOT NULL DEFAULT 'message' CHECK (type IN ('message', 'news', 'fact', 'alert')),
-  board_id uuid REFERENCES boards(id) ON DELETE CASCADE,
-  active boolean DEFAULT true,
-  priority int DEFAULT 0,
-  show_from timestamptz,
-  show_until timestamptz,
-  created_at timestamptz DEFAULT now(),
-  created_by uuid REFERENCES profiles(id)
-);
-
--- Row Level Security
-ALTER TABLE boards ENABLE ROW LEVEL SECURITY;
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE board_managers ENABLE ROW LEVEL SECURITY;
-ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
-
--- Policies pro boards
-CREATE POLICY "Public read active boards" ON boards FOR SELECT USING (active = true);
-CREATE POLICY "Auth manage boards" ON boards FOR ALL USING (auth.role() = 'authenticated');
-
--- Policies pro profiles
-CREATE POLICY "Users read own profile" ON profiles FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Auth read all profiles" ON profiles FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "Auth manage profiles" ON profiles FOR ALL USING (auth.role() = 'authenticated');
-
--- Policies pro messages
-CREATE POLICY "Public read messages" ON messages FOR SELECT USING (active = true);
-CREATE POLICY "Auth manage messages" ON messages FOR ALL USING (auth.role() = 'authenticated');
-
--- Policies pro board_managers
-CREATE POLICY "Auth read board_managers" ON board_managers FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "Auth manage board_managers" ON board_managers FOR ALL USING (auth.role() = 'authenticated');
-
--- Fun facts (zajímavosti)
-CREATE TABLE fun_facts (
-  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  content text NOT NULL,
-  active boolean DEFAULT true,
-  created_at timestamptz DEFAULT now()
-);
-
-ALTER TABLE fun_facts ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public read active facts" ON fun_facts FOR SELECT USING (active = true);
-CREATE POLICY "Auth manage facts" ON fun_facts FOR ALL USING (auth.role() = 'authenticated');
-
--- Trigger: automaticky vytvoří profil při registraci / pozvání uživatele
-CREATE OR REPLACE FUNCTION handle_new_user()
-RETURNS trigger AS $$
-BEGIN
-  INSERT INTO profiles (id, email, full_name, role)
-  VALUES (
-    new.id,
-    new.email,
-    new.raw_user_meta_data->>'full_name',
-    COALESCE(new.raw_user_meta_data->>'role', 'manager')
-  );
-  RETURN new;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE PROCEDURE handle_new_user();
-```
-
-### 3. Vytvoření prvního admin uživatele
-
-1. V Supabase dashboardu přejděte do **Authentication → Users**
-2. Klikněte **Invite user** a zadejte svůj e-mail
-3. Otevřete odkaz z e-mailu a nastavte heslo
-4. Spusťte v SQL Editoru (nahraďte e-mail):
-
-```sql
-UPDATE profiles SET role = 'admin' WHERE email = 'vas@email.cz';
-```
-
-### 4. Přidání výchozí tabule Motol
-
-```sql
-INSERT INTO boards (name, slug, address, stops, route, active)
-VALUES (
-  'Budova Motol',
-  'motol',
-  'Motolská 3, Praha 5',
-  ARRAY['Vozovna Motol', 'Motol (metro A, B)'],
-  '/spsmotol',
-  true
-);
-```
-
-## Environment variables
-
-Vytvořte soubor `.env.local` v kořeni projektu:
+Vytvoř `.env.local` v rootu:
 
 | Proměnná | Popis | Povinná |
-|---|---|---|
-| `VITE_SUPABASE_URL` | URL vašeho Supabase projektu | Ano |
+|----------|-------|---------|
+| `VITE_SUPABASE_URL` | URL Supabase projektu | Ano |
 | `VITE_SUPABASE_ANON_KEY` | Anon (public) klíč Supabase | Ano |
-| `VITE_GOLEMIO_API_KEY` | API klíč pro Golemio (odjezdy MHD) | Ano |
-| `VITE_WEATHER_API_KEY` | API klíč pro WeatherAPI (počasí) | Ne |
+| `VITE_WEATHER_API_KEY` | API klíč pro WeatherAPI.com | Ne |
 
-Příklad `.env.local`:
+Golemio API token je zahardcodován v kódu (veřejný read-only). Firebase config je v `index.html`.
 
-```env
-VITE_SUPABASE_URL=https://abcdefgh.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-VITE_GOLEMIO_API_KEY=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
-VITE_WEATHER_API_KEY=abc123def456
-```
+### Supabase
 
-> **Pozor:** Soubor `.env.local` nesmí být commitován do gitu (je zahrnut v `.gitignore`).
+Schéma databáze je v `supabase-schema.sql` — spusť v Supabase SQL Editoru.
+Edge Function pro cron push notifikací je v `supabase/functions/check-notifications/`.
 
-## Vercel deployment
+---
 
-### Nasazení
-
-1. Pushněte kód na GitHub
-2. Přihlaste se na [vercel.com](https://vercel.com)
-3. Klikněte **Add New Project** a vyberte váš GitHub repozitář
-4. Framework preset: **Vite**
-5. Klikněte **Deploy**
-
-### Environment variables na Vercel
-
-Po deploymentu přejděte do **Settings → Environment Variables** a přidejte všechny proměnné ze sekce výše.
-
-Poté spusťte nový deployment: **Deployments → Redeploy**.
-
-### Vlastní doména
-
-V **Settings → Domains** přidejte vlastní doménu (např. `tabule.sps-dopravni.cz`).
-
-> Nezapomeňte přidat doménu také do **Supabase → Authentication → URL Configuration → Site URL** a **Redirect URLs**.
-
-## Admin panel
-
-Admin panel je dostupný na adrese `/admin`.
-
-### Přihlášení
-
-Použijte e-mail a heslo nastavené v Supabase Authentication.
-
-### Role uživatelů
-
-| Role | Možnosti |
-|---|---|
-| **Administrátor** | Plný přístup: správa tabulí, zpráv, uživatelů; pozvaní nových uživatelů; změna rolí |
-| **Správce tabule** | Omezený přístup: spravuje pouze zprávy pro tabule, ke kterým má přiřazený přístup |
-
-### Sekce admin panelu
-
-**Přehled** — statistiky (počet tabulí, zpráv, uživatelů), rychlé akce, přehled posledních zpráv
-
-**Tabule** — seznam budov/tabulí. Admin může přidávat a editovat (název, slug, adresa, zastávky MHD, route, aktivní/neaktivní). Správce vidí pouze své tabule.
-
-**Zprávy** — správa zpráv zobrazovaných na tabulích roboty:
-- Typ: Zpráva / Novinka / Zajímavost
-- Přiřazení ke konkrétní tabuli nebo globálně (všem tabulím)
-- Priorita (vyšší = dřív se zobrazí)
-- Volitelné datum zobrazení (od / do)
-- Aktivace / deaktivace
-
-**Uživatelé** (pouze admin) — pozvání nových uživatelů, přiřazení tabulí ke správcům, změna rolí, smazání uživatelů
-
-### Pozvání nového správce
-
-1. Přejděte do **Uživatelé → Pozvat uživatele**
-2. Vyplňte e-mail, jméno a roli
-3. Pro roli Správce vyberte tabule, ke kterým má mít přístup
-4. Klikněte **Odeslat pozvánku**
-
-Uživatel obdrží e-mail s odkazem pro nastavení hesla.
-
-> **Poznámka:** Funkce pozvánek vyžaduje, aby projekt na Supabase měl povoleno odesílání e-mailů (výchozí nastavení u nových projektů). Zvoucí admin musí mít v projektu service_role klíč nebo Supabase musí mít povolené `inviteUserByEmail` pro authenticated uživatele.
-
-## Struktura projektu
+## 📁 Struktura projektu
 
 ```
-spsd_timetable/
-├── public/
-│   └── pictures/              # Obrázky (loga, robot, metro ikony)
-├── src/
-│   ├── components/
-│   │   ├── DailyRobot.tsx     # Animovaný robot se zprávami
-│   │   ├── TramDeparturesConnected.tsx
-│   │   ├── WeatherWidget.tsx
-│   │   └── ...
-│   ├── context/
-│   │   ├── DataContext.tsx    # Sdílená data (čas, sezonní téma)
-│   │   └── ThemeContext.tsx
-│   ├── hooks/
-│   │   └── useCustomMessages.ts  # Hook pro načítání zpráv ze Supabase
-│   ├── lib/
-│   │   └── supabase.ts        # Supabase client + TypeScript typy
-│   ├── pages/
-│   │   ├── Admin.tsx          # Admin panel (kompletní CRUD)
-│   │   ├── Index.tsx          # Úvodní stránka
-│   │   ├── Menu.tsx           # Výběr tabule (načítá z DB)
-│   │   └── Spsmotol.tsx       # Odjezdová tabule Motol
-│   └── App.tsx                # Routování
-├── index.html
-├── .env.local                 # Lokální env proměnné (neni v gitu)
-├── vite.config.ts
-└── tailwind.config.ts
+src/
+├── pages/                      # Routy
+│   ├── Index.tsx               # Landing page
+│   ├── Menu.tsx                # Desktop menu (výběr budovy)
+│   ├── Spsmotol.tsx            # 🖥️  Desktop tabule Motol
+│   ├── SpsMoravska.tsx         # 🖥️  Desktop tabule Moravská
+│   ├── Bikefest.tsx            # 🖥️  Desktop tabule Bikefest
+│   ├── Mobile.tsx              # 📱 /m — výběr budovy
+│   ├── MobileMotol.tsx         # 📱 /m/motol
+│   ├── MobileMoravska.tsx      # 📱 /m/moravska
+│   ├── MobileBikefest.tsx      # 📱 /m/bikefest
+│   ├── MobileMap.tsx           # 📱 /m/map — live mapa
+│   ├── MobileProfile.tsx       # 📱 /m/profile — nastavení
+│   └── Share.tsx               # /share — příjem sdíleného spoje
+│
+├── components/
+│   ├── MobileDepartures.tsx    # Reusable mobilní odjezdy (cards, tabs, swipe, PTR)
+│   ├── DepartureTracker.tsx    # Sheet s live trackingem spoje
+│   ├── BottomNav.tsx           # Spodní lišta (Odjezdy / Mapa / Nastavení)
+│   ├── PwaInstallPrompt.tsx    # Banner pro iOS "Přidat na plochu"
+│   └── TramDeparturesConnected.tsx  # Desktop odjezdy
+│
+├── utils/
+│   ├── pidApi.ts               # Wrapper nad Golemio API
+│   ├── firebase.ts             # FCM setup
+│   ├── notificationService.ts  # Supabase notifikace CRUD
+│   ├── delayHistory.ts         # Ukládání / čtení zpoždění
+│   ├── walking.ts              # Walk-time kalkulace (Haversine + průměrné tempo)
+│   ├── useUserLocation.ts      # Geolokace hook
+│   ├── usePullToRefresh.ts     # PTR hook
+│   ├── useDarkMode.ts          # Dark mode s localStorage + anti-flash
+│   └── supabase.ts
+│
+└── context/
+    ├── DataContext.tsx         # Globální store pro odjezdy + čas
+    └── ThemeContext.tsx        # Sezónní téma (robot, logo)
+
+supabase/
+└── functions/
+    └── check-notifications/    # Edge Function pro cron push notifikace
 ```
 
-## Vývoj
+---
 
-```bash
-# Vývojový server
-npm run dev
+## 🌐 Deployment (Vercel)
 
-# Build pro produkci
-npm run build
+1. Pushni kód na GitHub
+2. Přihlas se na [vercel.com](https://vercel.com) → **Add New Project**
+3. Framework preset: **Vite**
+4. Přidej ENV proměnné v **Settings → Environment Variables**
+5. Deploy
 
-# Preview produkčního buildu
-npm run preview
+Vlastní doména se přidává v **Settings → Domains**. Nezapomeň ji přidat i do Supabase **Authentication → URL Configuration**.
 
-# Kontrola kódu (ESLint)
-npm run lint
-```
+---
 
-## Licence
+## 🐛 Známá chování
 
-Interní projekt školy SPŠD Praha. Není určeno pro veřejné použití bez souhlasu školy.
+- **iOS Safari / PWA home indicator** — tmavý pás v dolní části obrazovky na iPhone je iOS systémová oblast (home indicator safe area). V Safari browseru je defaultně černá, v PWA módu respektuje `theme-color` meta. Po změně `theme-color` je nutné appku odebrat a znovu přidat na plochu, aby se meta tagy obnovily.
+- **FCM push na iOS** — funguje pouze pokud je appka nainstalovaná jako PWA (Safari → Sdílet → Přidat na plochu). V běžném Safari browseru iOS push API není dostupné.
+
+---
+
+## 👤 Autor
+
+**Adam "Brozovec" Brož** — SPŠD Praha
+
+---
+
+## 📜 Licence
+
+Interní projekt Střední průmyslové školy dopravní v Praze. Není určeno pro veřejné použití bez souhlasu školy.

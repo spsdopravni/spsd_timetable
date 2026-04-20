@@ -110,6 +110,61 @@ export interface TripStop {
   lon: number;
 }
 
+// Cache souřadnic zastávek per stop_id. Coords zastávek se prakticky nemění,
+// takže persistujeme do localStorage — uchová se mezi page refreshy a snižuje
+// počet volání Golemio API (důležité kvůli rate limitu).
+const COORDS_LS_PREFIX = "stop_coords_";
+const stopCoordsCache = new Map<string, { lat: number; lon: number } | null>();
+
+export const getStopCoords = async (
+  stopId: string,
+): Promise<{ lat: number; lon: number } | null> => {
+  if (!stopId) return null;
+  if (stopCoordsCache.has(stopId)) return stopCoordsCache.get(stopId)!;
+
+  // Try localStorage first.
+  try {
+    if (typeof localStorage !== "undefined") {
+      const raw = localStorage.getItem(COORDS_LS_PREFIX + stopId);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed.lat === "number" && typeof parsed.lon === "number") {
+          stopCoordsCache.set(stopId, parsed);
+          return parsed;
+        }
+      }
+    }
+  } catch {}
+
+  try {
+    const r = await fetch(
+      `${API_BASE}/v2/gtfs/stops/${encodeURIComponent(stopId)}`,
+      { headers: { "X-Access-Token": API_KEY_1 } },
+    );
+    if (!r.ok) {
+      stopCoordsCache.set(stopId, null);
+      return null;
+    }
+    const d = await r.json();
+    const coords = d.geometry?.coordinates; // GeoJSON [lon, lat]
+    if (!coords || coords.length < 2) {
+      stopCoordsCache.set(stopId, null);
+      return null;
+    }
+    const result = { lon: coords[0], lat: coords[1] };
+    stopCoordsCache.set(stopId, result);
+    try {
+      if (typeof localStorage !== "undefined") {
+        localStorage.setItem(COORDS_LS_PREFIX + stopId, JSON.stringify(result));
+      }
+    } catch {}
+    return result;
+  } catch {
+    stopCoordsCache.set(stopId, null);
+    return null;
+  }
+};
+
 // Najde trip_id pokračující linky, který odjíždí z dané zastávky nejdřív po `afterUnix`.
 // Použije departureboards (široké okno) a vybere první match.
 export const findNextTripId = async (

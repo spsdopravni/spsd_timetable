@@ -3,7 +3,10 @@ import { TramDeparturesConnected } from "@/components/TramDeparturesConnected";
 import { DailyRobot } from "@/components/DailyRobot";
 import { Snowfall } from "@/components/Snowfall";
 import { ChristmasGarland } from "@/components/ChristmasGarland";
-import { useDataContext } from "@/context/DataContext";
+import { useDataContext, ALL_STATIONS } from "@/context/DataContext";
+import { useUserLocation } from "@/utils/useUserLocation";
+import { walkingMinutes } from "@/utils/walking";
+import { getStopCoords } from "@/utils/pidApi";
 
 const Bikefest = () => {
   const { time, seasonalTheme, getDeparturesForStation } = useDataContext();
@@ -25,6 +28,32 @@ const Bikefest = () => {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [displayIndex, setDisplayIndex] = useState(screenIndex);
   const [animKey, setAnimKey] = useState(0);
+
+  // GPS-based walking time pro jednotlivá nástupiště. Pokud uživatel polohu
+  // nepovolí, fallback na hardcoded heuristiku v TramDeparturesConnected.
+  const userLoc = useUserLocation();
+  const [stopCoords, setStopCoords] = useState<Record<string, { lat: number; lon: number } | null>>({});
+  const platformKeys = ["vystavisteA", "vystavisteB", "vystavisteVlak", "prahaBubny"];
+  useEffect(() => {
+    for (const key of platformKeys) {
+      const conf = (ALL_STATIONS as Record<string, { id: string | string[] }>)[key];
+      if (!conf) continue;
+      const stopId = Array.isArray(conf.id) ? conf.id[0] : conf.id;
+      if (!stopId || stopCoords[stopId] !== undefined) continue;
+      getStopCoords(stopId).then((c) => setStopCoords((prev) => ({ ...prev, [stopId]: c })));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function walkSecondsFor(stationKey: string): number | undefined {
+    if (!userLoc.location) return undefined;
+    const conf = (ALL_STATIONS as Record<string, { id: string | string[] }>)[stationKey];
+    if (!conf) return undefined;
+    const stopId = Array.isArray(conf.id) ? conf.id[0] : conf.id;
+    const sc = stopId ? stopCoords[stopId] : null;
+    if (!sc) return undefined;
+    return walkingMinutes(userLoc.location.lat, userLoc.location.lon, sc.lat, sc.lon) * 60;
+  }
 
   useEffect(() => {
     if (screenIndex !== displayIndex) {
@@ -122,10 +151,15 @@ const Bikefest = () => {
                 <div className="flex items-center justify-center gap-3 w-full h-full">
                   <i className="fa-solid fa-location-dot text-gray-800 text-xl"></i>
                   <h2 className="font-black leading-none text-gray-900" style={{ fontSize: 'clamp(1.75rem, 3.5vh, 2.5rem)' }}>Nástupiště A</h2>
+                  {walkSecondsFor('vystavisteA') !== undefined && (
+                    <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-gray-900/15 px-3 py-1 text-base font-bold">
+                      <i className="fa-solid fa-person-walking" /> {Math.round(walkSecondsFor('vystavisteA')! / 60)} min
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="flex-1">
-                <TramDeparturesConnected stationKey="vystavisteA" maxItems={7} showTimesInMinutes={true} stationName="Výstaviště" disableAnimations={false} />
+                <TramDeparturesConnected stationKey="vystavisteA" maxItems={7} showTimesInMinutes={true} stationName="Výstaviště" disableAnimations={false} walkSeconds={walkSecondsFor('vystavisteA')} />
               </div>
             </div>
 
@@ -136,10 +170,15 @@ const Bikefest = () => {
                 <div className="flex items-center justify-center gap-3 w-full h-full">
                   <i className="fa-solid fa-location-dot text-gray-800 text-xl"></i>
                   <h2 className="font-black leading-none text-gray-900" style={{ fontSize: 'clamp(1.75rem, 3.5vh, 2.5rem)' }}>Nástupiště B</h2>
+                  {walkSecondsFor('vystavisteB') !== undefined && (
+                    <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-gray-900/15 px-3 py-1 text-base font-bold">
+                      <i className="fa-solid fa-person-walking" /> {Math.round(walkSecondsFor('vystavisteB')! / 60)} min
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="flex-1">
-                <TramDeparturesConnected stationKey="vystavisteB" maxItems={7} showTimesInMinutes={true} stationName="Výstaviště" disableAnimations={false} />
+                <TramDeparturesConnected stationKey="vystavisteB" maxItems={7} showTimesInMinutes={true} stationName="Výstaviště" disableAnimations={false} walkSeconds={walkSecondsFor('vystavisteB')} />
               </div>
             </div>
           </div>
@@ -152,10 +191,15 @@ const Bikefest = () => {
               <div className="flex items-center justify-center gap-3 w-full h-full">
                 <i className="fa-solid fa-train text-gray-800 text-xl"></i>
                 <h2 className="font-black leading-none text-gray-900" style={{ fontSize: 'clamp(1.75rem, 3.5vh, 2.5rem)' }}>Vlakové nádraží Praha-Výstaviště</h2>
+                {walkSecondsFor('vystavisteVlak') !== undefined && (
+                  <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-gray-900/15 px-3 py-1 text-base font-bold">
+                    <i className="fa-solid fa-person-walking" /> {Math.round(walkSecondsFor('vystavisteVlak')! / 60)} min
+                  </span>
+                )}
               </div>
             </div>
             <div className="flex-1">
-              <TramDeparturesConnected stationKey="vystavisteVlak" maxItems={7} showTimesInMinutes={true} stationName="Praha-Výstaviště" disableAnimations={false} />
+              <TramDeparturesConnected stationKey="vystavisteVlak" maxItems={7} showTimesInMinutes={true} stationName="Praha-Výstaviště" disableAnimations={false} walkSeconds={walkSecondsFor('vystavisteVlak')} />
             </div>
           </div>
         )}
@@ -167,10 +211,15 @@ const Bikefest = () => {
               <div className="flex items-center justify-center gap-3 w-full h-full">
                 <i className="fa-solid fa-train text-gray-800 text-xl"></i>
                 <h2 className="font-black leading-none text-gray-900" style={{ fontSize: 'clamp(1.75rem, 3.5vh, 2.5rem)' }}>Vlakové nádraží Praha-Bubny</h2>
+                {walkSecondsFor('prahaBubny') !== undefined && (
+                  <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-gray-900/15 px-3 py-1 text-base font-bold">
+                    <i className="fa-solid fa-person-walking" /> {Math.round(walkSecondsFor('prahaBubny')! / 60)} min
+                  </span>
+                )}
               </div>
             </div>
             <div className="flex-1">
-              <TramDeparturesConnected stationKey="prahaBubny" maxItems={7} showTimesInMinutes={true} stationName="Praha-Bubny" disableAnimations={false} />
+              <TramDeparturesConnected stationKey="prahaBubny" maxItems={7} showTimesInMinutes={true} stationName="Praha-Bubny" disableAnimations={false} walkSeconds={walkSecondsFor('prahaBubny')} />
             </div>
           </div>
         )}

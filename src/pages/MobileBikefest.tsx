@@ -2,6 +2,7 @@ import { MobileDepartures, type MobileBuildingDef } from "@/components/MobileDep
 
 const BUILDING: MobileBuildingDef = {
   title: "Bikefest — Výstaviště",
+  enableLiveWalkTime: true,
   stations: [
     { key: "vystavisteA", name: "Výstaviště", direction: "Nástupiště A", simpleName: "Výstaviště", walkMinutes: 2 },
     { key: "vystavisteB", name: "Výstaviště", direction: "Nástupiště B", simpleName: "Výstaviště", walkMinutes: 2 },

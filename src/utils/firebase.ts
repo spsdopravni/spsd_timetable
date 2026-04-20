@@ -42,6 +42,10 @@ export async function getFCMToken(): Promise<string | null> {
 
     const token = await msg.getToken({ vapidKey: VAPID_KEY });
     console.log("FCM token:", token?.substring(0, 20) + "...");
+    // Cache for supabase fetch wrapper — used as x-fcm-token header for RLS.
+    if (token && typeof localStorage !== "undefined") {
+      localStorage.setItem("fcm_token", token);
+    }
     return token;
   } catch (e) {
     console.error("FCM token error:", e);

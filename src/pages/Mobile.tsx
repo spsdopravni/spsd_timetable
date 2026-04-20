@@ -13,7 +13,7 @@ const Mobile = () => {
   const currentTime = time.currentTime;
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 via-white to-amber-50 flex flex-col overflow-hidden" style={{ height: "100dvh" }}>
+    <div className="bg-gradient-to-br from-blue-50 via-white to-amber-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 flex flex-col overflow-hidden" style={{ height: "100dvh" }}>
 
       {/* Header */}
       <div
@@ -24,7 +24,10 @@ const Mobile = () => {
         }}
       >
         <div className="absolute inset-0 bg-blue-900/85" />
-        <div className="relative z-10 px-5 pt-5 pb-5">
+        <div
+          className="relative z-10 px-5 pb-5"
+          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.25rem)" }}
+        >
           <div className="flex items-center justify-between mb-2">
             <img src={seasonalTheme.logoPath} alt="SPŠD" className="h-12 object-contain" />
             <div className="text-right">
@@ -66,6 +69,19 @@ const Mobile = () => {
               </div>
             </button>
           ))}
+        </div>
+
+        {/* Credit */}
+        <div className="mt-8 text-center text-[11px] text-gray-500 dark:text-gray-400">
+          Created and designed by{" "}
+          <a
+            href="https://brozovec.eu"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-blue-600 dark:text-blue-400 active:text-blue-700"
+          >
+            Adam &quot;Brozovec&quot; Brož
+          </a>
         </div>
       </div>
     </div>

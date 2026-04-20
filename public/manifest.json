@@ -4,8 +4,8 @@
   "description": "Odjezdy MHD pro studenty SPŠD Praha",
   "start_url": "/m",
   "display": "standalone",
-  "background_color": "#1e40af",
-  "theme_color": "#1e40af",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
   "orientation": "any",
   "lang": "cs",
   "icons": [

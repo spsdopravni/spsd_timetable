@@ -1,9 +1,15 @@
 import { useState, useEffect, useRef } from "react";
-import { useDataContext } from "@/context/DataContext";
-import { Clock, MapPin, AlertTriangle, Moon, Wrench, Info, ArrowRight, Bell, BellRing } from "lucide-react";
+import { useDataContext, ALL_STATIONS } from "@/context/DataContext";
+import { Clock, MapPin, AlertTriangle, Moon, Wrench, Info, ArrowRight, Bell, BellRing, Footprints } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { DepartureTracker } from "@/components/DepartureTracker";
 import { getActiveTripIds, requestPushPermission } from "@/utils/notificationService";
+import { getStopCoords } from "@/utils/pidApi";
+import { useUserLocation } from "@/utils/useUserLocation";
+import { walkingMinutes } from "@/utils/walking";
+import { usePullToRefresh } from "@/utils/usePullToRefresh";
+import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
+import { BottomNav } from "@/components/BottomNav";
 import type { Departure } from "@/types/pid";
 
 /* ── types ─────────────────────────────────────────────────── */
@@ -38,6 +44,8 @@ export interface MobileBuildingDef {
   stations: MobileStationDef[];
   theme?: MobileBuildingTheme;
   metro?: MetroInfoDef[];
+  // Opt-in: počítat čas chůze podle GPS uživatele (jinak se použije static walkMinutes).
+  enableLiveWalkTime?: boolean;
 }
 
 const DEFAULT_THEME: MobileBuildingTheme = {
@@ -320,7 +328,7 @@ export function MobileDepartures({ building }: { building: MobileBuildingDef }) 
     };
   }, []);
 
-  const { getDeparturesForStation, time, seasonalTheme } = useDataContext();
+  const { getDeparturesForStation, time, seasonalTheme, refreshStation } = useDataContext();
   const currentTime = time.currentTime;
   const timeOffset = time.timeOffset;
   const [nowSec, setNowSec] = useState(Math.floor((Date.now() + timeOffset) / 1000));
@@ -366,13 +374,63 @@ export function MobileDepartures({ building }: { building: MobileBuildingDef }) 
     getActiveTripIds().then(setNotifiedTripIds);
   }, [station.key, trackedDeparture]); // re-check when tracker closes
 
+  // Geolokace + dynamic walk minutes per station — JEN když building enableLiveWalkTime.
+  const liveWalk = !!building.enableLiveWalkTime;
+  const userLoc = useUserLocation(liveWalk);
+  const [stopCoords, setStopCoords] = useState<Record<string, { lat: number; lon: number } | null>>({});
+
+  useEffect(() => {
+    if (!liveWalk) return;
+    // Načti coords jen pro aktuální zastávku — pro výpočet walking time.
+    const conf = (ALL_STATIONS as Record<string, { id: string | string[] }>)[station.key];
+    if (!conf) return;
+    const stopId = Array.isArray(conf.id) ? conf.id[0] : conf.id;
+    if (!stopId || stopCoords[stopId] !== undefined) return;
+    getStopCoords(stopId).then((c) => setStopCoords((prev) => ({ ...prev, [stopId]: c })));
+  }, [liveWalk, station.key, stopCoords]);
+
+  const dynamicWalkMin: number = (() => {
+    if (!liveWalk) return station.walkMinutes;
+    const conf = (ALL_STATIONS as Record<string, { id: string | string[] }>)[station.key];
+    const stopId = conf ? (Array.isArray(conf.id) ? conf.id[0] : conf.id) : null;
+    const sc = stopId ? stopCoords[stopId] : null;
+    if (userLoc.location && sc) {
+      return walkingMinutes(userLoc.location.lat, userLoc.location.lon, sc.lat, sc.lon);
+    }
+    return station.walkMinutes;
+  })();
+
   const stationData = getDeparturesForStation(station.key);
-  const departures = stationData.departures.slice(0, 10);
+  const departures = stationData.departures.slice(0, 30);
   const loading = stationData.loading;
   const error = stationData.error;
 
+  // Pull-to-refresh — táhni seznam odjezdů dolů → re-fetch pro aktuální stanici.
+  const ptr = usePullToRefresh<HTMLDivElement>({
+    onRefresh: async () => {
+      await refreshStation(station.key);
+      await new Promise((r) => setTimeout(r, 300)); // krátká animace
+    },
+  });
+
+  // Auto-open tracker pokud URL nese ?openTrip=XXX (sdílecí odkaz).
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tripId = params.get("openTrip");
+    if (!tripId || trackedDeparture) return;
+    const match = departures.find((d) => d.trip_id === tripId);
+    if (match) {
+      setTrackedDeparture(match);
+      // Vyčisti URL — ať se to neotevře znovu po refresh.
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, [departures, trackedDeparture]);
+
   return (
-    <div className="bg-gradient-to-br from-blue-50 via-white to-amber-50 flex flex-col overflow-hidden" style={{ height: "100dvh" }}>
+    <div
+      className="bg-gradient-to-br from-blue-50 via-white to-amber-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 flex flex-col overflow-hidden"
+      style={{ height: "100dvh", paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 52px)" }}
+    >
 
       {/* Header */}
       <div
@@ -406,6 +464,39 @@ export function MobileDepartures({ building }: { building: MobileBuildingDef }) 
           <h1 className="text-2xl font-black leading-tight">{building.title}</h1>
           <div className={`text-base mt-0.5 ${t.dateColor || "text-blue-200"}`}>{station.name} — {station.direction}</div>
 
+          {/* Walk-time badge — tap otevře nativní mapy s pěší navigací. */}
+          {liveWalk && userLoc.location && (() => {
+            const conf = (ALL_STATIONS as Record<string, { id: string | string[] }>)[station.key];
+            const stopId = conf ? (Array.isArray(conf.id) ? conf.id[0] : conf.id) : null;
+            const sc = stopId ? stopCoords[stopId] : null;
+            const handleClick = () => {
+              if (!sc) return;
+              const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+              const isIOS = /iPhone|iPad|iPod/.test(ua);
+              const url = isIOS
+                ? `maps://?daddr=${sc.lat},${sc.lon}&dirflg=w`
+                : `https://www.google.com/maps/dir/?api=1&destination=${sc.lat},${sc.lon}&travelmode=walking`;
+              window.open(url, "_blank");
+            };
+            return (
+              <button
+                onClick={handleClick}
+                disabled={!sc}
+                className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur px-2.5 py-1 text-xs font-semibold active:bg-white/25 transition-colors"
+              >
+                <Footprints className="w-3.5 h-3.5" />
+                {dynamicWalkMin === 0 ? "Jsi na zastávce" : `${dynamicWalkMin} min pěšky — naviguj`}
+                {sc && <ArrowRight className="w-3 h-3 opacity-70" />}
+              </button>
+            );
+          })()}
+          {liveWalk && userLoc.status === "denied" && (
+            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur px-2.5 py-1 text-[11px]">
+              <Footprints className="w-3.5 h-3.5" />
+              Polohu zakázáno — používá se {station.walkMinutes} min
+            </div>
+          )}
+
           {/* Metro info */}
           {building.metro && building.metro.length > 0 && (
             <MetroHeader metro={building.metro} accentColor={t.accentColor} />
@@ -420,21 +511,36 @@ export function MobileDepartures({ building }: { building: MobileBuildingDef }) 
             try {
               if (typeof Notification === "undefined") {
                 const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-                if (isIOS) {
-                  alert("Oznámení fungují jen přes HTTPS.\n\nPřidej si appku z produkční domény (ne localhost).");
+                alert(isIOS
+                  ? "Na iPhonu zapni appku jako PWA: Safari → Sdílet → Přidat na plochu. Pak ji otevři z plochy a klikni znovu."
+                  : "Tvůj prohlížeč notifikace nepodporuje.");
+                return;
+              }
+
+              if (Notification.permission === "denied") {
+                alert("Notifikace jsou zablokované v prohlížeči.\n\nKlikni na zámeček v adresním řádku → Oznámení → Povolit, pak obnov stránku.");
+                return;
+              }
+
+              // CRITICAL: requestPermission MUSÍ běžet první v click handleru, jinak
+              // Chrome na Androidu zahodí prompt (ztratí se user gesture context po await).
+              const permission = await Notification.requestPermission();
+              setNotifPermission(permission);
+
+              if (permission !== "granted") {
+                if (permission === "denied") {
+                  alert("Notifikace zablokovány. Povol je v nastavení prohlížeče.");
                 }
                 return;
               }
 
+              // Až potom registruj SW + získej FCM token (nepotřebuje user gesture).
               const { registerFirebaseSW } = await import("@/utils/firebase");
               await registerFirebaseSW();
               await new Promise(r => setTimeout(r, 500));
-
-              const permission = await Notification.requestPermission();
-              setNotifPermission(permission);
-
-              if (permission === "granted") {
-                await requestPushPermission();
+              const token = await requestPushPermission();
+              if (!token) {
+                alert("Povolení získáno, ale FCM token se nepodařilo vytvořit. Zkontroluj že není zablokovaný Chrome v battery saveru.");
               }
             } catch (e: any) {
               alert("Chyba: " + e.message);
@@ -476,7 +582,7 @@ export function MobileDepartures({ building }: { building: MobileBuildingDef }) 
             animate="center"
             exit="exit"
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="flex-1 flex flex-col"
+            className="flex-1 flex flex-col min-h-0"
           >
             {error && (
               <div className="bg-white rounded-2xl shadow-sm border-2 border-gray-200 p-10 text-center">
@@ -500,13 +606,35 @@ export function MobileDepartures({ building }: { building: MobileBuildingDef }) 
             )}
 
             {departures.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-sm border-2 border-gray-200 overflow-y-auto flex-1 flex flex-col">
+              <div
+                ref={ptr.ref}
+                className="bg-white rounded-2xl shadow-sm border-2 border-gray-200 overflow-y-auto flex-1 relative"
+                style={{ overscrollBehaviorY: "contain", WebkitOverflowScrolling: "touch" }}
+              >
+                {/* Pull-to-refresh indikátor */}
+                {(ptr.pullDistance > 0 || ptr.refreshing) && (
+                  <div
+                    className="absolute top-0 left-0 right-0 flex items-center justify-center text-xs text-gray-500 z-10 pointer-events-none"
+                    style={{
+                      height: `${ptr.refreshing ? ptr.threshold : ptr.pullDistance}px`,
+                      transition: ptr.refreshing ? "height 0.2s" : undefined,
+                    }}
+                  >
+                    {ptr.refreshing ? (
+                      <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                    ) : ptr.pullDistance >= ptr.threshold ? (
+                      <span className="font-semibold text-blue-600">Pusť pro obnovení</span>
+                    ) : (
+                      <span>Táhni dolů…</span>
+                    )}
+                  </div>
+                )}
                 {departures.map((dep) => (
                   <MobileDepartureCard
                     key={`${dep.route_short_name}-${dep.trip_id}-${dep.departure_timestamp}`}
                     departure={dep}
                     currentTime={nowSec}
-                    walkMinutes={station.walkMinutes}
+                    walkMinutes={dynamicWalkMin}
                     simpleName={station.simpleName}
                     onTap={() => setTrackedDeparture(dep)}
                     hasNotification={!!dep.trip_id && notifiedTripIds.has(dep.trip_id)}
@@ -533,10 +661,16 @@ export function MobileDepartures({ building }: { building: MobileBuildingDef }) 
           departure={trackedDeparture}
           currentTime={nowSec}
           stationName={station.name}
-          walkMinutes={station.walkMinutes}
+          walkMinutes={dynamicWalkMin}
           onClose={() => setTrackedDeparture(null)}
         />
       )}
+
+      {/* PWA install prompt — banner co edukuje iOS uživatele jak appku přidat. */}
+      <PwaInstallPrompt />
+
+      {/* Sticky bottom navigation pro celé mobilní jádro. */}
+      <BottomNav />
     </div>
   );
 }

@@ -2,10 +2,11 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, Bell, BellOff, BellRing, MapPin, Clock, Wind, Accessibility,
-  Snowflake, Wifi, Usb, BatteryCharging, Bike,
+  Snowflake, Wifi, Usb, BatteryCharging, Bike, Share2,
 } from "lucide-react";
 import { getTripStops, findNextTripId, type TripStop } from "@/utils/pidApi";
 import { saveNotification, getActiveNotifications, requestPushPermission, cancelNotificationById } from "@/utils/notificationService";
+import { recordDelaySnapshot, getAverageDelay } from "@/utils/delayHistory";
 import type { Departure } from "@/types/pid";
 
 /* ── local notification (confirmation) ─────────────────────── */
@@ -307,6 +308,8 @@ export function DepartureTracker({ departure, currentTime, stationName, walkMinu
   const [notifyMinutes, setNotifyMinutes] = useState<number | null>(null);
   const [notifyMinutesSubId, setNotifyMinutesSubId] = useState<string | null>(null);
   const [minuteNotified, setMinuteNotified] = useState(false);
+  const [avgDelaySec, setAvgDelaySec] = useState<number | null>(null);
+  const [avgDelaySamples, setAvgDelaySamples] = useState<number>(0);
 
   // Live vehicle data
   const [liveCurrentStop, setLiveCurrentStop] = useState(departure.current_stop || "");
@@ -354,6 +357,17 @@ export function DepartureTracker({ departure, currentTime, stationName, walkMinu
     }
   }, [departure.trip_id]);
 
+  // Načti predikci zpoždění z historie (per linka × hodina dne).
+  useEffect(() => {
+    const hour = new Date(departure.arrival_timestamp * 1000).getHours();
+    getAverageDelay(departure.route_short_name, hour).then((avg) => {
+      if (avg && avg.samples >= 5) {
+        setAvgDelaySec(avg.avg_delay_seconds);
+        setAvgDelaySamples(avg.samples);
+      }
+    });
+  }, [departure.route_short_name, departure.arrival_timestamp]);
+
   // Load continuation trip stops (e.g. line 6 → 34 at Nádraží Holešovice).
   // Needs the loaded `stops` to know the terminus stop_id + scheduled arrival.
   useEffect(() => {
@@ -397,7 +411,16 @@ export function DepartureTracker({ departure, currentTime, stationName, walkMinu
           if (f.properties?.trip?.gtfs?.trip_id === departure.trip_id) {
             const lp = f.properties.last_position;
             setLiveLastStopSeq(lp?.last_stop?.sequence || null);
-            setLiveDelay(lp?.delay?.actual || 0);
+            const observedDelay = lp?.delay?.actual || 0;
+            setLiveDelay(observedDelay);
+
+            // Pasivně ukládej pozorované zpoždění do delay_snapshots (throttled).
+            recordDelaySnapshot({
+              tripId: departure.trip_id,
+              routeShortName: departure.route_short_name,
+              routeType: departure.route_type,
+              delaySeconds: observedDelay,
+            });
 
             // Find stop name from our stops list
             if (lp?.last_stop?.id && stops.length > 0) {
@@ -569,8 +592,11 @@ export function DepartureTracker({ departure, currentTime, stationName, walkMinu
         `${departure.headsign} → ${stationName}\nVyraz ze školy!`,
       );
       setMinuteNotified(true);
+      if (notifyMinutesSubId) {
+        cancelNotificationById(notifyMinutesSubId).catch(() => {});
+      }
     }
-  }, [notifyMinutes, minuteNotified, minutes, vehicleType, departure.route_short_name, departure.headsign]);
+  }, [notifyMinutes, notifyMinutesSubId, minuteNotified, minutes, vehicleType, departure.route_short_name, departure.headsign, stationName]);
 
   // Fire stop-arrival notification (local, when app is open) — mirrors server-side trigger.
   // Fires once when the vehicle reaches or passes the chosen stop.
@@ -584,8 +610,12 @@ export function DepartureTracker({ departure, currentTime, stationName, walkMinu
         `${departure.headsign} → ${stationName}\nBlíží se!`,
       );
       setNotified(true);
+      // Smaž server sub aby cron Edge Function nepushovala stejnou notifikaci znovu.
+      if (notifySubId) {
+        cancelNotificationById(notifySubId).catch(() => {});
+      }
     }
-  }, [notifyStopId, notifyStopName, notified, currentIdx, stops, vehicleType, departure.route_short_name, departure.headsign, stationName]);
+  }, [notifyStopId, notifyStopName, notified, notifySubId, currentIdx, stops, vehicleType, departure.route_short_name, departure.headsign, stationName]);
 
   // Auto close when departed
   useEffect(() => {
@@ -633,9 +663,49 @@ export function DepartureTracker({ departure, currentTime, stationName, walkMinu
                   </div>
                 </div>
               </div>
-              <button onClick={onClose} className="p-2 -mr-2 -mt-1 text-gray-400 active:text-gray-600">
-                <X className="w-6 h-6" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={async () => {
+                    // Encode minimal Departure as base64 JSON — receiver page
+                    // (/share) recreates full state and opens DepartureTracker.
+                    const payload = {
+                      trip_id: departure.trip_id,
+                      route_short_name: departure.route_short_name,
+                      route_type: departure.route_type,
+                      headsign: departure.headsign,
+                      arrival_timestamp: departure.arrival_timestamp,
+                      departure_timestamp: departure.departure_timestamp,
+                      delay: departure.delay || 0,
+                      vehicle_number: departure.vehicle_number,
+                      wheelchair_accessible: departure.wheelchair_accessible,
+                      air_conditioning: departure.air_conditioning,
+                      continues_as: departure.continues_as,
+                      continues_from: departure.continues_from,
+                      continues_direction: departure.continues_direction,
+                    };
+                    // Encode JSON as UTF-8 bytes → base64 (symetric s decoder na /share)
+                    const bytes = new TextEncoder().encode(JSON.stringify(payload));
+                    let binary = "";
+                    bytes.forEach((b) => (binary += String.fromCharCode(b)));
+                    const d = btoa(binary);
+                    const url = `${window.location.origin}/share?d=${d}&station=${encodeURIComponent(stationName)}`;
+                    const text = `${vehicleType} ${departure.route_short_name} → ${departure.headsign} (cíl ${stationName})`;
+                    if (navigator.share) {
+                      try { await navigator.share({ title: "Sleduj se mnou spoj", text, url }); } catch {}
+                    } else if (navigator.clipboard) {
+                      await navigator.clipboard.writeText(`${text}\n${url}`);
+                      await sendLocalNotification("Zkopírováno", "Odkaz je ve schránce.");
+                    }
+                  }}
+                  className="p-2 text-gray-400 active:text-gray-600"
+                  aria-label="Sdílet"
+                >
+                  <Share2 className="w-5 h-5" />
+                </button>
+                <button onClick={onClose} className="p-2 -mr-2 -mt-1 text-gray-400 active:text-gray-600">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
             </div>
 
             {/* Countdown */}
@@ -663,6 +733,18 @@ export function DepartureTracker({ departure, currentTime, stationName, walkMinu
                   </span>
                 )}
               </div>
+
+              {/* Historická predikce zpoždění */}
+              {avgDelaySec !== null && Math.abs(avgDelaySec) >= 30 && (
+                <div className="mt-2 text-[11px] text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                  <i className="fa-solid fa-chart-line text-[9px]" />
+                  Linka {departure.route_short_name} v tuto dobu mívá průměrně{" "}
+                  <strong className={avgDelaySec >= 60 ? "text-amber-700" : "text-gray-700 dark:text-gray-300"}>
+                    {avgDelaySec >= 0 ? "+" : ""}{Math.round(avgDelaySec / 60)} min
+                  </strong>
+                  <span className="opacity-50">({avgDelaySamples} pozorování)</span>
+                </div>
+              )}
 
               {/* Mini progress bar */}
               <div className="relative h-2 mt-3 rounded-full bg-gray-200 overflow-hidden">

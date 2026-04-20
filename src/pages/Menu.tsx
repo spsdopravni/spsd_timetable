@@ -168,6 +168,19 @@ const Menu = () => {
         </div>
       </div>
 
+      {/* Credit footer */}
+      <div className="text-center text-[11px] text-gray-600 pb-6 px-4">
+        Created and designed by{" "}
+        <a
+          href="https://brozovec.eu"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-semibold text-gray-400 hover:text-blue-400 transition-colors"
+        >
+          Adam &quot;Brozovec&quot; Brož
+        </a>
+      </div>
+
     </div>
   );
 };

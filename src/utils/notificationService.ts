@@ -63,6 +63,17 @@ export async function saveNotification(req: NotifyRequest): Promise<SaveResult> 
 
   const expiresAt = new Date((req.arrivalTimestamp + 3600) * 1000).toISOString();
 
+  // Dedupe: delete any existing active sub for same (token, trip, type) before inserting.
+  // Bez tohohle by tap-tap-tap nebo otevření trackeru tváří v tvář staré subscription
+  // vytvořilo víc duplicitních řádků a server by pak poslal víc notifikací.
+  await supabase
+    .from("notification_subscriptions")
+    .delete()
+    .eq("push_endpoint", token)
+    .eq("trip_id", req.tripId)
+    .eq("notify_type", req.type)
+    .eq("notified", false);
+
   const { error } = await supabase.from("notification_subscriptions").insert({
     push_endpoint: token,
     push_p256dh: "",
