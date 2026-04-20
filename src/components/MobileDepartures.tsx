@@ -142,8 +142,11 @@ function getServiceAlerts(departure: Departure, simpleName: string): ServiceAler
   if (hl.includes("jen do") || hl.includes("pouze do"))
     alerts.push({ text: "Zkrácená jízda", cls: "bg-yellow-100 text-yellow-800" });
 
-  if (departure.route_short_name === "6" && simpleName.toLowerCase().includes("výstaviště") && hl.includes("holešovic"))
-    alerts.push({ text: "Pokračuje jako 14 → Spořilov", cls: "bg-purple-100 text-purple-800" });
+  if (departure.continues_as)
+    alerts.push({
+      text: `Pokračuje jako ${departure.continues_as}${departure.continues_direction ? " → " + departure.continues_direction : ""}`,
+      cls: "bg-purple-100 text-purple-800",
+    });
 
   if (departure.alert_hash === "canceled")
     alerts.push({ text: "Zrušeno", cls: "bg-red-100 text-red-800" });
@@ -381,7 +384,10 @@ export function MobileDepartures({ building }: { building: MobileBuildingDef }) 
         }}
       >
         <div className={`absolute inset-0 ${t.headerOverlay}`} />
-        <div className="relative z-10 px-5 pt-5 pb-5">
+        <div
+          className="relative z-10 px-5 pb-5"
+          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.25rem)" }}
+        >
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               {t.logoSrc && <img src={t.logoSrc} alt="" className="h-10 object-contain" />}

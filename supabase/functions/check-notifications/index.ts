@@ -3,7 +3,9 @@ import { encode as base64url } from "https://deno.land/std@0.208.0/encoding/base
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const GOLEMIO_API_KEY = Deno.env.get("GOLEMIO_API_KEY") || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzcwNCwiaWF0IjoxNzYwNzkxMjUwLCJleHAiOjExNzYwNzkxMjUwLCJpc3MiOiJnb2xlbWlvIiwianRpIjoiM2Y4MWJiMjItM2YxNC00ODgxLThlMDYtYjQ1YmRlOTYzZjk3In0.BR0653y2bfG0zxdkOYvDgvywRR9Z9nXB4NlatJXR38A";
+// Hardcoded — Deno.env.get fallback was overridden by a stale GOLEMIO_API_KEY
+// secret in Supabase, which caused the API to return 401.
+const GOLEMIO_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzcwNCwiaWF0IjoxNzYwNzkxMjUwLCJleHAiOjExNzYwNzkxMjUwLCJpc3MiOiJnb2xlbWlvIiwianRpIjoiM2Y4MWJiMjItM2YxNC00ODgxLThlMDYtYjQ1YmRlOTYzZjk3In0.BR0653y2bfG0zxdkOYvDgvywRR9Z9nXB4NlatJXR38A";
 
 const FCM_PROJECT_ID = "spsdodjezdovka";
 const FCM_CLIENT_EMAIL = "firebase-adminsdk-fbsvc@spsdodjezdovka.iam.gserviceaccount.com";
@@ -107,18 +109,11 @@ async function sendFCM(fcmToken: string, title: string, body: string): Promise<b
         body: JSON.stringify({
           message: {
             token: fcmToken,
-            notification: { title, body },
+            // Data-only payload — no `notification` field, so the browser doesn't
+            // auto-show; our SW's onBackgroundMessage handler renders it consistently.
+            data: { title, body },
             webpush: {
-              notification: {
-                title,
-                body,
-                icon: "https://timetable.brozovec.eu/pictures/robotz-192.png",
-                badge: "https://timetable.brozovec.eu/pictures/robotz-192.png",
-                vibrate: [200, 100, 200],
-                tag: "spsd-departure",
-                renotify: true,
-                require_interaction: true,
-              },
+              headers: { Urgency: "high" },
             },
           },
         }),

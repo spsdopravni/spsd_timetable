@@ -110,10 +110,46 @@ export interface TripStop {
   lon: number;
 }
 
+// Najde trip_id pokračující linky, který odjíždí z dané zastávky nejdřív po `afterUnix`.
+// Použije departureboards (široké okno) a vybere první match.
+export const findNextTripId = async (
+  stopId: string,
+  routeShort: string,
+  afterUnix: number,
+): Promise<string | null> => {
+  if (!stopId || !routeShort) return null;
+  try {
+    const url = `${API_BASE}/v2/pid/departureboards?ids=${encodeURIComponent(stopId)}&limit=30&minutesAfter=30`;
+    const res = await fetch(url, {
+      headers: { "X-Access-Token": API_KEY_1, "Content-Type": "application/json" },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const candidates = (data.departures || [])
+      .filter((d: any) => d.route?.short_name === routeShort)
+      .map((d: any) => {
+        const sched = d.departure_timestamp?.scheduled || d.departure_timestamp?.predicted;
+        return {
+          tripId: d.trip?.id as string | undefined,
+          ts: sched ? Math.floor(new Date(sched).getTime() / 1000) : null,
+        };
+      })
+      .filter((x: any) => x.tripId && x.ts !== null)
+      // Tolerujeme až 60s před afterUnix (stejný vůz, který právě dojel)
+      .filter((x: any) => x.ts >= afterUnix - 60)
+      .sort((a: any, b: any) => a.ts - b.ts);
+
+    return candidates[0]?.tripId || null;
+  } catch {
+    return null;
+  }
+};
+
 export const getTripStops = async (tripId: string): Promise<TripStop[]> => {
   if (USE_MOCK_DATA || !tripId) return [];
 
-  const cacheKey = `trip_stops_${tripId}`;
+  // v2 cache key — bumped after adding pickup_type/drop_off_type filter for technical points.
+  const cacheKey = `trip_stops_v2_${tripId}`;
   const cachedData = apiCache.get<TripStop[]>(cacheKey);
   if (cachedData) return cachedData;
 
@@ -128,15 +164,24 @@ export const getTripStops = async (tripId: string): Promise<TripStop[]> => {
     const data = await response.json();
     const stopTimes = data.stop_times || [];
 
-    const stops: TripStop[] = stopTimes.map((st: any) => ({
-      stopId: st.stop_id,
-      stopName: st.stop?.properties?.stop_name || st.stop_id,
-      arrivalTime: st.arrival_time,
-      departureTime: st.departure_time,
-      stopSequence: st.stop_sequence,
-      lat: st.stop?.geometry?.coordinates?.[1] || 0,
-      lon: st.stop?.geometry?.coordinates?.[0] || 0,
-    }));
+    const stops: TripStop[] = stopTimes
+      // Filtruj technické body (výhybky, km značky, hranice úseků) — pasažér tam
+      // nenastupuje ani nevystupuje. Pickup/drop-off type 1 = "no service".
+      // Golemio vrací tahle pole jako string ("0"/"1"), ne number — porovnávám obojí.
+      .filter((st: any) => {
+        const pu = Number(st.pickup_type);
+        const doff = Number(st.drop_off_type);
+        return !(pu === 1 && doff === 1);
+      })
+      .map((st: any) => ({
+        stopId: st.stop_id,
+        stopName: st.stop?.properties?.stop_name || st.stop_id,
+        arrivalTime: st.arrival_time,
+        departureTime: st.departure_time,
+        stopSequence: st.stop_sequence,
+        lat: st.stop?.geometry?.coordinates?.[1] || 0,
+        lon: st.stop?.geometry?.coordinates?.[0] || 0,
+      }));
 
     apiCache.set(cacheKey, stops, 'routes');
     return stops;
@@ -353,6 +398,28 @@ export const getDepartures = async (stationIds: string | string[]): Promise<{ de
       };
     }
     
+    // Vyparsuj continuation rules z infotexts:
+    //   "Linka X pokračuje z STOP_NAME jako (nová )?linka Y[ směr DIR]..."
+    // Klíč mapy: `${routeShortName}__${stopName}` (case-insensitive)
+    type Cont = { as: string; from: string; direction?: string };
+    const continuations = new Map<string, Cont>();
+    const contRegex = /Linka\s+(\S+)\s+pokra[čc]uje\s+z\s+(.+?)\s+jako\s+(?:nov[aá]\s+)?linka\s+(\S+?)(?:\s+sm[ěe]r\s+(.+?))?[\.\s]/i;
+    for (const info of allAlerts) {
+      const text = info?.text || "";
+      const m = text.match(contRegex);
+      if (m) {
+        const fromRoute = m[1].trim();
+        const fromStop = m[2].trim();
+        const asRoute = m[3].trim();
+        const direction = m[4]?.trim();
+        continuations.set(`${fromRoute}__${fromStop.toLowerCase()}`, {
+          as: asRoute,
+          from: fromStop,
+          direction,
+        });
+      }
+    }
+
     const processedDepartures = allDepartures
       .filter((dep: any) => {
         const isValidRoute = dep.route?.type !== undefined;
@@ -505,9 +572,28 @@ export const getDepartures = async (stationIds: string | string[]): Promise<{ de
           agency_url: agencyUrl,
           stop_headsign: stopHeadsign,
           pickup_type: pickupType,
-          drop_off_type: dropOffType
-        };
-        
+          drop_off_type: dropOffType,
+          last_stop_name: dep.last_stop?.name || undefined,
+        } as any;
+
+        // Match continuation rule: `Linka X pokračuje z TERMINUS jako Y`.
+        // The trip's terminus is `trip.headsign` (NOT `last_stop.name`, which is
+        // the last passed stop along the way). Matching is fuzzy — covers cases
+        // where the infotext from-stop and the headsign aren't formatted identically.
+        const headsign = (dep.trip?.headsign || "").toLowerCase().trim();
+        if (headsign) {
+          for (const [key, cont] of continuations) {
+            const [keyRoute, keyStop] = key.split("__");
+            if (keyRoute !== processed.route_short_name) continue;
+            if (keyStop === headsign || keyStop.includes(headsign) || headsign.includes(keyStop)) {
+              processed.continues_as = cont.as;
+              processed.continues_from = cont.from;
+              processed.continues_direction = cont.direction;
+              break;
+            }
+          }
+        }
+
         return processed;
       })
       .filter((dep: any) => dep !== null)

@@ -43,7 +43,12 @@
       "Read(//Users/brozovec/Documents/GitHub/**)",
       "Bash(python3 -m venv /Users/brozovec/Documents/GitHub/route-comparison/.venv)",
       "Bash(/Users/brozovec/Documents/GitHub/route-comparison/.venv/bin/pip install *)",
-      "Bash(.venv/bin/python build_route.py)"
+      "Bash(.venv/bin/python build_route.py)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); deps=d.get\\('departures',[]\\)[:3]; [print\\(json.dumps\\(x, indent=2, ensure_ascii=False\\)\\) for x in deps]\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('departures',[{}]\\)[0], indent=2, ensure_ascii=False\\)[:2500]\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('keys:', list\\(d.keys\\(\\)\\)\\); print\\('block_id:', d.get\\('block_id'\\)\\); print\\('shape_id:', d.get\\('shape_id'\\)\\); st=d.get\\('stop_times',[]\\); print\\('first_stop:', st[0].get\\('stop',{}\\).get\\('properties',{}\\).get\\('stop_name'\\) if st else None\\); print\\('last_stop:', st[-1].get\\('stop',{}\\).get\\('properties',{}\\).get\\('stop_name'\\) if st else None\\); print\\('last_arrival:', st[-1].get\\('arrival_time'\\) if st else None\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); deps=[x for x in d.get\\('departures',[]\\) if x.get\\('route',{}\\).get\\('short_name'\\)=='34']; print\\(json.dumps\\(deps[:2], indent=2, ensure_ascii=False\\)[:2000]\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\('---'\\); print\\(t.get\\('text',''\\)\\) for t in d.get\\('infotexts',[]\\)]\")"
     ],
     "deny": [],
     "ask": []

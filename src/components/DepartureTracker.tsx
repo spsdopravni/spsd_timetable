@@ -4,7 +4,7 @@ import {
   X, Bell, BellOff, BellRing, MapPin, Clock, Wind, Accessibility,
   Snowflake, Wifi, Usb, BatteryCharging, Bike,
 } from "lucide-react";
-import { getTripStops, type TripStop } from "@/utils/pidApi";
+import { getTripStops, findNextTripId, type TripStop } from "@/utils/pidApi";
 import { saveNotification, getActiveNotifications, requestPushPermission, cancelNotificationById } from "@/utils/notificationService";
 import type { Departure } from "@/types/pid";
 
@@ -111,7 +111,7 @@ function RouteDiagram({
         <MapPin className="w-3.5 h-3.5" />
         Trasa — klikni na zastávku pro upozornění
       </div>
-      <div className="relative max-h-[30vh] overflow-y-auto rounded-2xl bg-gray-50 p-3">
+      <div className="relative rounded-2xl bg-gray-50 p-3">
         {stops.map((stop, idx) => {
           const isPast = currentIdx >= 0 && idx <= currentIdx;
           const isCurrent = currentIdx >= 0 && idx === currentIdx;
@@ -132,23 +132,23 @@ function RouteDiagram({
           return (
             <div
               key={`${stop.stopId}-${idx}`}
-              className="flex items-start gap-3 cursor-pointer active:bg-gray-100 rounded-lg -mx-1 px-1 py-0.5"
+              className="flex items-stretch gap-3 cursor-pointer active:bg-gray-100 rounded-lg -mx-1 px-1"
               onClick={() => onStopTap(stop)}
             >
-              {/* Timeline */}
-              <div className="flex flex-col items-center flex-shrink-0 w-5">
-                {/* Line above */}
-                {idx > 0 && (
-                  <div className="w-0.5 h-3 relative overflow-hidden" style={{ backgroundColor: "#d1d5db" }}>
+              {/* Timeline — flex column that stretches to row height so connectors never gap */}
+              <div className="flex flex-col items-center flex-shrink-0 w-5 self-stretch">
+                {/* Line above (fills upper half) */}
+                <div className="w-0.5 flex-1 relative overflow-hidden" style={{ backgroundColor: idx > 0 ? "#d1d5db" : "transparent" }}>
+                  {idx > 0 && (
                     <div
                       className="absolute top-0 left-0 right-0 transition-all duration-1000 ease-linear"
                       style={{ backgroundColor: accentColor, height: `${lineAboveFill}%` }}
                     />
-                  </div>
-                )}
+                  )}
+                </div>
                 {/* Dot */}
                 <div
-                  className={`rounded-full flex-shrink-0 flex items-center justify-center ${
+                  className={`rounded-full flex-shrink-0 flex items-center justify-center my-0.5 ${
                     isCurrent ? "w-5 h-5 shadow-md" :
                     isTarget ? "w-4 h-4 border-2" :
                     isNotify ? "w-4 h-4 border-2" :
@@ -164,19 +164,19 @@ function RouteDiagram({
                 >
                   {isCurrent && <i className="fa-solid fa-train-tram text-white text-[6px]" />}
                 </div>
-                {/* Line below */}
-                {idx < stops.length - 1 && (
-                  <div className="w-0.5 h-3 relative overflow-hidden" style={{ backgroundColor: "#d1d5db" }}>
+                {/* Line below (fills lower half) */}
+                <div className="w-0.5 flex-1 relative overflow-hidden" style={{ backgroundColor: idx < stops.length - 1 ? "#d1d5db" : "transparent" }}>
+                  {idx < stops.length - 1 && (
                     <div
                       className="absolute top-0 left-0 right-0 transition-all duration-1000 ease-linear"
                       style={{ backgroundColor: accentColor, height: `${lineBelowFill}%` }}
                     />
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
 
               {/* Stop info */}
-              <div className={`flex-1 min-w-0 ${idx === 0 || idx === stops.length - 1 ? "" : ""}`}>
+              <div className="flex-1 min-w-0 self-center py-1.5">
                 <div className={`text-sm leading-tight ${
                   isCurrent ? "font-bold text-gray-900" :
                   isTarget ? "font-bold" :
@@ -189,7 +189,7 @@ function RouteDiagram({
               </div>
 
               {/* Time */}
-              <div className={`text-xs flex-shrink-0 ${isPast ? "text-gray-300" : "text-gray-400"}`}>
+              <div className={`text-xs flex-shrink-0 self-center ${isPast ? "text-gray-300" : "text-gray-400"}`}>
                 {getAdjustedTime(stop.departureTime)}
                 {delaySeconds > 30 && !isPast && (
                   <span className="text-red-400 ml-1">+{Math.round(delaySeconds / 60)}</span>
@@ -198,6 +198,90 @@ function RouteDiagram({
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+/* ── continuation diagram (next route after vehicle continues) ─ */
+
+function ContinuationDiagram({
+  stops,
+  routeShortName,
+  direction,
+  transferStopName,
+  accentColor,
+  delaySeconds,
+}: {
+  stops: TripStop[];
+  routeShortName: string;
+  direction?: string;
+  transferStopName?: string;
+  accentColor: string;
+  delaySeconds: number;
+}) {
+  if (stops.length === 0) return null;
+
+  // Skip the transfer stop itself (it's the same stop where current trip ended).
+  const skipIdx = transferStopName
+    ? stops.findIndex(s => s.stopName === transferStopName)
+    : -1;
+  const visibleStops = skipIdx >= 0 ? stops.slice(skipIdx) : stops;
+
+  function getAdjustedTime(t: string): string {
+    if (delaySeconds === 0) return t.slice(0, 5);
+    const [h, m] = t.split(":").map(Number);
+    const total = h * 60 + m + Math.round(delaySeconds / 60);
+    const newH = Math.floor(total / 60) % 24;
+    const newM = total % 60;
+    return `${newH.toString().padStart(2, "0")}:${newM.toString().padStart(2, "0")}`;
+  }
+
+  const headsign = visibleStops[visibleStops.length - 1]?.stopName || "";
+
+  return (
+    <div className="mt-3">
+      {/* Divider */}
+      <div className="flex items-center gap-2 mb-2">
+        <div className="flex-1 h-px bg-amber-300" />
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-amber-700">
+          Pokračuje dále bez přestupu
+        </div>
+        <div className="flex-1 h-px bg-amber-300" />
+      </div>
+
+      {/* Route header */}
+      <div className="flex items-center gap-2 mb-2">
+        <div
+          className="rounded-lg px-2.5 py-1 font-bold text-white text-base"
+          style={{ backgroundColor: accentColor }}
+        >
+          {routeShortName}
+        </div>
+        <i className="fa-solid fa-arrow-right text-gray-400" />
+        <div className="font-bold text-gray-900">{direction || headsign}</div>
+      </div>
+
+      {/* Stops */}
+      <div className="rounded-2xl bg-amber-50/60 border border-amber-200 p-3">
+        {visibleStops.map((stop, idx) => (
+          <div key={`cont-${stop.stopId}-${idx}`} className="flex items-stretch gap-3 py-0.5">
+            <div className="flex flex-col items-center flex-shrink-0 w-5 self-stretch">
+              <div className="w-0.5 flex-1" style={{ backgroundColor: idx > 0 ? "#d1d5db" : "transparent" }} />
+              <div
+                className="w-2.5 h-2.5 rounded-full flex-shrink-0 my-0.5"
+                style={{ backgroundColor: accentColor }}
+              />
+              <div className="w-0.5 flex-1" style={{ backgroundColor: idx < visibleStops.length - 1 ? "#d1d5db" : "transparent" }} />
+            </div>
+            <div className="flex-1 text-sm text-gray-700 leading-tight self-center">
+              {stop.stopName}
+            </div>
+            <div className="text-xs text-gray-400 flex-shrink-0 self-center">
+              {getAdjustedTime(stop.departureTime)}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -215,6 +299,7 @@ interface DepartureTrackerProps {
 
 export function DepartureTracker({ departure, currentTime, stationName, walkMinutes, onClose }: DepartureTrackerProps) {
   const [stops, setStops] = useState<TripStop[]>([]);
+  const [continuationStops, setContinuationStops] = useState<TripStop[]>([]);
   const [notifyStopId, setNotifyStopId] = useState<string | null>(null);
   const [notifyStopName, setNotifyStopName] = useState<string>("");
   const [notifySubId, setNotifySubId] = useState<string | null>(null);
@@ -268,6 +353,32 @@ export function DepartureTracker({ departure, currentTime, stationName, walkMinu
       });
     }
   }, [departure.trip_id]);
+
+  // Load continuation trip stops (e.g. line 6 → 34 at Nádraží Holešovice).
+  // Needs the loaded `stops` to know the terminus stop_id + scheduled arrival.
+  useEffect(() => {
+    setContinuationStops([]);
+    if (!departure.continues_as || stops.length === 0) return;
+
+    const terminus = stops[stops.length - 1];
+    if (!terminus) return;
+
+    // Convert HH:MM:SS departureTime to today's unix timestamp.
+    const [h, m, s] = (terminus.departureTime || "00:00:00").split(":").map(Number);
+    const today = new Date();
+    today.setHours(h || 0, m || 0, s || 0, 0);
+    const arrivalUnix = Math.floor(today.getTime() / 1000);
+
+    let cancelled = false;
+    findNextTripId(terminus.stopId, departure.continues_as, arrivalUnix)
+      .then((nextTripId) => {
+        if (cancelled || !nextTripId) return;
+        return getTripStops(nextTripId).then((nextStops) => {
+          if (!cancelled) setContinuationStops(nextStops);
+        });
+      });
+    return () => { cancelled = true; };
+  }, [departure.continues_as, departure.trip_id, stops]);
 
   // Live poll vehicle position every 5s
   useEffect(() => {
@@ -611,6 +722,18 @@ export function DepartureTracker({ departure, currentTime, stationName, walkMinu
               liveLastStopSeq={liveLastStopSeq}
               fractionalProgress={fractionalProgress}
             />
+
+            {/* Pokračování bez přestupu — vykreslí seznam zastávek navazující linky */}
+            {departure.continues_as && continuationStops.length > 0 && (
+              <ContinuationDiagram
+                stops={continuationStops}
+                routeShortName={departure.continues_as}
+                direction={departure.continues_direction}
+                transferStopName={departure.continues_from}
+                accentColor={accentColor}
+                delaySeconds={delaySeconds}
+              />
+            )}
 
             {/* Minute-based notification */}
             <div className="mt-4">

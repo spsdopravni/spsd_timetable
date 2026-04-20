@@ -182,14 +182,8 @@ const TramDeparturesConnectedComponent = ({
       });
     }
 
-    // Linka 6 směr Nádraží Holešovice na Výstavišti pokračuje jako 14 směr Spořilov
-    if (departure.route_short_name === '6' && stationName.toLowerCase().includes('výstaviště') && departure.headsign?.toLowerCase().includes('holešovic')) {
-      alerts.push({
-        icon: <ArrowRight className="w-5 h-5 text-purple-600" style={{ width: `${1.5 * 1.0}rem`, height: `${1.5 * 1.0}rem` }} />,
-        text: "Pokračuje jako 14 → Spořilov",
-        color: "bg-purple-100 text-purple-800"
-      });
-    }
+    // Pokračování linky se nyní bere dynamicky z Golemio infotexts
+    // (departure.continues_as) a zobrazuje jako badge vedle headsignu.
 
     if (departure.alert_hash) {
       if (departure.alert_hash === 'canceled') {
@@ -391,6 +385,16 @@ const TramDeparturesConnectedComponent = ({
                           <span className="font-bold text-gray-900" style={{ fontSize: `${Math.max(1.6, 2.8 * 1.0)}rem` }}>
                             {getDirectionDisplay(departure)}
                           </span>
+                          {departure.continues_as && (
+                            <span
+                              className="inline-flex items-center gap-1 rounded-md bg-amber-100 text-amber-800 font-bold px-2 py-0.5"
+                              style={{ fontSize: `${Math.max(0.9, 1.4 * 1.0)}rem` }}
+                              title={`Pokračuje jako ${departure.continues_as}${departure.continues_direction ? " směr " + departure.continues_direction : ""}`}
+                            >
+                              <i className="fas fa-arrow-right" />
+                              {departure.continues_as}
+                            </span>
+                          )}
                           {departure.wheelchair_accessible && (
                             <i className="fas fa-wheelchair text-blue-600" style={{ fontSize: `${Math.max(0.9, 1.4 * 1.0)}rem` }}></i>
                           )}

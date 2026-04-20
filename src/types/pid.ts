@@ -29,6 +29,13 @@ export interface Departure {
   headsign: string;
   is_night?: boolean;
 
+  // Pokud spoj pokračuje jako jiná linka — z infotexts Golemia
+  // (např. "Linka 6 pokračuje z Nádraží Holešovice jako nová linka 34")
+  continues_as?: string;
+  continues_from?: string;
+  continues_direction?: string;
+  last_stop_name?: string;
+
   // Trip informace
   trip_id?: string;
   trip_number?: string;
