@@ -3,6 +3,7 @@ import { TramDeparturesConnected } from "@/components/TramDeparturesConnected";
 import { DailyRobot } from "@/components/DailyRobot";
 import { Snowfall } from "@/components/Snowfall";
 import { ChristmasGarland } from "@/components/ChristmasGarland";
+import { MeteoStation } from "@/components/MeteoStation";
 import { useDataContext, ALL_STATIONS } from "@/context/DataContext";
 import { useUserLocation } from "@/utils/useUserLocation";
 import { walkingMinutes } from "@/utils/walking";
@@ -141,6 +142,9 @@ const Bikefest = () => {
 
           <ChristmasGarland />
         </div>
+
+        {/* Meteostanice */}
+        <MeteoStation variant="bikefest" />
 
         {/* Content — mění se podle screenIndex */}
         {displayIndex === 0 && (

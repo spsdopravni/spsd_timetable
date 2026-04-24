@@ -259,6 +259,76 @@ const Index = () => {
         </div>
       </div>
 
+      {/* PERSONALIZOVANÉ TABULE */}
+      <div className="border-t border-white/10 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #1a1a1a 0%, #0f172a 60%, #1a1a1a 100%)' }}>
+        <div className="absolute top-0 left-0 right-0 h-1" style={{ background: '#FDD835' }} />
+        <div className="absolute bottom-0 left-0 right-0 h-1" style={{ background: '#FDD835' }} />
+
+        <div className="max-w-6xl mx-auto px-6 py-24">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left — text */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#FDD835' }}>
+                Na míru pro vaši akci
+              </p>
+              <h2 className="text-3xl lg:text-4xl font-black mb-6 leading-tight">
+                Děláme personalizované<br />
+                tabule pro <span style={{ color: '#FDD835' }}>vaše akce</span>
+              </h2>
+              <p className="text-gray-300 text-lg leading-relaxed mb-6">
+                Chystáte festival, konferenci nebo sportovní akci? Navrhneme tabuli v barvách a stylu vaší akce — s vlastním logem, maskotem a zastávkami MHD v okolí.
+              </p>
+              <ul className="space-y-3 mb-8">
+                {[
+                  "Vlastní branding — logo, barvy, typografie",
+                  "Maskot vaší akce na místě robota",
+                  "Výběr konkrétních zastávek a linek",
+                  "Nasazení na libovolný TV nebo projektor",
+                ].map((t, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <i className="fa-solid fa-check mt-1 flex-shrink-0 text-sm" style={{ color: '#FDD835' }}></i>
+                    <span className="text-gray-300">{t}</span>
+                  </li>
+                ))}
+              </ul>
+              <a
+                href="mailto:broz979171@mot.sps-dopravni.cz?subject=Personalizovan%C3%A1%20tabule%20pro%20akci"
+                className="inline-flex items-center gap-2 font-bold px-6 py-3 rounded-xl transition-all shadow-lg"
+                style={{ background: '#FDD835', color: '#1a1a1a' }}
+              >
+                <i className="fa-solid fa-envelope"></i>
+                Mám zájem o tabuli
+              </a>
+            </div>
+
+            {/* Right — Bikefest showcase */}
+            <div className="relative">
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl border" style={{ borderColor: 'rgba(253, 216, 53, 0.3)' }}>
+                <img
+                  src="/pictures/bikefest-tabule.png"
+                  alt="Prague Bike Fest — personalizovaná tabule"
+                  className="w-full object-cover"
+                />
+              </div>
+              {/* Bikefest robot overlay */}
+              <img
+                src="/pictures/robot-bikefest.png"
+                alt="Bikefest maskot"
+                className="absolute -bottom-6 -right-4 lg:-right-8 h-32 lg:h-40 object-contain drop-shadow-2xl"
+              />
+              {/* Bikefest badge */}
+              <div
+                className="absolute -top-3 left-4 lg:left-6 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 shadow-lg"
+                style={{ background: '#FDD835', color: '#1a1a1a' }}
+              >
+                <i className="fa-solid fa-bicycle"></i>
+                Prague Bike Fest 2026
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* KDE NÁS NAJDETE */}
       <div className="max-w-6xl mx-auto px-6 py-24">
         <p className="text-blue-400 text-xs font-semibold uppercase tracking-widest mb-3">Kde nás najdete</p>

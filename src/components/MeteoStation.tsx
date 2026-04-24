@@ -144,6 +144,8 @@ function AlertBannerRotating({ alerts }: { alerts: WeatherAlert[] }) {
 
 /* ── single metric ─────────────────────────────────────────── */
 
+type Variant = "default" | "bikefest";
+
 interface MetricProps {
   icon: React.ReactNode;
   label: string;
@@ -152,24 +154,32 @@ interface MetricProps {
   accent?: string;
   sub?: string;
   trend?: Trend;
+  variant?: Variant;
 }
 
-function Metric({ icon, label, value, unit, accent = "text-white", sub, trend }: MetricProps) {
+function Metric({ icon, label, value, unit, accent = "text-white", sub, trend, variant = "default" }: MetricProps) {
+  const isBikefest = variant === "bikefest";
   return (
     <div className="flex items-center gap-4 min-w-0">
-      <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center">
+      <div
+        className={`flex-shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center ${isBikefest ? "" : "bg-white/10"}`}
+        style={isBikefest ? { background: "rgba(253, 216, 53, 0.12)", border: "1px solid rgba(253, 216, 53, 0.35)" } : undefined}
+      >
         {icon}
       </div>
       <div className="min-w-0">
-        <div className="text-sm text-white/50 leading-tight truncate">{label}</div>
+        <div className={`text-sm leading-tight truncate ${isBikefest ? "text-white/70" : "text-white/50"}`}>{label}</div>
         <div className="flex items-center gap-1">
-          <span className={`font-bold leading-tight ${accent}`} style={{ fontSize: "clamp(1.4rem, 2.5vh, 2rem)" }}>
+          <span
+            className={`font-bold leading-tight ${isBikefest ? "text-white" : accent}`}
+            style={{ fontSize: "clamp(1.4rem, 2.5vh, 2rem)" }}
+          >
             {value}
-            <span className="text-base font-normal text-white/40 ml-1">{unit}</span>
+            <span className={`text-base font-normal ml-1 ${isBikefest ? "text-white/50" : "text-white/40"}`}>{unit}</span>
           </span>
           {trend && <TrendArrow trend={trend} />}
         </div>
-        {sub && <div className="text-xs text-white/30 leading-tight">{sub}</div>}
+        {sub && <div className={`text-xs leading-tight ${isBikefest ? "text-white/50" : "text-white/30"}`}>{sub}</div>}
       </div>
     </div>
   );
@@ -177,20 +187,31 @@ function Metric({ icon, label, value, unit, accent = "text-white", sub, trend }:
 
 /* ── main component ────────────────────────────────────────── */
 
-function MeteoStationComponent() {
+interface MeteoStationProps {
+  variant?: Variant;
+}
+
+function MeteoStationComponent({ variant = "default" }: MeteoStationProps) {
   const { data, extras, connected, available, lastUpdate } = useMeteoStation();
 
   // On HTTPS (Vercel) — meteostation not reachable, hide completely
   if (!available) return null;
 
+  const isBikefest = variant === "bikefest";
   const hasData = data.teplota !== null;
 
   if (!hasData) {
     return (
-      <div className="w-full bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800 border-b border-white/10">
+      <div
+        className={`w-full ${isBikefest ? "" : "bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800 border-b border-white/10"}`}
+        style={isBikefest ? { background: "#1a1a1a", borderTop: "3px solid #FDD835", borderBottom: "3px solid #FDD835" } : undefined}
+      >
         <div className="flex items-center justify-center gap-3 py-4 px-6">
-          <div className="w-3 h-3 rounded-full bg-yellow-400 animate-pulse" />
-          <span className="text-white/50 text-xl">
+          <div
+            className="w-3 h-3 rounded-full animate-pulse"
+            style={isBikefest ? { background: "#FDD835" } : undefined}
+          />
+          <span className={`text-xl ${isBikefest ? "text-white/70" : "text-white/50"}`}>
             Meteostanice — načítání dat...
           </span>
         </div>
@@ -205,8 +226,14 @@ function MeteoStationComponent() {
 
   const alerts = extras.alerts;
 
+  const iconStyle = isBikefest ? { color: "#FDD835" } : undefined;
+  const iconCls = (defaultCls: string) => isBikefest ? "w-7 h-7" : defaultCls;
+
   return (
-    <div className={`w-full border-b border-white/10 shadow-lg ${connected ? "bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800" : "bg-gradient-to-r from-slate-800 via-red-950/30 to-slate-800"}`}>
+    <div
+      className={`w-full shadow-lg ${isBikefest ? "" : `border-b border-white/10 ${connected ? "bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800" : "bg-gradient-to-r from-slate-800 via-red-950/30 to-slate-800"}`}`}
+      style={isBikefest ? { background: "#1a1a1a", borderTop: "3px solid #FDD835", borderBottom: "3px solid #FDD835" } : undefined}
+    >
 
       {/* ── alert banner (rotuje po jednom) ───────────── */}
       <AlertBannerRotating alerts={alerts} />
@@ -214,25 +241,28 @@ function MeteoStationComponent() {
       <div className="flex items-center gap-6 py-3 px-6" style={{ minHeight: "5rem" }}>
 
         {/* ── teplota (velká, výrazná) ─────────────────── */}
-        <div className="flex items-center gap-3 pr-6 border-r border-white/15 flex-shrink-0">
+        <div
+          className="flex items-center gap-3 pr-6 flex-shrink-0"
+          style={isBikefest ? { borderRight: "1px solid rgba(253, 216, 53, 0.35)" } : { borderRight: "1px solid rgba(255,255,255,0.15)" }}
+        >
           <Thermometer className={`w-12 h-12 ${temperatureColor(data.teplota)}`} />
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-white/50 leading-tight">Teplota</span>
+              <span className={`text-sm leading-tight ${isBikefest ? "text-white/70" : "text-white/50"}`}>Teplota</span>
               <TrendArrow trend={extras.tempTrend} />
             </div>
             <div className={`font-extrabold leading-none ${temperatureColor(data.teplota)}`} style={{ fontSize: "clamp(2.2rem, 4vh, 3.2rem)" }}>
               {val(data.teplota)}
-              <span className="font-bold text-white/40 ml-0.5" style={{ fontSize: "clamp(1rem, 2vh, 1.5rem)" }}>&#176;C</span>
+              <span className={`font-bold ml-0.5 ${isBikefest ? "text-white/60" : "text-white/40"}`} style={{ fontSize: "clamp(1rem, 2vh, 1.5rem)" }}>&#176;C</span>
             </div>
             <div className="flex items-center gap-3 mt-0.5">
               {feelsLikeDiff && (
-                <span className="text-xs text-white/40">
+                <span className={`text-xs ${isBikefest ? "text-white/60" : "text-white/40"}`}>
                   Pocitově {val(extras.feelsLike)}&#176;C
                 </span>
               )}
               {extras.tempMin !== null && extras.tempMax !== null && (
-                <span className="text-xs text-white/30">
+                <span className={`text-xs ${isBikefest ? "text-white/50" : "text-white/30"}`}>
                   {val(extras.tempMin)}&#176; / {val(extras.tempMax)}&#176;
                 </span>
               )}
@@ -243,7 +273,8 @@ function MeteoStationComponent() {
         {/* ── metriky ──────────────────────────────────── */}
         <div className="flex-1 grid grid-cols-6 gap-x-5">
           <Metric
-            icon={<Droplets className="w-7 h-7 text-blue-400" />}
+            variant={variant}
+            icon={<Droplets className={iconCls("w-7 h-7 text-blue-400")} style={iconStyle} />}
             label="Vlhkost"
             value={val(data.vlhkost, 0)}
             unit="%"
@@ -252,7 +283,8 @@ function MeteoStationComponent() {
           />
 
           <Metric
-            icon={<Gauge className="w-7 h-7 text-violet-400" />}
+            variant={variant}
+            icon={<Gauge className={iconCls("w-7 h-7 text-violet-400")} style={iconStyle} />}
             label="Tlak"
             value={val(data.tlakMoreHladina, 0)}
             unit="hPa"
@@ -261,7 +293,8 @@ function MeteoStationComponent() {
           />
 
           <Metric
-            icon={<Wind className="w-7 h-7 text-cyan-400" />}
+            variant={variant}
+            icon={<Wind className={iconCls("w-7 h-7 text-cyan-400")} style={iconStyle} />}
             label="Vítr"
             value={val(data.prumernaRychlostVetruKmh)}
             unit="km/h"
@@ -270,10 +303,12 @@ function MeteoStationComponent() {
           />
 
           <Metric
+            variant={variant}
             icon={
               <Navigation
-                className="w-7 h-7 text-teal-400 transition-transform duration-700"
+                className={`${iconCls("text-teal-400")} w-7 h-7 transition-transform duration-700`}
                 style={{
+                  ...(iconStyle ?? {}),
                   transform: data.smerVetruStupne !== null
                     ? `rotate(${data.smerVetruStupne + 180}deg)`
                     : undefined,
@@ -287,7 +322,8 @@ function MeteoStationComponent() {
           />
 
           <Metric
-            icon={<CloudRain className={`w-7 h-7 ${isRaining ? "text-blue-400" : "text-sky-400"}`} />}
+            variant={variant}
+            icon={<CloudRain className={iconCls(`w-7 h-7 ${isRaining ? "text-blue-400" : "text-sky-400"}`)} style={iconStyle} />}
             label="Srážky dnes"
             value={val(data.srazkyZaDen, 1)}
             unit="mm"
@@ -296,7 +332,8 @@ function MeteoStationComponent() {
           />
 
           <Metric
-            icon={<Waves className="w-7 h-7 text-emerald-400" />}
+            variant={variant}
+            icon={<Waves className={iconCls("w-7 h-7 text-emerald-400")} style={iconStyle} />}
             label="Rosný bod"
             value={val(data.rosnyBod)}
             unit="&#176;C"
@@ -305,16 +342,25 @@ function MeteoStationComponent() {
         </div>
 
         {/* ── status ───────────────────────────────────── */}
-        <div className="flex-shrink-0 pl-6 border-l border-white/15">
+        <div
+          className="flex-shrink-0 pl-6"
+          style={isBikefest ? { borderLeft: "1px solid rgba(253, 216, 53, 0.35)" } : { borderLeft: "1px solid rgba(255,255,255,0.15)" }}
+        >
           <div className="flex flex-col items-end gap-1">
             <div className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded-full ${connected ? "bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]" : "bg-red-500"}`} />
-              <span className={`text-sm font-medium ${connected ? "text-green-400/70" : "text-red-400/70"}`}>
+              <div
+                className={`w-3 h-3 rounded-full ${!isBikefest && connected ? "bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]" : !isBikefest && !connected ? "bg-red-500" : ""}`}
+                style={isBikefest ? { background: connected ? "#FDD835" : "#ef4444", boxShadow: connected ? "0 0 8px rgba(253, 216, 53, 0.6)" : undefined } : undefined}
+              />
+              <span
+                className={`text-sm font-medium ${!isBikefest ? (connected ? "text-green-400/70" : "text-red-400/70") : ""}`}
+                style={isBikefest ? { color: connected ? "#FDD835" : "#ef4444" } : undefined}
+              >
                 {connected ? "Online" : "Offline"}
               </span>
             </div>
             {lastUpdate && (
-              <span className="text-xs text-white/25">
+              <span className={`text-xs ${isBikefest ? "text-white/50" : "text-white/25"}`}>
                 {lastUpdate.toLocaleTimeString("cs-CZ")}
               </span>
             )}
