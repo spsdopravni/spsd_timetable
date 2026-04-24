@@ -81,6 +81,7 @@ const SpsMoravska = () => {
     interval: number | null;
   }
   const [metroDirections, setMetroDirections] = useState<MetroDirection[]>([]);
+  const [activeMetroLine, setActiveMetroLine] = useState<"A" | "C">("A");
 
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('tram-display-settings-moravska');
@@ -106,31 +107,40 @@ const SpsMoravska = () => {
     localStorage.setItem('tram-display-settings-moravska', JSON.stringify(settings));
   }, [settings]);
 
-  // Metro — Náměstí Míru metro A: rozdělit podle směru, spočítat interval
+  // Metro v headeru rotuje s tram stanicí:
+  //   Jana Masaryka (index 0) → Metro A (Náměstí Míru)
+  //   Šumavská     (index 1) → Metro C (I. P. Pavlova)
   useEffect(() => {
-    const metroData = getDeparturesForStation('namestiMiruMetro');
+    const isA = activeMetroLine === "A";
+    const stationKey = isA ? 'namestiMiruMetro' : 'ipPavlovaMetro';
+    // Hlavní termini podle linky — zkrácené spoje (Skalka, Petřiny, Muzeum,
+    // Nádraží Holešovice — short turn na C) se vyřadí.
+    const MAIN_TERMINI = isA
+      ? ['Nemocnice Motol', 'Depo Hostivař']
+      : ['Letňany', 'Háje'];
+
+    const metroData = getDeparturesForStation(stationKey);
     if (metroData.departures.length === 0) {
       setMetroDirections([]);
       return;
     }
 
     const nowSec = Math.floor(Date.now() / 1000);
-    // Rozdělit departures podle headsign (konečná)
+
     const byDirection: Record<string, typeof metroData.departures> = {};
     for (const dep of metroData.departures) {
-      const key = dep.headsign || 'Neznámý';
-      if (!byDirection[key]) byDirection[key] = [];
-      byDirection[key].push(dep);
+      const h = dep.headsign || '';
+      if (!MAIN_TERMINI.includes(h)) continue;
+      if (!byDirection[h]) byDirection[h] = [];
+      byDirection[h].push(dep);
     }
 
     const dirs: MetroDirection[] = Object.entries(byDirection).map(([headsign, deps]) => {
-      // Seřadit podle času
       const sorted = [...deps].sort((a, b) => a.arrival_timestamp - b.arrival_timestamp);
       const nextDep = sorted[0];
       const diff = nextDep.arrival_timestamp - nowSec;
       const nextMin = diff > 0 ? Math.ceil(diff / 60) : null;
 
-      // Interval z posledních 3 vlaků — průměrný rozestup
       let interval: number | null = null;
       if (sorted.length >= 2) {
         const count = Math.min(sorted.length, 3);
@@ -144,15 +154,17 @@ const SpsMoravska = () => {
       return { headsign, nextMin, interval };
     });
 
-    // Směr Nemocnice Motol vždy první
+    // Preferovaný směr první: Motol pro A, Letňany pro C (oba centrum-směr).
     dirs.sort((a, b) => {
-      if (a.headsign.includes('Motol')) return -1;
-      if (b.headsign.includes('Motol')) return 1;
+      const prefA = isA ? a.headsign.includes('Motol') : a.headsign === 'Letňany';
+      const prefB = isA ? b.headsign.includes('Motol') : b.headsign === 'Letňany';
+      if (prefA) return -1;
+      if (prefB) return 1;
       return 0;
     });
 
     setMetroDirections(dirs);
-  }, [currentTime, getDeparturesForStation]);
+  }, [currentTime, getDeparturesForStation, activeMetroLine]);
 
   const handleLogoClick = () => {
     setLogoClickCount(prev => prev + 1);
@@ -180,6 +192,7 @@ const SpsMoravska = () => {
       setIsDirectionFadingOut(true);
       setTimeout(() => {
         setCurrentStationIndex(newIndex);
+        setActiveMetroLine(newIndex === 0 ? "A" : "C");
         setDirectionAnimationKey(prev => prev + 1);
         setIsDirectionFadingOut(false);
       }, 400);
@@ -229,33 +242,40 @@ const SpsMoravska = () => {
                 <h1 className="font-bold leading-tight text-6xl" key={`main-station-${currentStationIndex}`}>
                   {mainStationName}
                 </h1>
-                {/* Metro Náměstí Míru — jednoduchý řádek */}
-                {metroDirections.length > 0 && (
-                  <div className="mt-2 text-2xl text-blue-100">
-                    <img src="/pictures/metroA.svg" alt="A" className="inline-block mr-2" style={{ width: '1em', height: '1em', verticalAlign: 'middle' }} onError={(e) => {
-                      const t = e.target as HTMLImageElement;
-                      t.outerHTML = '<span class="inline-flex items-center justify-center bg-green-600 text-white font-bold rounded" style="width:1em;height:1em;font-size:0.5em;vertical-align:middle">A</span>';
-                    }} />
-                    {metroDirections.map((dir, i) => (
-                      <span key={i} className="inline-flex items-center">
-                        {i > 0 && (
-                          <>
-                            <span className="text-blue-400 mx-2">·</span>
-                            <img src="/pictures/metroA.svg" alt="A" className="flex-shrink-0 mr-1" style={{ width: '0.9em', height: '0.9em' }} onError={(e) => {
-                              const t = e.target as HTMLImageElement;
-                              t.outerHTML = '<span class="inline-flex items-center justify-center bg-green-600 text-white font-bold rounded flex-shrink-0 mr-1" style="width:0.9em;height:0.9em;font-size:0.5em">A</span>';
-                            }} />
-                          </>
-                        )}
-                        <span className="text-blue-200">{dir.headsign}</span>
-                        <span className="font-bold text-white ml-2">{dir.nextMin ?? '—'} min</span>
-                        {dir.interval !== null && (
-                          <span className="text-blue-300 text-lg"> / {dir.interval} min</span>
-                        )}
-                      </span>
-                    ))}
-                  </div>
-                )}
+                {/* Metro rotuje s stanicí: A (Nám. Míru) ↔ C (I. P. Pavlova) */}
+                {metroDirections.length > 0 && (() => {
+                  const metroSvg = activeMetroLine === "A" ? "/pictures/metroA.svg" : "/pictures/metroC.svg";
+                  const fallbackBg = activeMetroLine === "A" ? "bg-green-600" : "bg-red-600";
+                  const fallbackLetter = activeMetroLine;
+                  const stationLabel = activeMetroLine === "A" ? "Nám. Míru" : "I. P. Pavlova";
+                  return (
+                    <div className="mt-2 text-2xl text-blue-100" key={`metro-${activeMetroLine}`}>
+                      <img src={metroSvg} alt={activeMetroLine} className="inline-block mr-2" style={{ width: '1em', height: '1em', verticalAlign: 'middle' }} onError={(e) => {
+                        const t = e.target as HTMLImageElement;
+                        t.outerHTML = `<span class="inline-flex items-center justify-center ${fallbackBg} text-white font-bold rounded" style="width:1em;height:1em;font-size:0.5em;vertical-align:middle">${fallbackLetter}</span>`;
+                      }} />
+                      <span className="text-blue-300 mr-2">{stationLabel}</span>
+                      {metroDirections.map((dir, i) => (
+                        <span key={i} className="inline-flex items-center">
+                          {i > 0 && (
+                            <>
+                              <span className="text-blue-400 mx-2">·</span>
+                              <img src={metroSvg} alt={activeMetroLine} className="flex-shrink-0 mr-1" style={{ width: '0.9em', height: '0.9em' }} onError={(e) => {
+                                const t = e.target as HTMLImageElement;
+                                t.outerHTML = `<span class="inline-flex items-center justify-center ${fallbackBg} text-white font-bold rounded flex-shrink-0 mr-1" style="width:0.9em;height:0.9em;font-size:0.5em">${fallbackLetter}</span>`;
+                              }} />
+                            </>
+                          )}
+                          <span className="text-blue-200">{dir.headsign}</span>
+                          <span className="font-bold text-white ml-2">{dir.nextMin ?? '—'} min</span>
+                          {dir.interval !== null && (
+                            <span className="text-blue-300 text-lg"> / {dir.interval} min</span>
+                          )}
+                        </span>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Time */}

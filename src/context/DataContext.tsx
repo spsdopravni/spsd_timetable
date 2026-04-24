@@ -18,6 +18,8 @@ export const ALL_STATIONS = {
   sumavskaB: { id: 'U744Z2P', name: 'Šumavská (B)' },
   // Náměstí Míru metro (jen pro odpočet v headeru)
   namestiMiruMetro: { id: ['U476Z101P', 'U476Z102P'], name: 'Náměstí Míru (metro A)' },
+  // I. P. Pavlova metro C (rotace s A v hlavičce Moravská)
+  ipPavlovaMetro: { id: ['U118Z101P', 'U118Z102P'], name: 'I. P. Pavlova (metro C)' },
   // Výstaviště — Bikefest
   vystavisteA: { id: 'U532Z1P', name: 'Výstaviště (A)' },
   vystavisteB: { id: 'U532Z2P', name: 'Výstaviště (B)' },
