@@ -457,20 +457,25 @@ const TramDeparturesConnectedComponent = ({
 
                   <div className="text-center lg:text-right flex-shrink-0 w-full lg:w-auto flex flex-col items-center lg:items-end" style={{ gap: `${Math.max(0.2, 0.3 * 1.0)}rem` }}>
                     <div className="flex items-center gap-2">
-                      {showTimesInMinutes && timeToArrival < 240 && (
-                        <div className="font-bold" style={{
-                          fontSize: `${Math.max(2.2, 4.0 * 1.0)}rem`,
-                          color: formatDisplayTime(departure).includes('Nestíháš') ? '#dc2626' : '#16a34a'
-                        }}>
-                          {formatDisplayTime(departure).includes('Stíháš') || formatDisplayTime(departure).includes('Nestíháš') ? formatDisplayTime(departure) : ''}
-                        </div>
-                      )}
-
-                      <div className="font-bold text-gray-900" style={{ fontSize: `${Math.max(2.2, 4.0 * 1.0)}rem` }}>
-                        {showTimesInMinutes && (formatDisplayTime(departure).includes('Stíháš') || formatDisplayTime(departure).includes('Nestíháš'))
-                          ? ''
-                          : formatDisplayTime(departure)}
-                      </div>
+                      {(() => {
+                        const display = formatDisplayTime(departure);
+                        const isStihas = showTimesInMinutes && (display.includes('Stíháš') || display.includes('Nestíháš'));
+                        if (isStihas) {
+                          return (
+                            <div className="font-bold" style={{
+                              fontSize: `${Math.max(2.2, 4.0 * 1.0)}rem`,
+                              color: display.includes('Nestíháš') ? '#dc2626' : '#16a34a'
+                            }}>
+                              {display}
+                            </div>
+                          );
+                        }
+                        return (
+                          <div className="font-bold text-gray-900" style={{ fontSize: `${Math.max(2.2, 4.0 * 1.0)}rem` }}>
+                            {display}
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     <div className="flex items-center gap-2">

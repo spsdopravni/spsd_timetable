@@ -5,9 +5,12 @@ import { Snowfall } from "@/components/Snowfall";
 import { ChristmasGarland } from "@/components/ChristmasGarland";
 import { MeteoStation } from "@/components/MeteoStation";
 import { useDataContext, ALL_STATIONS } from "@/context/DataContext";
-import { useUserLocation } from "@/utils/useUserLocation";
 import { walkingMinutes } from "@/utils/walking";
 import { getStopCoords } from "@/utils/pidApi";
+
+// Fixní poloha desktop tabule (počítač stojí na místě, GPS v prohlížeči nedává
+// smysl). Pěší časy a "stíháš/nestíháš" se počítají odsud.
+const DISPLAY_LOCATION = { lat: 50.107159, lon: 14.428045 };
 
 const Bikefest = () => {
   const { time, seasonalTheme, getDeparturesForStation } = useDataContext();
@@ -30,9 +33,8 @@ const Bikefest = () => {
   const [displayIndex, setDisplayIndex] = useState(screenIndex);
   const [animKey, setAnimKey] = useState(0);
 
-  // GPS-based walking time pro jednotlivá nástupiště. Pokud uživatel polohu
-  // nepovolí, fallback na hardcoded heuristiku v TramDeparturesConnected.
-  const userLoc = useUserLocation();
+  // Walking time z fixní polohy displeje (DISPLAY_LOCATION). Desktop tabule
+  // stojí na místě, takže GPS prohlížeče se nepoužívá.
   const [stopCoords, setStopCoords] = useState<Record<string, { lat: number; lon: number } | null>>({});
   const platformKeys = ["vystavisteA", "vystavisteB", "vystavisteVlak", "prahaBubny"];
   useEffect(() => {
@@ -47,13 +49,12 @@ const Bikefest = () => {
   }, []);
 
   function walkSecondsFor(stationKey: string): number | undefined {
-    if (!userLoc.location) return undefined;
     const conf = (ALL_STATIONS as Record<string, { id: string | string[] }>)[stationKey];
     if (!conf) return undefined;
     const stopId = Array.isArray(conf.id) ? conf.id[0] : conf.id;
     const sc = stopId ? stopCoords[stopId] : null;
     if (!sc) return undefined;
-    return walkingMinutes(userLoc.location.lat, userLoc.location.lon, sc.lat, sc.lon) * 60;
+    return walkingMinutes(DISPLAY_LOCATION.lat, DISPLAY_LOCATION.lon, sc.lat, sc.lon) * 60;
   }
 
   useEffect(() => {
