@@ -21,6 +21,9 @@ const SpsMoravska = lazy(() =>
 const Bikefest = lazy(() =>
   import("./pages/Bikefest").then(module => ({ default: module.default }))
 );
+const MakerFaire = lazy(() =>
+  import("./pages/MakerFaire").then(module => ({ default: module.default }))
+);
 const Menu = lazy(() =>
   import("./pages/Menu").then(module => ({ default: module.default }))
 );
@@ -35,6 +38,9 @@ const MobileMoravska = lazy(() =>
 );
 const MobileBikefest = lazy(() =>
   import("./pages/MobileBikefest").then(module => ({ default: module.default }))
+);
+const MobileMakerFaire = lazy(() =>
+  import("./pages/MobileMakerFaire").then(module => ({ default: module.default }))
 );
 const Share = lazy(() =>
   import("./pages/Share").then(module => ({ default: module.default }))
@@ -64,11 +70,13 @@ const App = () => (
                 <Route path="/spsmotol" element={<Spsmotol />} />
                 <Route path="/spsmoravska" element={<SpsMoravska />} />
                 <Route path="/bikefest" element={<Bikefest />} />
+                <Route path="/makerfaire" element={<MakerFaire />} />
                 <Route path="/menu" element={<Menu />} />
                 <Route path="/m" element={<Mobile />} />
                 <Route path="/m/motol" element={<MobileMotol />} />
                 <Route path="/m/moravska" element={<MobileMoravska />} />
                 <Route path="/m/bikefest" element={<MobileBikefest />} />
+                <Route path="/m/makerfaire" element={<MobileMakerFaire />} />
                 <Route path="/m/profile" element={<MobileProfile />} />
                 <Route path="/share" element={<Share />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -4,7 +4,7 @@ import { useDataContext } from "@/context/DataContext";
 const BUILDINGS = [
   { name: "Budova Motol", route: "/m/motol", stops: ["Vozovna Motol", "Motol (metro A, B)"] },
   { name: "Budova Moravská", route: "/m/moravska", stops: ["Jana Masaryka", "Šumavská"] },
-  { name: "Bikefest", route: "/m/bikefest", stops: ["Výstaviště", "Praha-Bubny"] },
+  { name: "Maker Faire Prague", route: "/m/makerfaire", stops: ["Výstaviště", "Praha-Bubny"] },
 ];
 
 const Mobile = () => {

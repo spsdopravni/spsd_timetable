@@ -35,6 +35,7 @@ const BUILDINGS: Building[] = [
 
 const SPECIAL_EVENTS = [
   { key: "bikefest", label: "Prague Bike Fest 2026", icon: "fa-solid fa-bicycle", route: "/bikefest", available: true },
+  { key: "makerfaire", label: "Maker Faire Prague", icon: "fa-solid fa-robot", route: "/makerfaire", available: true },
   { key: "pragensis", label: "Škola Pragensis", icon: "fa-solid fa-star", route: "/pragensis", available: false },
 ];
 

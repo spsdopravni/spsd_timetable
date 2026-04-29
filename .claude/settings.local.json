@@ -49,7 +49,9 @@
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('keys:', list\\(d.keys\\(\\)\\)\\); print\\('block_id:', d.get\\('block_id'\\)\\); print\\('shape_id:', d.get\\('shape_id'\\)\\); st=d.get\\('stop_times',[]\\); print\\('first_stop:', st[0].get\\('stop',{}\\).get\\('properties',{}\\).get\\('stop_name'\\) if st else None\\); print\\('last_stop:', st[-1].get\\('stop',{}\\).get\\('properties',{}\\).get\\('stop_name'\\) if st else None\\); print\\('last_arrival:', st[-1].get\\('arrival_time'\\) if st else None\\)\")",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); deps=[x for x in d.get\\('departures',[]\\) if x.get\\('route',{}\\).get\\('short_name'\\)=='34']; print\\(json.dumps\\(deps[:2], indent=2, ensure_ascii=False\\)[:2000]\\)\")",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\('---'\\); print\\(t.get\\('text',''\\)\\) for t in d.get\\('infotexts',[]\\)]\")",
-      "Bash(bun add *)"
+      "Bash(bun add *)",
+      "Read(//Users/brozovec/Downloads/**)",
+      "Bash(cp /Users/brozovec/Downloads/mf_prague_l1.svg /Users/brozovec/Documents/GitHub/spsd_timetable/public/pictures/makerfaire-logo.svg)"
     ],
     "deny": [],
     "ask": []

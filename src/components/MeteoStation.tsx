@@ -144,7 +144,12 @@ function AlertBannerRotating({ alerts }: { alerts: WeatherAlert[] }) {
 
 /* ── single metric ─────────────────────────────────────────── */
 
-type Variant = "default" | "bikefest";
+type Variant = "default" | "bikefest" | "makerfaire";
+
+const VARIANT_ACCENT: Record<Exclude<Variant, "default">, { hex: string; rgb: string }> = {
+  bikefest: { hex: "#FDD835", rgb: "253, 216, 53" },
+  makerfaire: { hex: "#F03553", rgb: "240, 53, 83" },
+};
 
 interface MetricProps {
   icon: React.ReactNode;
@@ -158,28 +163,29 @@ interface MetricProps {
 }
 
 function Metric({ icon, label, value, unit, accent = "text-white", sub, trend, variant = "default" }: MetricProps) {
-  const isBikefest = variant === "bikefest";
+  const isEvent = variant !== "default";
+  const eventAccent = isEvent ? VARIANT_ACCENT[variant] : null;
   return (
     <div className="flex items-center gap-4 min-w-0">
       <div
-        className={`flex-shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center ${isBikefest ? "" : "bg-white/10"}`}
-        style={isBikefest ? { background: "rgba(253, 216, 53, 0.12)", border: "1px solid rgba(253, 216, 53, 0.35)" } : undefined}
+        className={`flex-shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center ${isEvent ? "" : "bg-white/10"}`}
+        style={eventAccent ? { background: `rgba(${eventAccent.rgb}, 0.12)`, border: `1px solid rgba(${eventAccent.rgb}, 0.35)` } : undefined}
       >
         {icon}
       </div>
       <div className="min-w-0">
-        <div className={`text-sm leading-tight truncate ${isBikefest ? "text-white/70" : "text-white/50"}`}>{label}</div>
+        <div className={`text-sm leading-tight truncate ${isEvent ? "text-white/70" : "text-white/50"}`}>{label}</div>
         <div className="flex items-center gap-1">
           <span
-            className={`font-bold leading-tight ${isBikefest ? "text-white" : accent}`}
+            className={`font-bold leading-tight ${isEvent ? "text-white" : accent}`}
             style={{ fontSize: "clamp(1.4rem, 2.5vh, 2rem)" }}
           >
             {value}
-            <span className={`text-base font-normal ml-1 ${isBikefest ? "text-white/50" : "text-white/40"}`}>{unit}</span>
+            <span className={`text-base font-normal ml-1 ${isEvent ? "text-white/50" : "text-white/40"}`}>{unit}</span>
           </span>
           {trend && <TrendArrow trend={trend} />}
         </div>
-        {sub && <div className={`text-xs leading-tight ${isBikefest ? "text-white/50" : "text-white/30"}`}>{sub}</div>}
+        {sub && <div className={`text-xs leading-tight ${isEvent ? "text-white/50" : "text-white/30"}`}>{sub}</div>}
       </div>
     </div>
   );
@@ -197,21 +203,22 @@ function MeteoStationComponent({ variant = "default" }: MeteoStationProps) {
   // On HTTPS (Vercel) — meteostation not reachable, hide completely
   if (!available) return null;
 
-  const isBikefest = variant === "bikefest";
+  const isEvent = variant !== "default";
+  const eventAccent = isEvent ? VARIANT_ACCENT[variant] : null;
   const hasData = data.teplota !== null;
 
   if (!hasData) {
     return (
       <div
-        className={`w-full ${isBikefest ? "" : "bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800 border-b border-white/10"}`}
-        style={isBikefest ? { background: "#1a1a1a", borderTop: "3px solid #FDD835", borderBottom: "3px solid #FDD835" } : undefined}
+        className={`w-full ${isEvent ? "" : "bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800 border-b border-white/10"}`}
+        style={eventAccent ? { background: "#1a1a1a", borderTop: `3px solid ${eventAccent.hex}`, borderBottom: `3px solid ${eventAccent.hex}` } : undefined}
       >
         <div className="flex items-center justify-center gap-3 py-4 px-6">
           <div
             className="w-3 h-3 rounded-full animate-pulse"
-            style={isBikefest ? { background: "#FDD835" } : undefined}
+            style={eventAccent ? { background: eventAccent.hex } : undefined}
           />
-          <span className={`text-xl ${isBikefest ? "text-white/70" : "text-white/50"}`}>
+          <span className={`text-xl ${isEvent ? "text-white/70" : "text-white/50"}`}>
             Meteostanice — načítání dat...
           </span>
         </div>
@@ -226,13 +233,13 @@ function MeteoStationComponent({ variant = "default" }: MeteoStationProps) {
 
   const alerts = extras.alerts;
 
-  const iconStyle = isBikefest ? { color: "#FDD835" } : undefined;
-  const iconCls = (defaultCls: string) => isBikefest ? "w-7 h-7" : defaultCls;
+  const iconStyle = eventAccent ? { color: eventAccent.hex } : undefined;
+  const iconCls = (defaultCls: string) => isEvent ? "w-7 h-7" : defaultCls;
 
   return (
     <div
-      className={`w-full shadow-lg ${isBikefest ? "" : `border-b border-white/10 ${connected ? "bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800" : "bg-gradient-to-r from-slate-800 via-red-950/30 to-slate-800"}`}`}
-      style={isBikefest ? { background: "#1a1a1a", borderTop: "3px solid #FDD835", borderBottom: "3px solid #FDD835" } : undefined}
+      className={`w-full shadow-lg ${isEvent ? "" : `border-b border-white/10 ${connected ? "bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800" : "bg-gradient-to-r from-slate-800 via-red-950/30 to-slate-800"}`}`}
+      style={eventAccent ? { background: "#1a1a1a", borderTop: `3px solid ${eventAccent.hex}`, borderBottom: `3px solid ${eventAccent.hex}` } : undefined}
     >
 
       {/* ── alert banner (rotuje po jednom) ───────────── */}
@@ -243,26 +250,26 @@ function MeteoStationComponent({ variant = "default" }: MeteoStationProps) {
         {/* ── teplota (velká, výrazná) ─────────────────── */}
         <div
           className="flex items-center gap-3 pr-6 flex-shrink-0"
-          style={isBikefest ? { borderRight: "1px solid rgba(253, 216, 53, 0.35)" } : { borderRight: "1px solid rgba(255,255,255,0.15)" }}
+          style={eventAccent ? { borderRight: `1px solid rgba(${eventAccent.rgb}, 0.35)` } : { borderRight: "1px solid rgba(255,255,255,0.15)" }}
         >
           <Thermometer className={`w-12 h-12 ${temperatureColor(data.teplota)}`} />
           <div>
             <div className="flex items-center gap-2">
-              <span className={`text-sm leading-tight ${isBikefest ? "text-white/70" : "text-white/50"}`}>Teplota</span>
+              <span className={`text-sm leading-tight ${isEvent ? "text-white/70" : "text-white/50"}`}>Teplota</span>
               <TrendArrow trend={extras.tempTrend} />
             </div>
             <div className={`font-extrabold leading-none ${temperatureColor(data.teplota)}`} style={{ fontSize: "clamp(2.2rem, 4vh, 3.2rem)" }}>
               {val(data.teplota)}
-              <span className={`font-bold ml-0.5 ${isBikefest ? "text-white/60" : "text-white/40"}`} style={{ fontSize: "clamp(1rem, 2vh, 1.5rem)" }}>&#176;C</span>
+              <span className={`font-bold ml-0.5 ${isEvent ? "text-white/60" : "text-white/40"}`} style={{ fontSize: "clamp(1rem, 2vh, 1.5rem)" }}>&#176;C</span>
             </div>
             <div className="flex items-center gap-3 mt-0.5">
               {feelsLikeDiff && (
-                <span className={`text-xs ${isBikefest ? "text-white/60" : "text-white/40"}`}>
+                <span className={`text-xs ${isEvent ? "text-white/60" : "text-white/40"}`}>
                   Pocitově {val(extras.feelsLike)}&#176;C
                 </span>
               )}
               {extras.tempMin !== null && extras.tempMax !== null && (
-                <span className={`text-xs ${isBikefest ? "text-white/50" : "text-white/30"}`}>
+                <span className={`text-xs ${isEvent ? "text-white/50" : "text-white/30"}`}>
                   {val(extras.tempMin)}&#176; / {val(extras.tempMax)}&#176;
                 </span>
               )}
@@ -344,23 +351,23 @@ function MeteoStationComponent({ variant = "default" }: MeteoStationProps) {
         {/* ── status ───────────────────────────────────── */}
         <div
           className="flex-shrink-0 pl-6"
-          style={isBikefest ? { borderLeft: "1px solid rgba(253, 216, 53, 0.35)" } : { borderLeft: "1px solid rgba(255,255,255,0.15)" }}
+          style={eventAccent ? { borderLeft: `1px solid rgba(${eventAccent.rgb}, 0.35)` } : { borderLeft: "1px solid rgba(255,255,255,0.15)" }}
         >
           <div className="flex flex-col items-end gap-1">
             <div className="flex items-center gap-2">
               <div
-                className={`w-3 h-3 rounded-full ${!isBikefest && connected ? "bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]" : !isBikefest && !connected ? "bg-red-500" : ""}`}
-                style={isBikefest ? { background: connected ? "#FDD835" : "#ef4444", boxShadow: connected ? "0 0 8px rgba(253, 216, 53, 0.6)" : undefined } : undefined}
+                className={`w-3 h-3 rounded-full ${!isEvent && connected ? "bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]" : !isEvent && !connected ? "bg-red-500" : ""}`}
+                style={eventAccent ? { background: connected ? eventAccent.hex : "#ef4444", boxShadow: connected ? `0 0 8px rgba(${eventAccent.rgb}, 0.6)` : undefined } : undefined}
               />
               <span
-                className={`text-sm font-medium ${!isBikefest ? (connected ? "text-green-400/70" : "text-red-400/70") : ""}`}
-                style={isBikefest ? { color: connected ? "#FDD835" : "#ef4444" } : undefined}
+                className={`text-sm font-medium ${!isEvent ? (connected ? "text-green-400/70" : "text-red-400/70") : ""}`}
+                style={eventAccent ? { color: connected ? eventAccent.hex : "#ef4444" } : undefined}
               >
                 {connected ? "Online" : "Offline"}
               </span>
             </div>
             {lastUpdate && (
-              <span className={`text-xs ${isBikefest ? "text-white/50" : "text-white/25"}`}>
+              <span className={`text-xs ${isEvent ? "text-white/50" : "text-white/25"}`}>
                 {lastUpdate.toLocaleTimeString("cs-CZ")}
               </span>
             )}
