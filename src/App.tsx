@@ -24,6 +24,12 @@ const Bikefest = lazy(() =>
 const MakerFaire = lazy(() =>
   import("./pages/MakerFaire").then(module => ({ default: module.default }))
 );
+const Letna = lazy(() =>
+  import("./pages/Letna").then(module => ({ default: module.default }))
+);
+const VozovnaMotolPidDay = lazy(() =>
+  import("./pages/VozovnaMotolPidDay").then(module => ({ default: module.default }))
+);
 const Menu = lazy(() =>
   import("./pages/Menu").then(module => ({ default: module.default }))
 );
@@ -41,6 +47,12 @@ const MobileBikefest = lazy(() =>
 );
 const MobileMakerFaire = lazy(() =>
   import("./pages/MobileMakerFaire").then(module => ({ default: module.default }))
+);
+const MobileLetna = lazy(() =>
+  import("./pages/MobileLetna").then(module => ({ default: module.default }))
+);
+const MobileVozovnaMotolPidDay = lazy(() =>
+  import("./pages/MobileVozovnaMotolPidDay").then(module => ({ default: module.default }))
 );
 const Share = lazy(() =>
   import("./pages/Share").then(module => ({ default: module.default }))
@@ -71,12 +83,16 @@ const App = () => (
                 <Route path="/spsmoravska" element={<SpsMoravska />} />
                 <Route path="/bikefest" element={<Bikefest />} />
                 <Route path="/makerfaire" element={<MakerFaire />} />
+                <Route path="/pidday/letna" element={<Letna />} />
+                <Route path="/pidday/motol" element={<VozovnaMotolPidDay />} />
                 <Route path="/menu" element={<Menu />} />
                 <Route path="/m" element={<Mobile />} />
                 <Route path="/m/motol" element={<MobileMotol />} />
                 <Route path="/m/moravska" element={<MobileMoravska />} />
                 <Route path="/m/bikefest" element={<MobileBikefest />} />
                 <Route path="/m/makerfaire" element={<MobileMakerFaire />} />
+                <Route path="/m/pidday/letna" element={<MobileLetna />} />
+                <Route path="/m/pidday/motol" element={<MobileVozovnaMotolPidDay />} />
                 <Route path="/m/profile" element={<MobileProfile />} />
                 <Route path="/share" element={<Share />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -3,7 +3,6 @@ import { TramDeparturesConnected } from "@/components/TramDeparturesConnected";
 import { DailyRobot } from "@/components/DailyRobot";
 import { Snowfall } from "@/components/Snowfall";
 import { ChristmasGarland } from "@/components/ChristmasGarland";
-import { MeteoStation } from "@/components/MeteoStation";
 import { useDataContext, ALL_STATIONS } from "@/context/DataContext";
 import { walkingMinutes } from "@/utils/walking";
 import { getStopCoords } from "@/utils/pidApi";
@@ -153,9 +152,6 @@ const MakerFaire = () => {
 
           <ChristmasGarland />
         </div>
-
-        {/* Meteostanice */}
-        <MeteoStation variant="makerfaire" />
 
         {/* Content — mění se podle screenIndex */}
         {displayIndex === 0 && (

@@ -51,7 +51,20 @@
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\('---'\\); print\\(t.get\\('text',''\\)\\) for t in d.get\\('infotexts',[]\\)]\")",
       "Bash(bun add *)",
       "Read(//Users/brozovec/Downloads/**)",
-      "Bash(cp /Users/brozovec/Downloads/mf_prague_l1.svg /Users/brozovec/Documents/GitHub/spsd_timetable/public/pictures/makerfaire-logo.svg)"
+      "Bash(cp /Users/brozovec/Downloads/mf_prague_l1.svg /Users/brozovec/Documents/GitHub/spsd_timetable/public/pictures/makerfaire-logo.svg)",
+      "Bash(brew install *)",
+      "Bash(pdfinfo /Users/brozovec/Downloads/VJR_PID3.pdf)",
+      "Bash(pdfinfo /Users/brozovec/Downloads/LJR_PID3.pdf)",
+      "WebSearch",
+      "WebFetch(domain:pid.cz)",
+      "WebFetch(domain:cs.wikipedia.org)",
+      "Bash(bun run *)",
+      "Bash(npm run *)",
+      "Bash(echo \"PID: $!\")",
+      "Read(//tmp/**)",
+      "Read(//private/tmp/**)",
+      "Bash(cp \"/Users/brozovec/Downloads/SPSD_logo_symbol_RGB_color1 \\(1\\).png\" /Users/brozovec/Documents/GitHub/spsd_timetable/public/pictures/spsd-arrows.png)",
+      "Bash(cp \"/Users/brozovec/Downloads/logo \\(1\\).png\" /Users/brozovec/Documents/GitHub/spsd_timetable/public/pictures/muzeum-mhd.png)"
     ],
     "deny": [],
     "ask": []

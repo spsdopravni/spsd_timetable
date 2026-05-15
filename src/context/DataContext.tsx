@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { getDepartures } from '@/utils/pidApi';
 import { getWeather } from '@/utils/weatherApi';
+import { generatePid3Departures, generatePidDayLetenskaDepartures } from '@/utils/piddayDepartures';
+import type { Pid3StopName } from '@/data/piddaySchedule';
 import type { Departure } from '@/types/pid';
 import type { WeatherData } from '@/types/weather';
 
@@ -29,6 +31,40 @@ export const ALL_STATIONS = {
   vltavskaMetro: { id: ['U100Z101P', 'U100Z102P'], name: 'Vltavská (metro C)' },
   holesoviceMetro: { id: ['U115Z101P', 'U115Z102P'], name: 'Nádraží Holešovice (metro C)' },
   prahaBubny: { id: 'U100Z301', name: 'Praha-Bubny (vlak)' },
+  // Sparta tram (Letenská pláň) — Den PID 2026
+  spartaA: { id: 'U692Z1P', name: 'Sparta (A)' },
+  spartaB: { id: 'U692Z2P', name: 'Sparta (B)' },
+};
+
+// Virtuální stanice generované lokálně (Den PID 2026).
+// Nemají stop_id v PID API — odjezdy se počítají z lokálního JŘ.
+type PidDayVirtualStation = {
+  name: string;
+  generate: (now: Date) => Departure[];
+};
+
+export const PIDDAY_VIRTUAL_STATIONS: Record<string, PidDayVirtualStation> = {
+  pid3Letna: {
+    name: 'Letenská pláň (PID3)',
+    generate: (now) => generatePid3Departures('Letenská pláň' as Pid3StopName, now, 8),
+  },
+  pid3VozovnaMotol: {
+    name: 'Vozovna Motol (PID3)',
+    generate: (now) => generatePid3Departures('Vozovna Motol' as Pid3StopName, now, 8),
+  },
+  piddayLetenska: {
+    name: 'Letenská pláň · Den PID',
+    generate: (now) => generatePidDayLetenskaDepartures(now, 20),
+  },
+  // 2-sloupcová tabule — chronologické pokračování, levý 7, pravý 7.
+  piddayLetenskaA: {
+    name: 'Letenská pláň · sloupec 1',
+    generate: (now) => generatePidDayLetenskaDepartures(now, 14).slice(0, 7),
+  },
+  piddayLetenskaB: {
+    name: 'Letenská pláň · sloupec 2',
+    generate: (now) => generatePidDayLetenskaDepartures(now, 14).slice(7, 14),
+  },
 };
 
 // Weather lokace
@@ -36,6 +72,18 @@ export const WEATHER_LOCATIONS = {
   vozovnaMotol: { lat: 50.0755, lon: 14.4378, name: 'Vozovna Motol' },
   moravska: { lat: 50.0735, lon: 14.4407, name: 'Moravská' },
 };
+
+// MANUAL TIME OVERRIDE — pro testování PID Day tabule mimo provozní hodiny.
+// Když nastaveno {h,m}, čas se "posune" na dnešek HH:MM a normálně tiká dál.
+// Pro reálný čas nastav `null` (a smaž tento override před produkčním nasazením).
+const MANUAL_TIME_OVERRIDE: { hours: number; minutes: number } | null = null;
+
+function computeManualOffset(): number | null {
+  if (!MANUAL_TIME_OVERRIDE) return null;
+  const target = new Date();
+  target.setHours(MANUAL_TIME_OVERRIDE.hours, MANUAL_TIME_OVERRIDE.minutes, 0, 0);
+  return target.getTime() - Date.now();
+}
 
 interface StationDepartures {
   departures: Departure[];
@@ -354,8 +402,9 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
   // Initialize - load all data on mount
   useEffect(() => {
     const initialize = async () => {
-      // Sync time
-      const offset = await fetchWorldTime();
+      // Sync time (manual override má přednost pro testovací režim)
+      const manual = computeManualOffset();
+      const offset = manual !== null ? manual : await fetchWorldTime();
       setTime(prev => ({ ...prev, timeOffset: offset }));
 
       // Load all station data
@@ -394,6 +443,30 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     return () => clearInterval(interval);
   }, [fetchStationDepartures]);
 
+  // Den PID 2026 — generování virtuálních PID3 odjezdů z lokálního JŘ.
+  // Regenerace každých 30 s, aby seznam pravidelně odbavoval projeté odjezdy.
+  useEffect(() => {
+    const regenerate = () => {
+      const now = new Date(Date.now() + time.timeOffset);
+      setStationData(prev => {
+        const next = { ...prev };
+        for (const [key, conf] of Object.entries(PIDDAY_VIRTUAL_STATIONS)) {
+          next[key] = {
+            departures: conf.generate(now),
+            alerts: [],
+            loading: false,
+            error: null,
+            lastUpdate: now,
+          };
+        }
+        return next;
+      });
+    };
+    regenerate();
+    const interval = setInterval(regenerate, 30 * 1000);
+    return () => clearInterval(interval);
+  }, [time.timeOffset]);
+
   // Refresh weather every 10 minutes
   useEffect(() => {
     const interval = setInterval(() => {
@@ -405,8 +478,10 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     return () => clearInterval(interval);
   }, [fetchWeatherData]);
 
-  // Re-sync time every 10 minutes
+  // Re-sync time every 10 minutes (přeskakuje se v manuálním overridu, jinak
+  // by se nastavený fake čas pravidelně přepisoval na reálný).
   useEffect(() => {
+    if (MANUAL_TIME_OVERRIDE) return;
     const interval = setInterval(async () => {
       const offset = await fetchWorldTime();
       setTime(prev => ({ ...prev, timeOffset: offset }));

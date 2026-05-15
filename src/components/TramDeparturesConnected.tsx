@@ -155,6 +155,37 @@ const TramDeparturesConnectedComponent = ({
       );
     }
 
+    // PID Day 2026 — ikony partnerů u tras které vedou kolem SPŠD / Muzea MHD
+    if (departure.route_id?.startsWith("pidday-") && routeNumber?.startsWith("PID")) {
+      const showsSpsd = routeNumber === "PID3";                       // Motol = SPŠD
+      const showsMhd = ["PID3", "PID4", "PID5"].includes(routeNumber); // Vozovna Střešovice = Muzeum MHD
+      if (showsSpsd || showsMhd) {
+        return (
+          <div className="flex items-center gap-2">
+            <span>{headsign}</span>
+            {showsSpsd && (
+              <img
+                src="/pictures/spsd-logo-vertical.png"
+                alt="SPŠD"
+                title="Trasa kolem SPŠ dopravní (Modulová železnice v Motole)"
+                className="inline-block align-middle"
+                style={{ height: `${Math.max(2.5, 4.0 * 1.0)}rem`, width: 'auto', verticalAlign: 'middle' }}
+              />
+            )}
+            {showsMhd && (
+              <img
+                src="/pictures/muzeum-mhd.png"
+                alt="Muzeum MHD"
+                title="Trasa kolem Muzea MHD ve Střešovicích"
+                className="inline-block align-middle"
+                style={{ height: `${Math.max(1.8, 3.0 * 1.0)}rem`, width: 'auto', verticalAlign: 'middle' }}
+              />
+            )}
+          </div>
+        );
+      }
+    }
+
     return headsign;
   };
 
@@ -371,7 +402,7 @@ const TramDeparturesConnectedComponent = ({
                 >
 
                   <div className="flex items-center w-full lg:w-auto" style={{ gap: `${Math.max(0.6, 1.0 * 1.0)}rem` }}>
-                    <div className={`rounded-lg flex items-center justify-center ${getRouteColor(departure.route_type, departure.route_short_name)}`}
+                    <div className={`rounded-lg flex items-center justify-center ${departure.route_color ? '' : getRouteColor(departure.route_type, departure.route_short_name)}`}
                          style={{
                            width: departure.route_short_name.length > 2 ?
                              `${Math.max(3.5, 5.25 * 1.0)}rem` :
@@ -379,7 +410,11 @@ const TramDeparturesConnectedComponent = ({
                            height: `${Math.max(3.0, 4.5 * 1.0)}rem`,
                            minWidth: departure.route_short_name.length > 2 ?
                              `${Math.max(3.5, 5.25 * 1.0)}rem` :
-                             `${Math.max(3.0, 4.5 * 1.0)}rem`
+                             `${Math.max(3.0, 4.5 * 1.0)}rem`,
+                           ...(departure.route_color ? {
+                             backgroundColor: `#${departure.route_color}`,
+                             color: `#${departure.route_text_color || 'ffffff'}`,
+                           } : {})
                          }}>
                       <span className="font-bold" style={{
                         fontSize: departure.route_short_name.length > 2 ?
@@ -415,21 +450,23 @@ const TramDeparturesConnectedComponent = ({
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-1 sm:gap-2 text-gray-600" style={{
-                        fontSize: `${Math.max(0.7, 1.2 * 1.0)}rem`,
-                        gap: `${Math.max(0.2, 0.3 * 1.0)}rem`
-                      }}>
-                        <div className="flex items-center gap-1" style={{ gap: `${0.3 * 1.0}rem` }}>
-                          <Clock className="w-3 h-3 sm:w-4 sm:h-4" style={{ width: `${Math.max(0.6, 1.2 * 1.0)}rem`, height: `${Math.max(0.6, 1.2 * 1.0)}rem` }} />
-                          {formatTime(timeToArrival)}
+                      {!departure.route_id?.startsWith("pidday-") && (
+                        <div className="flex items-center gap-1 sm:gap-2 text-gray-600" style={{
+                          fontSize: `${Math.max(0.7, 1.2 * 1.0)}rem`,
+                          gap: `${Math.max(0.2, 0.3 * 1.0)}rem`
+                        }}>
+                          <div className="flex items-center gap-1" style={{ gap: `${0.3 * 1.0}rem` }}>
+                            <Clock className="w-3 h-3 sm:w-4 sm:h-4" style={{ width: `${Math.max(0.6, 1.2 * 1.0)}rem`, height: `${Math.max(0.6, 1.2 * 1.0)}rem` }} />
+                            {formatTime(timeToArrival)}
+                          </div>
+                          <div className="flex items-center gap-1" style={{ gap: `${0.3 * 1.0}rem` }}>
+                            <MapPin className="w-3 h-3 sm:w-4 sm:h-4" style={{ width: `${Math.max(0.6, 1.2 * 1.0)}rem`, height: `${Math.max(0.6, 1.2 * 1.0)}rem` }} />
+                            <span className="max-w-full" title={departure.current_stop || 'Poloha neznámá'}>
+                              {departure.current_stop || 'Poloha neznámá'}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1" style={{ gap: `${0.3 * 1.0}rem` }}>
-                          <MapPin className="w-3 h-3 sm:w-4 sm:h-4" style={{ width: `${Math.max(0.6, 1.2 * 1.0)}rem`, height: `${Math.max(0.6, 1.2 * 1.0)}rem` }} />
-                          <span className="max-w-full" title={departure.current_stop || 'Poloha neznámá'}>
-                            {departure.current_stop || 'Poloha neznámá'}
-                          </span>
-                        </div>
-                      </div>
+                      )}
 
 
                       {serviceAlerts.length > 0 && (
@@ -502,7 +539,7 @@ const TramDeparturesConnectedComponent = ({
                           <span>Noční linka</span>
                         </Badge>
                       )}
-                      {(departure.headsign?.toLowerCase().includes('vozovna') && !departure.headsign?.toLowerCase().includes('ústředn')) && (
+                      {(departure.headsign?.toLowerCase().includes('vozovna') && !departure.headsign?.toLowerCase().includes('ústředn') && !departure.route_id?.startsWith('pidday-')) && (
                         <Badge className="bg-orange-100 text-orange-800 justify-center lg:justify-start flex items-center gap-1"
                                style={{
                                  fontSize: `${Math.max(0.5, 0.8 * 1.0)}rem`,

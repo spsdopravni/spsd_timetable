@@ -74,6 +74,10 @@ const STATION_API_MAPPING: {[key: string]: string} = {
 
   // Praha-Bubny
   "U100Z301": API_KEY_PRAGENSIS,
+
+  // Sparta tram (Den PID 2026)
+  "U692Z1P": API_KEY_PRAGENSIS,
+  "U692Z2P": API_KEY_PRAGENSIS,
 };
 
 // Funkce pro nastavení třetího API klíče
