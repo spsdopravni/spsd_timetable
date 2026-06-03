@@ -78,6 +78,10 @@ const STATION_API_MAPPING: {[key: string]: string} = {
   // Sparta tram (Den PID 2026)
   "U692Z1P": API_KEY_PRAGENSIS,
   "U692Z2P": API_KEY_PRAGENSIS,
+
+  // Depo Kačerov — Den otevřených dveří (autobusová zastávka Depo Kačerov A/B)
+  "U79Z1P": API_KEY_PRAGENSIS,
+  "U79Z2P": API_KEY_PRAGENSIS,
 };
 
 // Funkce pro nastavení třetího API klíče

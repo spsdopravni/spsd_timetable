@@ -64,7 +64,11 @@
       "Read(//tmp/**)",
       "Read(//private/tmp/**)",
       "Bash(cp \"/Users/brozovec/Downloads/SPSD_logo_symbol_RGB_color1 \\(1\\).png\" /Users/brozovec/Documents/GitHub/spsd_timetable/public/pictures/spsd-arrows.png)",
-      "Bash(cp \"/Users/brozovec/Downloads/logo \\(1\\).png\" /Users/brozovec/Documents/GitHub/spsd_timetable/public/pictures/muzeum-mhd.png)"
+      "Bash(cp \"/Users/brozovec/Downloads/logo \\(1\\).png\" /Users/brozovec/Documents/GitHub/spsd_timetable/public/pictures/muzeum-mhd.png)",
+      "Bash(grep -E \"\\\\.tsx$\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\([{'id':f['properties'].get\\('stop_id'\\),'name':f['properties'].get\\('stop_name'\\),'platform':f['properties'].get\\('platform_code'\\),'lat':f['geometry']['coordinates'][1],'lon':f['geometry']['coordinates'][0]} for f in d.get\\('features',[]\\)], ensure_ascii=False, indent=1\\)\\)\")",
+      "Bash(echo \"=== EXIT: $? ===\")",
+      "WebFetch(domain:www.dpp.cz)"
     ],
     "deny": [],
     "ask": []

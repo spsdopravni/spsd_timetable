@@ -38,6 +38,7 @@ const SPECIAL_EVENTS = [
   { key: "makerfaire", label: "Maker Faire Prague", icon: "fa-solid fa-robot", route: "/makerfaire", available: true },
   { key: "pidday-letna", label: "Den PID 2026 — Letenská pláň", icon: "fa-solid fa-bus", route: "/pidday/letna", available: true },
   { key: "pidday-motol", label: "Den PID 2026 — Vozovna Motol", icon: "fa-solid fa-bus", route: "/pidday/motol", available: true },
+  { key: "depo-kacerov", label: "Den otevřených dveří — Depo Kačerov", icon: "fa-solid fa-door-open", route: "/depo-kacerov", available: true },
   { key: "pragensis", label: "Škola Pragensis", icon: "fa-solid fa-star", route: "/pragensis", available: false },
 ];
 

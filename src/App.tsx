@@ -30,6 +30,9 @@ const Letna = lazy(() =>
 const VozovnaMotolPidDay = lazy(() =>
   import("./pages/VozovnaMotolPidDay").then(module => ({ default: module.default }))
 );
+const DepoKacerov = lazy(() =>
+  import("./pages/DepoKacerov").then(module => ({ default: module.default }))
+);
 const Menu = lazy(() =>
   import("./pages/Menu").then(module => ({ default: module.default }))
 );
@@ -53,6 +56,9 @@ const MobileLetna = lazy(() =>
 );
 const MobileVozovnaMotolPidDay = lazy(() =>
   import("./pages/MobileVozovnaMotolPidDay").then(module => ({ default: module.default }))
+);
+const MobileDepoKacerov = lazy(() =>
+  import("./pages/MobileDepoKacerov").then(module => ({ default: module.default }))
 );
 const Share = lazy(() =>
   import("./pages/Share").then(module => ({ default: module.default }))
@@ -85,6 +91,7 @@ const App = () => (
                 <Route path="/makerfaire" element={<MakerFaire />} />
                 <Route path="/pidday/letna" element={<Letna />} />
                 <Route path="/pidday/motol" element={<VozovnaMotolPidDay />} />
+                <Route path="/depo-kacerov" element={<DepoKacerov />} />
                 <Route path="/menu" element={<Menu />} />
                 <Route path="/m" element={<Mobile />} />
                 <Route path="/m/motol" element={<MobileMotol />} />
@@ -93,6 +100,7 @@ const App = () => (
                 <Route path="/m/makerfaire" element={<MobileMakerFaire />} />
                 <Route path="/m/pidday/letna" element={<MobileLetna />} />
                 <Route path="/m/pidday/motol" element={<MobileVozovnaMotolPidDay />} />
+                <Route path="/m/depo-kacerov" element={<MobileDepoKacerov />} />
                 <Route path="/m/profile" element={<MobileProfile />} />
                 <Route path="/share" element={<Share />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

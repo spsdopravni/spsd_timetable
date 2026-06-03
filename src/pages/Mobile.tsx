@@ -5,6 +5,7 @@ const BUILDINGS = [
   { name: "Budova Motol", route: "/m/motol", stops: ["Vozovna Motol", "Motol (metro A, B)"] },
   { name: "Budova Moravská", route: "/m/moravska", stops: ["Jana Masaryka", "Šumavská"] },
   { name: "Maker Faire Prague", route: "/m/makerfaire", stops: ["Výstaviště", "Praha-Bubny"] },
+  { name: "Depo Kačerov — Den otevřených dveří", route: "/m/depo-kacerov", stops: ["Vložený spoj metra", "Depo Kačerov (bus)"] },
 ];
 
 const Mobile = () => {

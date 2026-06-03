@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, Rea
 import { getDepartures } from '@/utils/pidApi';
 import { getWeather } from '@/utils/weatherApi';
 import { generatePid3Departures, generatePidDayLetenskaDepartures } from '@/utils/piddayDepartures';
+import { generateDepoKacerovOut } from '@/utils/depoKacerovMetro';
 import type { Pid3StopName } from '@/data/piddaySchedule';
 import type { Departure } from '@/types/pid';
 import type { WeatherData } from '@/types/weather';
@@ -34,6 +35,12 @@ export const ALL_STATIONS = {
   // Sparta tram (Letenská pláň) — Den PID 2026
   spartaA: { id: 'U692Z1P', name: 'Sparta (A)' },
   spartaB: { id: 'U692Z2P', name: 'Sparta (B)' },
+  // Depo Kačerov — Den otevřených dveří (6. 6. 2026).
+  // Tabule stojí přímo u zastávky „Depo Kačerov" (NE terminál Kačerov).
+  // Metro C jede jako speciální „vložený spoj" (viz depoKacerovMetro*
+  // ve PIDDAY_VIRTUAL_STATIONS); zde jen autobusová zastávka Depo Kačerov.
+  depoKacerovBusA: { id: 'U79Z1P', name: 'Depo Kačerov (A)' },
+  depoKacerovBusB: { id: 'U79Z2P', name: 'Depo Kačerov (B)' },
 };
 
 // Virtuální stanice generované lokálně (Den PID 2026).
@@ -64,6 +71,12 @@ export const PIDDAY_VIRTUAL_STATIONS: Record<string, PidDayVirtualStation> = {
   piddayLetenskaB: {
     name: 'Letenská pláň · sloupec 2',
     generate: (now) => generatePidDayLetenskaDepartures(now, 14).slice(7, 14),
+  },
+  // Den otevřených dveří depo Kačerov — vložený spoj metra C (6. 6. 2026).
+  // Tabule stojí v depu, takže ukazujeme jen odjezdy Z DEPA → Nádraží Holešovice.
+  depoKacerovMetroOut: {
+    name: 'Depo Kačerov → Nádraží Holešovice',
+    generate: (now) => generateDepoKacerovOut(now, 10),
   },
 };
 
