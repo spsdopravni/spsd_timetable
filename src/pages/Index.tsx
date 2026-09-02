@@ -508,9 +508,10 @@ const Index = () => {
             <motion.p variants={fadeUp} className="text-blue-400 text-xs font-semibold uppercase tracking-widest mb-3">Autoři</motion.p>
             <motion.h2 variants={fadeUp} className="text-3xl font-black mb-10">Tým</motion.h2>
           </motion.div>
-          <motion.div variants={stagger} {...reveal} className="grid gap-5 max-w-sm">
+          <motion.div variants={stagger} {...reveal} className="grid gap-5 sm:grid-cols-2 max-w-2xl">
             {[
-              { name: "Adam Brož", cls: "2.A · Informační technologie", email: "broz979171@mot.sps-dopravni.cz" },
+              { name: "Adam \"Brozovec\" Brož", cls: "Student SPŠD", email: "broz979171@mot.sps-dopravni.cz" },
+              { name: "Štefan \"Hatsuko\" Barát", cls: "Student SPŠD", email: "Barat70671@mot.sps-dopravni.cz" },
             ].map((a, i) => (
               <motion.div key={i} variants={fadeUp} whileHover={{ y: -6 }} transition={{ duration: 0.25, ease: EASE }} className="rounded-xl border border-white/10 p-6" style={{ background: 'rgba(255,255,255,0.04)' }}>
                 <div className="w-12 h-12 rounded-full bg-blue-900/60 flex items-center justify-center mb-4">
@@ -518,10 +519,12 @@ const Index = () => {
                 </div>
                 <h3 className="font-bold text-lg">{a.name}</h3>
                 <p className="text-gray-500 text-sm mb-3">{a.cls}</p>
-                <a href={`mailto:${a.email}`} className="text-blue-400 text-sm hover:text-blue-300 transition-colors break-all flex items-center gap-1.5">
-                  <i className="fa-solid fa-envelope text-xs flex-shrink-0"></i>
-                  {a.email}
-                </a>
+                {a.email && (
+                  <a href={`mailto:${a.email}`} className="text-blue-400 text-sm hover:text-blue-300 transition-colors break-all flex items-center gap-1.5">
+                    <i className="fa-solid fa-envelope text-xs flex-shrink-0"></i>
+                    {a.email}
+                  </a>
+                )}
               </motion.div>
             ))}
           </motion.div>
@@ -568,6 +571,8 @@ const Index = () => {
           <a href="https://brozovec.eu" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-blue-400 transition-colors font-semibold">
             Adam &quot;Brozovec&quot; Brož
           </a>
+          {" & "}
+          <span className="text-gray-500 font-semibold">Štefan &quot;Hatsuko&quot; Barát</span>
         </p>
       </footer>
 
