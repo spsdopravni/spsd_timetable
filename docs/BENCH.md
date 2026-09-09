@@ -1114,3 +1114,39 @@ Scénáře meteostanice: `--meteo ok` (normální ESP), `slow` (1,5 s latence), 
 8. **Reálná meteostanice na 10.0.10.208.** Jestli ESP32 opravdu umí zamrznout bez RST (základní předpoklad nálezu), se ověří jen připojením na LAN a sledováním `pending` v DevTools na Pi.
 
 **Doporučený mini‑harness na Pi** (mimo tento repo): `chromium --remote-debugging-port=9222` + `npm run bench` s ručně přepsaným `url`/`--build false`, nebo jednodušeji `bench/cpu-probe.html` (kalibrace) + logovací cron `vcgencmd get_throttled; free -m; date` do souboru po dobu 24 h a porovnání s okamžikem, kdy tabule vizuálně zatuhne.
+---
+
+## 9. Ověřené A/B měření (9. 9. 2026)
+
+**Metodická poznámka, která platí pro každé další měření.** První kolo oprav
+jsem porovnával proti baseline změřenému o půl hodiny dřív. To je špatně:
+při kontrolním přeměření dal **stejný commit 65,5 ms/s tam, kde předtím dal
+29,9**. Absolutní hodnoty na MacBooku driftují se stavem stroje (teplota,
+ostatní procesy, stav cache) klidně dvojnásobně. Srovnávat lze jen běhy
+**proložené v jedné relaci**.
+
+Správně změřeno: `ca791fe` (jen harness, žádné opravy) a `17822d5` (po obou
+kolech), střídavě A-B-A-B, `--route /spsmotol --minutes 2 --cpu 6`:
+
+| metrika | před | po | rozdíl |
+|---|---:|---:|---:|
+| CPU celkem (ms/s) | 148,4 | **70,2** | −53 % |
+| z toho JS (ms/s) | 33,1 | **17,9** | −46 % |
+| z toho styly (ms/s) | 25,9 | **9,9** | −62 % |
+| z toho layout (ms/s) | 2,8 | **2,2** | −21 % |
+| přepočtů stylů / s | 37,0 | **12,3** | −67 % |
+| požadavků / min | 439,5 | **83,2** | −81 % |
+| JS při startu (kB) | 570 | **390** | −32 % |
+
+Rozptyl uvnitř každé větve byl pod 5 % (148,0 / 148,8 a 72,1 / 68,3), takže
+rozdíl je skutečný, ne šum. Absolutní čísla ale pořád platí jen pro tenhle
+MacBook při tomhle nastavení — na Pi budou řádově jiná.
+
+**Co z toho neplyne.** Registr aktivních zastávek (21 → 4 stahované zastávky)
+se v tomhle měření na počtu requestů neprojeví, protože bench běží
+s `VITE_USE_MOCK_DATA` a odjezdy nejdou po síti. Úspora 439,5 → 83,2 req/min
+je meteostanice. Zisk z registru se projeví až v provozu proti Golemiu.
+
+**Než začneš měřit vlastní optimalizaci:** pusť `npm run bench` dvakrát za
+sebou na tomtéž commitu. Rozdíl, který ti vyjde, je hranice, pod kterou
+nesmíš interpretovat žádné zlepšení.
