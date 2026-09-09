@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, ReactNode } from 'react';
 import { getDepartures } from '@/utils/pidApi';
 import { getWeather } from '@/utils/weatherApi';
 import { generatePid3Departures, generatePidDayLetenskaDepartures } from '@/utils/piddayDepartures';
@@ -134,15 +134,6 @@ interface DataContextType {
   // Weather data
   weatherData: { [key: string]: WeatherState };
 
-  // Čas synchronizovaný se serverem
-  time: TimeState;
-
-  // Zimní období (sněžení, zimní logo, zimní robot) - deprecated, use seasonalTheme
-  isWinterPeriod: boolean;
-
-  // Seasonal theme (logo, robot, snowfall)
-  seasonalTheme: SeasonalTheme;
-
   // Funkce pro manuální refresh
   refreshStation: (stationKey: string) => Promise<void>;
   refreshWeather: (locationKey: string) => Promise<void>;
@@ -151,6 +142,9 @@ interface DataContextType {
   // Získání dat pro stanici
   getDeparturesForStation: (stationKey: string) => StationDepartures;
   getWeatherForLocation: (locationKey: string) => WeatherState;
+
+  /** Přihlásí zastávku k odběru; vrací odhlašovací funkci. */
+  subscribeStation: (stationKey: string) => () => void;
 }
 
 const defaultStationData: StationDepartures = {
@@ -170,6 +164,14 @@ const defaultWeatherState: WeatherState = {
 
 const DataContext = createContext<DataContextType | null>(null);
 
+/* Čas se mění 1×/s, data 1×/60 s, sezóna 1×/den. Když všechno viselo na
+   jednom context value, měnila se jeho reference každou sekundu a překreslil
+   se celý strom tabule — memo() na komponentách proti tomu nic nezmůže.
+   Proto tři oddělené contexty: kdo čte jen data, ten se s hodinami netiká. */
+const TimeContext = createContext<TimeState | undefined>(undefined);
+const SeasonalContext = createContext<{ seasonalTheme: SeasonalTheme; isWinterPeriod: boolean } | undefined>(undefined);
+const TimeOffsetContext = createContext<number>(0);
+
 export const useDataContext = () => {
   const context = useContext(DataContext);
   if (!context) {
@@ -185,6 +187,33 @@ interface DataProviderProps {
 export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
   // Station data state
   const [stationData, setStationData] = useState<{ [key: string]: StationDepartures }>({});
+
+  // Které zastávky jsou opravdu na obrazovce. Dřív se každých 60 s stahovalo
+  // všech 21 z ALL_STATIONS na každé tabuli, i když Motol zobrazuje čtyři —
+  // 17 zbytečných requestů za minutu a s každým další překreslení stromu.
+  // Počítáme reference, ne jen přítomnost: stejnou zastávku může zobrazovat
+  // víc komponent najednou a odchod jedné nesmí sebrat data ostatním.
+  const stationRefs = useRef<Map<string, number>>(new Map());
+  const [activeVersion, setActiveVersion] = useState(0);
+
+  const subscribeStation = useCallback((key: string) => {
+    const n = stationRefs.current.get(key) ?? 0;
+    stationRefs.current.set(key, n + 1);
+    if (n === 0) setActiveVersion(v => v + 1);
+
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      const cur = stationRefs.current.get(key) ?? 0;
+      if (cur <= 1) {
+        stationRefs.current.delete(key);
+        setActiveVersion(v => v + 1);
+      } else {
+        stationRefs.current.set(key, cur - 1);
+      }
+    };
+  }, []);
 
   // Weather data state
   const [weatherData, setWeatherData] = useState<{ [key: string]: WeatherState }>({});
@@ -319,17 +348,18 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     return weatherData[locationKey] || defaultWeatherState;
   }, [weatherData]);
 
-  // Detekce vánočního období (20.12 - 26.12) - sněžení a zimní logo (deprecated)
-  const isWinterPeriod = (() => {
-    const month = time.currentTime.getMonth() + 1;
-    const day = time.currentTime.getDate();
-    return month === 12 && day >= 20 && day <= 26;
-  })();
+  // Sezóna se mění jednou za den, ne každou sekundu. Dřív se oba objekty
+  // přepočítávaly při každém tiku hodin a novou referencí překreslily
+  // všechny konzumenty, včetně robota.
+  const dayKey = `${time.currentTime.getMonth() + 1}-${time.currentTime.getDate()}`;
 
-  // Seasonal theme calculation (same logic as DailyRobot)
-  const seasonalTheme: SeasonalTheme = (() => {
-    const month = time.currentTime.getMonth() + 1;
-    const day = time.currentTime.getDate();
+  const isWinterPeriod = useMemo(() => {
+    const [m, d] = dayKey.split('-').map(Number);
+    return m === 12 && d >= 20 && d <= 26;
+  }, [dayKey]);
+
+  const seasonalTheme: SeasonalTheme = useMemo(() => {
+    const [month, day] = dayKey.split('-').map(Number);
 
     // Silvestr a Nový rok (27.12 - 6.1) - NEJVYŠŠÍ PRIORITA
     if ((month === 12 && day >= 27) || (month === 1 && day <= 6)) {
@@ -410,7 +440,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       robotTheme: { image: '/pictures/robotz.png', theme: 'classic' },
       showSnowfall: false
     };
-  })();
+  }, [dayKey]);
 
   // Initialize - load all data on mount
   useEffect(() => {
@@ -420,10 +450,8 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       const offset = manual !== null ? manual : await fetchWorldTime();
       setTime(prev => ({ ...prev, timeOffset: offset }));
 
-      // Load all station data
-      Object.keys(ALL_STATIONS).forEach(key => {
-        fetchStationDepartures(key);
-      });
+      // Data zastávek natáhne refresh efekt níž, a to jen pro ty,
+      // které jsou opravdu na obrazovce.
 
       // Load weather data
       Object.keys(WEATHER_LOCATIONS).forEach(key => {
@@ -445,25 +473,29 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     return () => clearInterval(timer);
   }, [time.timeOffset]);
 
-  // Refresh departures every 60 seconds
+  // Refresh jen těch zastávek, které jsou opravdu na obrazovce.
   useEffect(() => {
-    const interval = setInterval(() => {
-      Object.keys(ALL_STATIONS).forEach(key => {
-        fetchStationDepartures(key);
-      });
-    }, 60000);
-
+    const tick = () => stationRefs.current.forEach((_, key) => fetchStationDepartures(key));
+    tick();
+    const interval = setInterval(tick, 60000);
     return () => clearInterval(interval);
-  }, [fetchStationDepartures]);
+  }, [fetchStationDepartures, activeVersion]);
 
   // Den PID 2026 — generování virtuálních PID3 odjezdů z lokálního JŘ.
   // Regenerace každých 30 s, aby seznam pravidelně odbavoval projeté odjezdy.
   useEffect(() => {
+    // Jen pro virtuální zastávky, které někdo zobrazuje. Dřív se generovalo
+    // všech šest každých 30 s na každé tabuli — a zápis do stationData
+    // pokaždé překreslil celý strom, i na Motole, kde se nezobrazují.
+    const wanted = Object.keys(PIDDAY_VIRTUAL_STATIONS).filter(k => stationRefs.current.has(k));
+    if (wanted.length === 0) return;
+
     const regenerate = () => {
       const now = new Date(Date.now() + time.timeOffset);
       setStationData(prev => {
         const next = { ...prev };
-        for (const [key, conf] of Object.entries(PIDDAY_VIRTUAL_STATIONS)) {
+        for (const key of wanted) {
+          const conf = PIDDAY_VIRTUAL_STATIONS[key];
           next[key] = {
             departures: conf.generate(now),
             alerts: [],
@@ -478,7 +510,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     regenerate();
     const interval = setInterval(regenerate, 30 * 1000);
     return () => clearInterval(interval);
-  }, [time.timeOffset]);
+  }, [time.timeOffset, activeVersion]);
 
   // Refresh weather every 10 minutes
   useEffect(() => {
@@ -503,22 +535,83 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     return () => clearInterval(interval);
   }, [fetchWorldTime]);
 
-  const value: DataContextType = {
+  // Každý provider dostane vlastní memoizovanou hodnotu, aby se reference
+  // měnila jen tehdy, když se opravdu změnila jeho data.
+  const timeValue = useMemo(() => time, [time]);
+
+  const seasonalValue = useMemo(
+    () => ({ seasonalTheme, isWinterPeriod }),
+    [seasonalTheme, isWinterPeriod]
+  );
+
+  // Pozor: `time` tu schválně NENÍ. Kdyby bylo, měnila by se reference
+  // datového value každou sekundu a celé rozdělení contextů by nemělo smysl —
+  // konzumenti odjezdů by se překreslovali dál. Kdo chce hodiny, bere useTime().
+  const dataValue = useMemo<DataContextType>(() => ({
     stationData,
     weatherData,
-    time,
-    isWinterPeriod,
-    seasonalTheme,
     refreshStation,
     refreshWeather,
     refreshAll,
     getDeparturesForStation,
     getWeatherForLocation,
-  };
+    subscribeStation,
+  }), [
+    stationData, weatherData,
+    refreshStation, refreshWeather, refreshAll,
+    getDeparturesForStation, getWeatherForLocation, subscribeStation,
+  ]);
 
   return (
-    <DataContext.Provider value={value}>
-      {children}
-    </DataContext.Provider>
+    <TimeOffsetContext.Provider value={time.timeOffset}>
+    <TimeContext.Provider value={timeValue}>
+      <SeasonalContext.Provider value={seasonalValue}>
+        <DataContext.Provider value={dataValue}>
+          {children}
+        </DataContext.Provider>
+      </SeasonalContext.Provider>
+    </TimeContext.Provider>
+    </TimeOffsetContext.Provider>
   );
+};
+
+/* ── granulární hooky ────────────────────────────────────────────────
+   Komponenta si má brát jen to, co opravdu potřebuje. Hodiny v hlavičce
+   chtějí useTime(), robot useSeasonal(), seznam odjezdů useStation(). */
+
+/** Tik hodin. Mění se každou sekundu — ber jen tam, kde jde o vteřiny. */
+export const useTime = (): TimeState => {
+  const ctx = useContext(TimeContext);
+  if (!ctx) throw new Error('useTime musí být uvnitř DataProvider');
+  return ctx;
+};
+
+/** Posun oproti serverovému času. Mění se jednou za 10 minut — bezpečné
+    číst i tam, kde se nesmí překreslovat každou sekundu. */
+export const useTimeOffset = (): number => useContext(TimeOffsetContext);
+
+/** Sezónní téma (logo, robot, sněžení). Mění se jednou za den. */
+export const useSeasonal = () => {
+  const ctx = useContext(SeasonalContext);
+  if (!ctx) throw new Error('useSeasonal musí být uvnitř DataProvider');
+  return ctx;
+};
+
+/**
+ * Odjezdy pro jednu zastávku. Zároveň ji přihlásí k odběru, takže se
+ * stahuje jen to, co je opravdu na obrazovce.
+ */
+export const useStations = (stationKeys: string[]): void => {
+  const { subscribeStation } = useDataContext();
+  const key = stationKeys.join('|');
+  useEffect(() => {
+    const offs = key ? key.split('|').map(k => subscribeStation(k)) : [];
+    return () => offs.forEach(off => off());
+  }, [subscribeStation, key]);
+};
+
+export const useStation = (stationKey: string): StationDepartures => {
+  const { getDeparturesForStation, subscribeStation } = useDataContext();
+  useEffect(() => subscribeStation(stationKey), [subscribeStation, stationKey]);
+  return getDeparturesForStation(stationKey);
 };

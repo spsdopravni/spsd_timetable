@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef, memo, useCallback, useMemo } from '
 import { motion, AnimatePresence } from 'framer-motion';
 import funFacts from '@/data/fun_facts.json';
 import nameDays from '@/data/name_days.json';
-import { useDataContext } from '@/context/DataContext';
+import { useSeasonal } from '@/context/DataContext';
 const DailyRobotComponent = ({ barColor, customMessages = [], robotImage }: { barColor?: string; customMessages?: string[]; robotImage?: string }) => {
-  const { seasonalTheme } = useDataContext();
+  const { seasonalTheme } = useSeasonal();
   const [currentMessage, setCurrentMessage] = useState('');
   const [isVisible, setIsVisible] = useState(false);
   const [robotPhase, setRobotPhase] = useState('hidden'); // 'hidden', 'movingLeft', 'atLeft', 'movingRight', 'atRight', 'movingAway'

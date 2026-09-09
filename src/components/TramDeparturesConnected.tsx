@@ -2,7 +2,7 @@ import { useMemo, memo } from "react";
 import { Clock, AlertTriangle, Info, Snowflake, Car, MapPin, Wrench, Bus, Wind, Accessibility, Calendar, ArrowRight, Moon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useDataContext } from "@/context/DataContext";
+import { useTime, useStation } from "@/context/DataContext";
 import type { Departure } from "@/types/pid";
 
 interface TramDeparturesConnectedProps {
@@ -26,8 +26,8 @@ const TramDeparturesConnectedComponent = ({
   disableAnimations = false,
   walkSeconds,
 }: TramDeparturesConnectedProps) => {
-  const { getDeparturesForStation, time } = useDataContext();
-  const stationData = getDeparturesForStation(stationKey);
+  const time = useTime();
+  const stationData = useStation(stationKey);
   const { departures, loading, error } = stationData;
   const timeOffset = time.timeOffset;
 

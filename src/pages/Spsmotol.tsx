@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { TramDeparturesConnected } from "@/components/TramDeparturesConnected";
+import { LiveClock } from "@/components/LiveClock";
 import { WeatherWidget } from "@/components/WeatherWidget";
 import { RouteInfo } from "@/components/RouteInfo";
 import { Settings } from "@/components/Settings";
@@ -10,10 +11,12 @@ import { AlertBanner } from "@/components/AlertBanner";
 import { MeteoStation } from "@/components/MeteoStation";
 import { Snowfall } from "@/components/Snowfall";
 import { ChristmasGarland } from "@/components/ChristmasGarland";
-import { useDataContext } from "@/context/DataContext";
+import { useDataContext, useSeasonal, useTime } from "@/context/DataContext";
 
 const Spsmotol = () => {
-  const { time, seasonalTheme, getDeparturesForStation } = useDataContext();
+  const time = useTime();
+  const { seasonalTheme } = useSeasonal();
+  const { getDeparturesForStation } = useDataContext();
   useEffect(() => {
     document.body.classList.add('tram-display');
     return () => document.body.classList.remove('tram-display');
@@ -231,19 +234,7 @@ const Spsmotol = () => {
 
               {/* Right side - Time and Date */}
               <div className="flex flex-col items-end gap-3">
-                <div className="text-right">
-                  <div className="font-bold text-7xl">
-                    {currentTime.toLocaleTimeString('cs-CZ')}
-                  </div>
-                  <div className="text-blue-100 mt-2 text-3xl">
-                    {currentTime.toLocaleDateString('cs-CZ', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </div>
-                </div>
+                <LiveClock />
               </div>
             </div>
           </div>
