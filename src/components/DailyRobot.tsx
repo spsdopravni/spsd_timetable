@@ -1,29 +1,36 @@
-import React, { useState, useEffect, useRef, memo, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, memo, useCallback } from 'react';
 import funFacts from '@/data/fun_facts.json';
 import nameDays from '@/data/name_days.json';
-import { useSeasonal } from '@/context/DataContext';
-/** Cílová pozice a doba přesunu pro každou fázi průjezdu robota. */
-const ROBOT_PHASES: Record<string, { x: string; ms: number }> = {
-  hidden:      { x: 'calc(100vw + 50px)',  ms: 0 },
-  movingLeft:  { x: 'calc(-100vw + 50px)', ms: 4000 },
-  atLeft:      { x: 'calc(-100vw + 50px)', ms: 0 },
-  movingRight: { x: 'calc(-85vw + 50px)',  ms: 4000 },
-  atRight:     { x: 'calc(-85vw + 50px)',  ms: 0 },
-  movingAway:  { x: 'calc(100vw)',         ms: 3000 },
+import { useSeasonal } from "@/context/DataContext";
+
+/**
+ * Fáze animace robota. Pohyb je řízený čistě CSS transitions (viz index.css,
+ * třídy .robot-sprite / .robot-phase-*), takže běží na kompozitoru GPU a
+ * neseká se, i když je hlavní JS vlákno vytížené re-renderem tabule
+ * (důležité pro Raspberry Pi).
+ */
+type RobotPhase = 'hidden' | 'movingLeft' | 'atLeft' | 'movingRight' | 'atRight' | 'movingAway';
+
+const PHASE_CLASS: Record<RobotPhase, string> = {
+  hidden: 'robot-phase-hidden',
+  movingLeft: 'robot-phase-left',
+  atLeft: 'robot-phase-left',
+  movingRight: 'robot-phase-right',
+  atRight: 'robot-phase-right',
+  movingAway: 'robot-phase-away',
 };
 
 const DailyRobotComponent = ({ barColor, customMessages = [], robotImage }: { barColor?: string; customMessages?: string[]; robotImage?: string }) => {
   const { seasonalTheme } = useSeasonal();
   const [currentMessage, setCurrentMessage] = useState('');
-  const [isVisible, setIsVisible] = useState(false);
-  const [robotPhase, setRobotPhase] = useState('hidden'); // 'hidden', 'movingLeft', 'atLeft', 'movingRight', 'atRight', 'movingAway'
+  const [robotPhase, setRobotPhase] = useState<RobotPhase>('hidden');
+  // Když se obrázek robota nepodaří načíst, spadneme na výchozího robota.
+  const [imageFailed, setImageFailed] = useState(false);
   const [showBackground, setShowBackground] = useState(false);
   const [showText, setShowText] = useState(false);
   const [messageCounter, setMessageCounter] = useState(0);
-  // Běh animace držíme v ref, ne ve state: kdyby to byl state, každá jeho
-  // změna by restartovala efekt níž a tím zahodila 60s interval (viz komentář
-  // u efektu). Do renderu tahle hodnota stejně nevstupuje.
   const isAnimatingRef = useRef(false);
+  const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const getDayName = useCallback(() => {
     const days = ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota'];
@@ -89,7 +96,6 @@ const DailyRobotComponent = ({ barColor, customMessages = [], robotImage }: { ba
     const day = getDayName();
     const nameDay = getNameDayInfo();
     const hour = new Date().getHours();
-    const minutes = new Date().getMinutes();
     const dayOfWeek = new Date().getDay(); // 0=neděle, 1=pondělí, ..., 5=pátek, 6=sobota
     const holidays = getSchoolHolidays();
 
@@ -193,137 +199,105 @@ const DailyRobotComponent = ({ barColor, customMessages = [], robotImage }: { ba
     setCurrentMessage(generateMessage());
   }, [messageCounter]);
 
-  // Postupná animace - robot jede z prava doleva a zpět
+  // Postupná animace - robot jede z prava doleva a zpět.
+  // Časová osa (ms od startu):
+  //   0     movingLeft   – jede zprava doleva (4 s)
+  //   4000  atLeft       – čeká vlevo
+  //   6000  movingRight  – vrací se doprava (4 s), zobrazí se lišta
+  //   10000 atRight      – zobrazí se text
+  //   15000               – text i lišta zmizí
+  //   16000 movingAway   – odjíždí doprava (3 s)
+  //   19000 hidden       – konec
   useEffect(() => {
-    // Fázové timeouty jedné otočky robota. Bez tohohle pole zůstávaly po
-    // odmountování viset a dostřelovaly setState do mrtvé komponenty.
-    const phaseTimers: ReturnType<typeof setTimeout>[] = [];
-    const push = (t: ReturnType<typeof setTimeout>) => { phaseTimers.push(t); return t; };
-
-    const startAnimation = () => {
-      // Pokud už animace běží, přeskoč
-      if (isAnimatingRef.current) {
-        return;
-      }
-
-      isAnimatingRef.current = true;
-      setMessageCounter(prev => prev + 1); // Změna textu při každém zobrazení
-      setIsVisible(true);
-      setRobotPhase('movingLeft');
-
-      // Robot dorazí doleva po 4 sekundách
-      push(setTimeout(() => {
-        setRobotPhase('atLeft');
-      }, 4000));
-
-      // Robot se začne vracet doprava po 2 sekundách
-      push(setTimeout(() => {
-        setRobotPhase('movingRight');
-        setShowBackground(true);
-      }, 6000));
-
-      // Robot dorazí doprava s pozadím
-      push(setTimeout(() => {
-        setRobotPhase('atRight');
-        setShowText(true);
-      }, 10000));
-
-      // Text a pozadí zmizí po 15 sekundách
-      push(setTimeout(() => {
-        setShowText(false);
-        setShowBackground(false);
-      }, 15000));
-
-      // Robot odjíždí doprava po 16 sekundách (po zmizení textu)
-      push(setTimeout(() => {
-        setRobotPhase('movingAway');
-      }, 16000));
-
-      // Vše úplně zmizí po 19 sekundách
-      push(setTimeout(() => {
-        setRobotPhase('hidden');
-        setIsVisible(false);
-        isAnimatingRef.current = false; // Animace skončila
-      }, 19000));
+    const schedule = (fn: () => void, ms: number) => {
+      timeoutsRef.current.push(setTimeout(fn, ms));
     };
 
-    // První zobrazení po 2 sekundách
-    const initialTimer = setTimeout(startAnimation, 2000);
+    const startAnimation = () => {
+      if (isAnimatingRef.current) return;
+      isAnimatingRef.current = true;
 
-    // Pak každou minutu
+      setMessageCounter(prev => prev + 1);
+      // Robot je v DOM pořád (schovaný za pravým okrajem), takže stačí
+      // přepnout fázi a CSS transition se rozjede z aktuální pozice.
+      setRobotPhase('movingLeft');
+
+      schedule(() => setRobotPhase('atLeft'), 4000);
+      schedule(() => { setRobotPhase('movingRight'); setShowBackground(true); }, 6000);
+      schedule(() => { setRobotPhase('atRight'); setShowText(true); }, 10000);
+      schedule(() => { setShowText(false); setShowBackground(false); }, 15000);
+      schedule(() => setRobotPhase('movingAway'), 16000);
+      schedule(() => {
+        setRobotPhase('hidden');
+        isAnimatingRef.current = false;
+      }, 19000);
+    };
+
+    // První zobrazení po 2 sekundách, pak každou minutu
+    const initialTimer = setTimeout(startAnimation, 2000);
     const showTimer = setInterval(startAnimation, 60000);
 
     return () => {
       clearTimeout(initialTimer);
       clearInterval(showTimer);
-      phaseTimers.forEach(clearTimeout);
+      timeoutsRef.current.forEach(clearTimeout);
+      timeoutsRef.current = [];
+      isAnimatingRef.current = false;
     };
-    // Prázdné deps schválně. Dřív tu bylo [isAnimating], jenže startAnimation
-    // hned na začátku isAnimating měnil → efekt se cleanupnul a spustil znovu
-    // → 60s interval se zahodil dřív, než jednou tiknul, a robot jezdil
-    // s periodou ~21 s místo 60 s (naměřeno: mountedPct 90 %, movingPct 53 %).
   }, []);
 
-  // Kam a jak dlouho pro každou fázi. Dřív to řešil framer-motion, jenže ten
-  // neumí interpolovat calc() na kompozitoru — dopočítával ho v JS a přepisoval
-  // inline styl každý snímek. Naměřeno: robot sám dělal 12,3 přepočtů stylů za
-  // sekundu a 24 ze 64 ms CPU. CSS transition na transform zvládne totéž
-  // na kompozitoru: styl se zapíše jednou za fázi, ne 60× za sekundu.
-  const phase = ROBOT_PHASES[robotPhase] ?? ROBOT_PHASES.hidden;
-  const facingLeft = robotPhase === 'movingRight' || robotPhase === 'atRight' || robotPhase === 'movingAway';
+  const facingRight = robotPhase === 'movingRight' || robotPhase === 'atRight' || robotPhase === 'movingAway';
+  const preferredImage = robotImage || seasonalTheme.robotTheme.image;
+  const imageSrc = imageFailed ? '/pictures/robotz.png' : preferredImage;
+  const isHidden = robotPhase === 'hidden';
 
+  // Všechny tři prvky zůstávají v DOM trvale. Obrázek se tak stáhne a dekóduje
+  // jen jednou při načtení stránky – ne při každém průjezdu (dřív se element
+  // odpojoval a Raspberry Pi pak robota dekódovalo znovu, na pomalé síti se
+  // místo něj stihl ukázat jen alt text a ikonka načítání).
   return (
     <>
       {/* Pozadí s textem */}
-      {isVisible && <div
-        className={`robot-animation fixed bottom-0 left-0 right-0 h-24 z-40 shadow-lg ${barColor ? '' : 'bg-gradient-to-l from-blue-900 via-blue-800 to-blue-900/95'}`}
+      <div
+        aria-hidden={!showBackground}
+        className={`robot-animation robot-fade fixed bottom-0 left-0 right-0 h-24 z-40 shadow-lg pointer-events-none ${barColor ? '' : 'bg-gradient-to-l from-blue-900 via-blue-800 to-blue-900/95'}`}
         style={{
           opacity: showBackground ? 1 : 0,
-          ...(barColor ? { background: barColor } : {}),
+          ...(barColor ? { background: barColor } : {})
         }}
-      />}
+      />
 
       {/* Text vycentrovaný na celé obrazovce */}
-      {isVisible && <div
-        className="robot-animation fixed bottom-0 left-0 right-0 w-full h-24 z-50 flex items-center justify-center"
+      <div
+        aria-hidden={!showText}
+        className="robot-animation robot-fade fixed bottom-0 left-0 right-0 w-full h-24 z-50 flex items-center justify-center pointer-events-none"
         style={{ opacity: showText ? 1 : 0 }}
       >
-        <div
-          className="text-white font-bold text-center"
-          style={{ fontSize: '2rem', wordBreak: 'keep-all', whiteSpace: 'nowrap', overflow: 'hidden' }}
-        >
+        <div className="text-white font-bold text-center" style={{
+          fontSize: `${Math.max(1.2, 2 * 1.0)}rem`,
+          wordBreak: 'keep-all',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden'
+        }}>
           {currentMessage}
         </div>
-      </div>}
+      </div>
 
-      {/* Robot — kontejner je namontovaný pořád. Kdyby se odmontovával,
-          transition by při startu neměla odkud vyjít a robot by na cílovou
-          pozici skočil místo aby přejel (ověřeno měřením transformu). */}
+      {/* Robot */}
       <div
-        className="robot-animation fixed z-[9999]"
-        style={{
-          bottom: 0,
-          right: 0,
-          opacity: robotPhase === 'hidden' ? 0 : 1,
-          transform: `translate3d(${phase.x}, 0, 0)`,
-          ['--robot-dur' as string]: `${phase.ms}ms`,
-          // Vrstvu na GPU drž jen když se opravdu hýbe, ne 24/7.
-          willChange: phase.ms > 0 ? 'transform' : 'auto',
-        }}
+        aria-hidden={isHidden}
+        className={`robot-animation robot-sprite fixed z-[9999] pointer-events-none ${PHASE_CLASS[robotPhase]}`}
       >
         <img
-          src={robotImage || seasonalTheme.robotTheme.image}
-          alt={robotImage ? 'Robot' : `Robot ${seasonalTheme.robotTheme.theme}`}
-          className="w-auto object-contain robot-sprite"
-          style={{
-            height: '16rem',
-            transform: facingLeft ? 'scaleX(-1)' : 'scaleX(1)',
-          }}
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            if (target.src !== '/pictures/robotz.png') {
-              target.src = '/pictures/robotz.png';
-            }
+          src={imageSrc}
+          // Prázdný alt: kdyby se obrázek načítal pomalu, nechceme místo
+          // robota vidět text „Robot autumn“ a ikonku obrázku.
+          alt=""
+          decoding="async"
+          className={`robot-image w-auto object-contain ${facingRight ? 'robot-image-flipped' : ''}`}
+          style={{ height: '16rem' }}
+          onError={() => {
+            if (!imageFailed) setImageFailed(true);
           }}
         />
       </div>

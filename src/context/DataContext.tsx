@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { getDepartures } from '@/utils/pidApi';
 import { getWeather } from '@/utils/weatherApi';
 import { generatePid3Departures, generatePidDayLetenskaDepartures } from '@/utils/piddayDepartures';
+import { recordDelaySnapshotsFromDepartures } from '@/utils/delayHistory';
 import { generateDepoKacerovOut } from '@/utils/depoKacerovMetro';
 import type { Pid3StopName } from '@/data/piddaySchedule';
 import type { Departure } from '@/types/pid';
@@ -265,6 +266,10 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
 
     try {
       const result = await getDepartures(station.id);
+
+      // Pasivní sběr pozorovaného zpoždění pro predikce „obvykle +X min".
+      recordDelaySnapshotsFromDepartures(result.departures || []);
+
       setStationData(prev => ({
         ...prev,
         [stationKey]: {

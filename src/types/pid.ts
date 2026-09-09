@@ -18,6 +18,8 @@ export interface Departure {
   arrival_timestamp: number;
   departure_timestamp: number;
   delay?: number;
+  /** true = zpoždění je skutečně naměřené (vozidlo hlásí polohu), ne výchozí 0 */
+  delay_available?: boolean;
 
   // Informace o trase
   route_short_name: string;

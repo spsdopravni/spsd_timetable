@@ -4,7 +4,8 @@ import SnowfallLib from 'react-snowfall';
 const SnowfallComponent = () => {
   return (
     <SnowfallLib
-      snowflakeCount={40}
+      // Méně vloček = méně práce pro canvas na hlavním vlákně (Raspberry Pi)
+      snowflakeCount={25}
       style={{
         position: 'fixed',
         top: 0,

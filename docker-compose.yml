@@ -21,6 +21,9 @@ services:
       NGINX_PORT: "80"
       GOLEMIO_UPSTREAM: "https://api.golemio.cz"
       WEATHER_UPSTREAM: "https://api.weatherapi.com"
+      # Výluky servíruje Vercel funkce (api/pid-alerts.ts), kterou kontejner
+      # neumí spustit — proxuje se na produkční nasazení.
+      ALERTS_UPSTREAM: "${ALERTS_UPSTREAM:-https://timetable.brozovec.eu}"
       # Meteostanice ve školní síti; kontejner na ni musí dosáhnout.
       METEO_UPSTREAM: "${METEO_UPSTREAM:-http://10.0.10.208}"
 

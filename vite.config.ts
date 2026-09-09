@@ -15,6 +15,30 @@ export default defineConfig(({ mode }) => ({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/meteo/, ''),
       },
+      // Vercel serverless funkce (api/*.ts) lokálně neběží – při vývoji
+      // a v `vite preview` (Raspberry Pi) se /api bere z produkce.
+      // Přepsat lze přes VITE_API_PROXY_TARGET.
+      '/api': {
+        target: process.env.VITE_API_PROXY_TARGET || 'https://timetable.brozovec.eu',
+        changeOrigin: true,
+        secure: true,
+      },
+    },
+  },
+  // `vite preview` (spouští se na Raspberry Pi přes `npm run dev`) má mít
+  // stejné proxy jako dev server – explicitně, aby to nezáviselo na defaultu.
+  preview: {
+    proxy: {
+      '/meteo': {
+        target: 'http://10.0.10.208',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/meteo/, ''),
+      },
+      '/api': {
+        target: process.env.VITE_API_PROXY_TARGET || 'https://timetable.brozovec.eu',
+        changeOrigin: true,
+        secure: true,
+      },
     },
   },
   plugins: [

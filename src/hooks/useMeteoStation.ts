@@ -83,12 +83,14 @@ const TEXT_SENSORS: SensorEndpoint[] = [
   { path: "/text_sensor/vitr_smr_stupn", key: "smerVetruStupne", transform: parseFloat },
 ];
 
-// 12 senzorů × 1 request. Při 2 s to dělalo ~518 000 requestů za den na ESP32
-// v lokální síti; naměřeno 503 req/min. Meteodata se takhle rychle nemění.
+// 12 senzorů = 12 požadavků na kolo. Při 5 s to je 144 req/min na ESP32;
+// naměřeno, že polling meteostanice byl hlavní zdroj síťového provozu tabule
+// (439 → 83 req/min po zpomalení). Meteodata se takhle rychle nemění.
 const POLL_INTERVAL = 15_000; // 15 s
-const FETCH_TIMEOUT = 3_000;  // ESP umí přijmout spojení a pak už neodpovědět
-const RETRY_INTERVAL = 60_000; // jak často zkoušet stanici, když je nedostupná
-const TREND_HISTORY_SIZE = 8; // ~2 minutes of history (8 × 15s)
+const RETRY_INTERVAL = 30_000; // 30 s – když je stanice nedostupná, zkoušíme ji znovu pomaleji
+const FETCH_TIMEOUT = 4_000; // 4 s – aby visící požadavky neblokovaly další kolo
+const MAX_FAILS_BEFORE_HIDE = 3;
+const TREND_HISTORY_SIZE = 8; // ~2 minuty historie (8 × 15 s)
 const TREND_THRESHOLD_TEMP = 0.3; // °C difference to count as trend
 const TREND_THRESHOLD_PRESSURE = 0.5; // hPa difference to count as trend
 
@@ -187,12 +189,7 @@ export function useMeteoStation() {
   const [available, setAvailable] = useState(true);
   const failCount = useRef(0);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  // Bez tohohle guardu se při zamrzlé meteostanici (TCP se spojí, odpověď
-  // nepřijde) fronta pending requestů plnila donekonečna — naměřeno 1350
-  // pending, +2535 DOM nodů/min a +93 listenerů/min. Tohle byla jediná
-  // reprodukovaná příčina "po delším běhu to zatuhne".
-  const inFlight = useRef(false);
+  const intervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // trend history buffers
   const tempHistory = useRef<number[]>([]);
@@ -202,24 +199,27 @@ export function useMeteoStation() {
   const minMax = useRef<{ min: number; max: number; day: number } | null>(null);
 
   const fetchAll = useCallback(async () => {
-    // Předchozí dávka ještě neskončila — přeskoč, ať se requesty nekupí.
-    if (inFlight.current) return;
-    inFlight.current = true;
+    // Společný timeout pro celé kolo – bez něj by na Pi po výpadku sítě
+    // zůstávaly viset desítky požadavků najednou.
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
+
     try {
       const results = await Promise.allSettled([
         ...SENSORS.map(async (s) => {
-          const res = await fetch(`${BASE}${s.path}`, { signal: AbortSignal.timeout(FETCH_TIMEOUT) });
+          const res = await fetch(`${BASE}${s.path}`, { signal: controller.signal });
           if (!res.ok) throw new Error(res.statusText);
           const json = await res.json();
-          // Přijmi jen skutečné číslo. Když ESP (nebo cokoli, co sedí na té
-          // adrese) vrátí jiný tvar, nesmí se undefined dostat do stavu —
-          // komponenta na něm pak volá .toFixed() a shodí celou tabuli.
+          // Přijmi jen skutečné číslo. Když na té adrese sedí něco, co vrací
+          // jiný tvar, nesmí se undefined dostat do stavu — MeteoStation na
+          // něm zavolá .toFixed() a shodí celou tabuli. (Ověřeno testem
+          // kontejneru proti stub serveru.)
           const num = typeof json?.value === 'number' ? json.value : Number(json?.value);
           if (!Number.isFinite(num)) throw new Error('nečíselná hodnota');
           return { key: s.key, value: num };
         }),
         ...TEXT_SENSORS.map(async (s) => {
-          const res = await fetch(`${BASE}${s.path}`, { signal: AbortSignal.timeout(FETCH_TIMEOUT) });
+          const res = await fetch(`${BASE}${s.path}`, { signal: controller.signal });
           if (!res.ok) throw new Error(res.statusText);
           const json = await res.json();
           if (json?.value === undefined || json?.value === null) throw new Error('chybí hodnota');
@@ -278,36 +278,48 @@ export function useMeteoStation() {
         });
 
         setConnected(true);
+        setAvailable(true);
         setLastUpdate(new Date());
         failCount.current = 0;
-        // Dřív se setAvailable(true) nevolalo nikde: po třech selháních (stačil
-        // jeden noční výpadek WiFi) byl panel mrtvý až do reloadu stránky.
-        setAvailable(true);
-      } else {
-        failCount.current++;
-        setConnected(false);
-        if (failCount.current >= 3) setAvailable(false);
+        return true;
       }
+
+      failCount.current++;
+      setConnected(false);
+      if (failCount.current >= MAX_FAILS_BEFORE_HIDE) setAvailable(false);
+      return false;
     } catch {
       failCount.current++;
       setConnected(false);
-      if (failCount.current >= 3) setAvailable(false);
+      if (failCount.current >= MAX_FAILS_BEFORE_HIDE) setAvailable(false);
+      return false;
     } finally {
-      inFlight.current = false;
+      clearTimeout(timeoutId);
     }
   }, []);
 
+  // Dotazování běží pořád. Když stanice neodpovídá, pruh se po několika
+  // neúspěších schová, ale dál se každých 30 s zkouší znovu – po naběhnutí
+  // sítě nebo restartu meteostanice se sám objeví. Dřív se po 3 chybách
+  // (např. hned po zapnutí Raspberry Pi, než naběhla síť) přestalo dotazovat
+  // úplně a počasí zmizelo až do obnovení stránky.
   useEffect(() => {
-    // Když je stanice nedostupná, nepřestáváme se ptát úplně — jen zpomalíme.
-    // Jinak by se z výpadku nikdy nezotavila: pro obnovení musí proběhnout
-    // úspěšný fetch, a ten se nemá kde stát, když se polling vypne natvrdo.
-    const period = available ? POLL_INTERVAL : RETRY_INTERVAL;
-    fetchAll();
-    intervalRef.current = setInterval(fetchAll, period);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+    let cancelled = false;
+
+    const tick = async () => {
+      const ok = await fetchAll();
+      if (cancelled) return;
+      const delay = ok || failCount.current < MAX_FAILS_BEFORE_HIDE ? POLL_INTERVAL : RETRY_INTERVAL;
+      intervalRef.current = setTimeout(tick, delay);
     };
-  }, [fetchAll, available]);
+
+    tick();
+
+    return () => {
+      cancelled = true;
+      if (intervalRef.current) clearTimeout(intervalRef.current);
+    };
+  }, [fetchAll]);
 
   return { data, extras, connected, available, lastUpdate };
 }

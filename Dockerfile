@@ -28,7 +28,8 @@ COPY --from=build /app/dist /usr/share/nginx/html
 ENV NGINX_PORT=80 \
     METEO_UPSTREAM=http://10.0.10.208 \
     GOLEMIO_UPSTREAM=https://api.golemio.cz \
-    WEATHER_UPSTREAM=https://api.weatherapi.com
+    WEATHER_UPSTREAM=https://api.weatherapi.com \
+    ALERTS_UPSTREAM=https://timetable.brozovec.eu
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
   CMD wget -qO- http://127.0.0.1/healthz >/dev/null 2>&1 || exit 1

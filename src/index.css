@@ -105,12 +105,10 @@
     overflow: hidden;
   }
 
-  /* OPTIMALIZACE PRO LOW-END HARDWARE
-     Úroveň pohybu řídí data-motion na <html> (useDisplaySettings).
-     Dřív tu bylo plošné vypnutí bez podmínky, takže přepínač animací
-     v Nastavení nemohl fungovat — přepínal třídy, jejichž animace už byly
-     zabité. Výchozí stav bez atributu = reduced, ať se nic nezmění
-     stránkám, které Nastavení nemají. */
+  /* OPTIMALIZACE PRO LOW-END HARDWARE — vypnout animace a transice.
+     Úroveň řídí data-motion na <html> (useDisplaySettings): bez atributu
+     nebo "reduced" = jen robot, "full" = vše, "off" = nic. Dřív to bylo
+     bezpodmínečné, takže přepínač animací v Nastavení nemohl fungovat. */
   :root:not([data-motion="full"]) * {
     animation-duration: 0s !important;
     animation-delay: 0s !important;
@@ -118,47 +116,13 @@
     transition-delay: 0s !important;
   }
 
-  /* reduced (a stránky bez Nastavení, kde atribut chybí): robot se hýbat
-     smí, karty a směry ne.
-
-     Pozor na `revert`: to zahazuje autorské styly, takže by sebralo i inline
-     transition robota. Proto se sem píše konkrétní hodnota — pravidlo se
-     třídou (0,1,0) přebije plošné `*` (0,0,0), obojí !important, takže
-     rozhoduje specificita. Přesun běží na kompozitoru, doba jde z inline
-     --robot-dur podle právě probíhající fáze. */
-  :root:not([data-motion="full"]):not([data-motion="off"]) .robot-animation {
-    transition: transform var(--robot-dur, 0ms) linear, opacity 500ms linear !important;
-  }
-  :root:not([data-motion="full"]):not([data-motion="off"]) .robot-sprite {
-    transition: transform 300ms ease-in-out !important;
-  }
-
-  /* Stín robota je drahý přes velkou plochu; na tabuli ho drž nízko. */
-  .robot-sprite {
-    filter: drop-shadow(2px 2px 6px rgba(0, 0, 0, .35));
-  }
-
-  /* off: nehýbe se vůbec nic, včetně robota. */
-  :root[data-motion="full"] .robot-animation {
-    transition: transform var(--robot-dur, 0ms) linear, opacity 500ms linear;
-  }
-  :root[data-motion="full"] .robot-sprite {
-    transition: transform 300ms ease-in-out;
-  }
-
-  :root[data-motion="off"] *,
-  :root[data-motion="off"] .robot-animation,
-  :root[data-motion="off"] .robot-animation * {
-    animation: none !important;
-    transition: none !important;
-  }
-
-  /* Systémové nastavení "omezit pohyb" má poslední slovo. */
-  @media (prefers-reduced-motion: reduce) {
-    *, .robot-animation, .robot-animation * {
-      animation: none !important;
-      transition: none !important;
-    }
+  /* Povolit animace pouze pro robota */
+  :root:not([data-motion="off"]) .robot-animation,
+  :root:not([data-motion="off"]) .robot-animation * {
+    animation-duration: revert !important;
+    animation-delay: revert !important;
+    transition-duration: revert !important;
+    transition-delay: revert !important;
   }
 
   /* Hardware acceleration optimizations */
@@ -167,10 +131,12 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Dřív tu bylo img, video { transform: translateZ(0); backface-visibility:
-     hidden } — plošné povyšování každého obrázku na vlastní kompozitní vrstvu.
-     Na tabuli to dělalo 10-20 GPU textur navíc bez užitku; kompozici necháváme
-     jen na tom, co se opravdu hýbe (robot má willChange nastavený sám). */
+  /*
+   * Pozn.: dřívější globální `img { transform: translateZ(0) }` bylo odstraněno.
+   * Povyšovalo každou ikonku (metro, logo, …) na samostatnou GPU vrstvu, což na
+   * Raspberry Pi spotřebovává paměť GPU a zpomaluje kompozici. Vrstvu dostává
+   * jen to, co se opravdu hýbe (robot).
+   */
 
   /* Skrýt scrollbar pro všechny prohlížeče */
   * {
@@ -206,6 +172,95 @@
   :-ms-fullscreen *::-webkit-scrollbar {
     display: none !important;
   }
+}
+
+/* =========================================================================
+ * Robot (DailyRobot) – animace čistě přes CSS transitions.
+ * Pohyb i prolínání běží jen na `transform` a `opacity`, které Chromium
+ * animuje na kompozitoru (GPU) mimo hlavní JS vlákno. Díky tomu se robot
+ * na Raspberry Pi netrhá, i když React zrovna překresluje odjezdy.
+ * Durations mají !important, protože globální reset výše nuluje všechny
+ * transition-duration.
+ * ========================================================================= */
+.robot-sprite {
+  bottom: 0;
+  right: 0;
+  will-change: transform, opacity;
+  transition-property: transform, opacity;
+  transition-timing-function: linear;
+  transition-duration: 1s !important;
+  /* Výchozí stav = schovaný vpravo za okrajem */
+  transform: translate3d(calc(100vw + 50px), 0, 0);
+  opacity: 0;
+}
+
+.robot-sprite.robot-phase-hidden {
+  transform: translate3d(calc(100vw + 50px), 0, 0);
+  opacity: 0;
+  transition-duration: 1s !important;
+}
+
+.robot-sprite.robot-phase-left {
+  transform: translate3d(calc(-100vw + 50px), 0, 0);
+  opacity: 1;
+  transition-duration: 4s, 0.3s !important;
+}
+
+.robot-sprite.robot-phase-right {
+  transform: translate3d(calc(-85vw + 50px), 0, 0);
+  opacity: 1;
+  transition-duration: 4s, 0.3s !important;
+}
+
+.robot-sprite.robot-phase-away {
+  transform: translate3d(100vw, 0, 0);
+  opacity: 1;
+  transition-duration: 3s, 0.3s !important;
+}
+
+/* Otočení robota podle směru jízdy */
+.robot-image {
+  transform: scaleX(1);
+  transition: transform 0.3s ease-in-out !important;
+  backface-visibility: hidden;
+}
+
+.robot-image.robot-image-flipped {
+  transform: scaleX(-1);
+}
+
+/* Lišta a text pod robotem – jen opacity */
+.robot-fade {
+  will-change: opacity;
+  transition: opacity 0.5s linear !important;
+}
+
+/* Vypnutý pohyb (Nastavení → Animace → Vypnout). Musí stát AŽ ZA pravidly
+   robota výše — mají stejnou specificitu i !important, takže rozhoduje
+   pořadí. Robota samotného navíc stránky vůbec nevykreslí. */
+:root[data-motion="off"] .robot-sprite,
+:root[data-motion="off"] .robot-image,
+:root[data-motion="off"] .robot-fade,
+:root[data-motion="off"] .service-alert-fade {
+  transition: none !important;
+  animation: none !important;
+  will-change: auto;
+}
+
+/* Systémové „omezit pohyb" má poslední slovo. */
+@media (prefers-reduced-motion: reduce) {
+  .robot-sprite,
+  .robot-image,
+  .robot-fade,
+  .service-alert-fade {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Pruh mimořádností/výluk – prolínání mezi položkami (jen opacity) */
+.service-alert-fade {
+  transition: opacity 0.4s ease !important;
 }
 
 /* Alert Banner Scroll Animation */
