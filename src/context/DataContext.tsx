@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { getDepartures } from '@/utils/pidApi';
 import { getWeather } from '@/utils/weatherApi';
 import { generatePid3Departures, generatePidDayLetenskaDepartures } from '@/utils/piddayDepartures';
 import { generateDepoKacerovOut } from '@/utils/depoKacerovMetro';
+import { recordDelaySnapshotsFromDepartures } from '@/utils/delayHistory';
 import type { Pid3StopName } from '@/data/piddaySchedule';
 import type { Departure } from '@/types/pid';
 import type { WeatherData } from '@/types/weather';
@@ -236,6 +237,8 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
 
     try {
       const result = await getDepartures(station.id);
+      // Pasivní sběr pozorovaného zpoždění pro predikce „obvykle +X min“.
+      recordDelaySnapshotsFromDepartures(result.departures || []);
       setStationData(prev => ({
         ...prev,
         [stationKey]: {
@@ -319,17 +322,19 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     return weatherData[locationKey] || defaultWeatherState;
   }, [weatherData]);
 
+  // Měsíc a den se mění jen jednou denně – sezónní téma se proto memoizuje
+  // podle nich, aby konzumenti (DailyRobot, hlavička) nedostávali každou
+  // sekundu nový objekt a zbytečně se nepřekreslovali.
+  const themeMonth = time.currentTime.getMonth() + 1;
+  const themeDay = time.currentTime.getDate();
+
   // Detekce vánočního období (20.12 - 26.12) - sněžení a zimní logo (deprecated)
-  const isWinterPeriod = (() => {
-    const month = time.currentTime.getMonth() + 1;
-    const day = time.currentTime.getDate();
-    return month === 12 && day >= 20 && day <= 26;
-  })();
+  const isWinterPeriod = themeMonth === 12 && themeDay >= 20 && themeDay <= 26;
 
   // Seasonal theme calculation (same logic as DailyRobot)
-  const seasonalTheme: SeasonalTheme = (() => {
-    const month = time.currentTime.getMonth() + 1;
-    const day = time.currentTime.getDate();
+  const seasonalTheme: SeasonalTheme = useMemo(() => {
+    const month = themeMonth;
+    const day = themeDay;
 
     // Silvestr a Nový rok (27.12 - 6.1) - NEJVYŠŠÍ PRIORITA
     if ((month === 12 && day >= 27) || (month === 1 && day <= 6)) {
@@ -410,7 +415,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       robotTheme: { image: '/pictures/robotz.png', theme: 'classic' },
       showSnowfall: false
     };
-  })();
+  }, [themeMonth, themeDay]);
 
   // Initialize - load all data on mount
   useEffect(() => {
@@ -503,7 +508,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     return () => clearInterval(interval);
   }, [fetchWorldTime]);
 
-  const value: DataContextType = {
+  const value: DataContextType = useMemo(() => ({
     stationData,
     weatherData,
     time,
@@ -514,7 +519,18 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     refreshAll,
     getDeparturesForStation,
     getWeatherForLocation,
-  };
+  }), [
+    stationData,
+    weatherData,
+    time,
+    isWinterPeriod,
+    seasonalTheme,
+    refreshStation,
+    refreshWeather,
+    refreshAll,
+    getDeparturesForStation,
+    getWeatherForLocation,
+  ]);
 
   return (
     <DataContext.Provider value={value}>

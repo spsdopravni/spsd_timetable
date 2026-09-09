@@ -7,6 +7,7 @@ import { WeatherHeader } from "@/components/WeatherHeader";
 import { DailyRobot } from "@/components/DailyRobot";
 import { AlertBanner } from "@/components/AlertBanner";
 import { MeteoStation } from "@/components/MeteoStation";
+import { ServiceAlerts } from "@/components/ServiceAlerts";
 import { Snowfall } from "@/components/Snowfall";
 import { ChristmasGarland } from "@/components/ChristmasGarland";
 import { useDataContext } from "@/context/DataContext";
@@ -275,6 +276,12 @@ const Spsmotol = () => {
 
         {/* Meteostanice */}
         <MeteoStation />
+
+        {/* Mimořádnosti a výluky PID pro linky z Vozovny Motol a Motolu */}
+        <ServiceAlerts
+          stationKeys={['vozovnaRepy', 'vozovnaCentrum', 'motolZlicin', 'motolNemocnice']}
+          extraLines={['9', '10', '15', '16', '174', '180', '184']}
+        />
 
         {/* Content area */}
         <div className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0">

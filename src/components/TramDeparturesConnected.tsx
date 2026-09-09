@@ -1,9 +1,50 @@
-import { useState, useEffect, memo } from "react";
-import { Clock, AlertTriangle, Info, Snowflake, Car, MapPin, Wrench, Bus, Wind, Accessibility, Calendar, ArrowRight, Moon } from "lucide-react";
+import { memo, useEffect, useMemo, useState } from "react";
+import { Clock, AlertTriangle, Info, Snowflake, Car, MapPin, Wrench, Bus, Wind, Accessibility, Calendar, ArrowRight, Moon, History } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useDataContext } from "@/context/DataContext";
+import { getAverageDelaysForRoutes, delayAverageKey, type DelayAverageMap } from "@/utils/delayHistory";
 import type { Departure } from "@/types/pid";
+
+// Predikce se ukazuje až od tolika pozorování (méně = náhoda).
+const MIN_PREDICTION_SAMPLES = 5;
+// Zpoždění pod tuhle mez považujeme za „obvykle včas“.
+const ON_TIME_THRESHOLD_SECONDS = 60;
+
+/**
+ * Historické průměrné zpoždění linek podle hodiny dne (view delay_averages).
+ * Jeden hromadný dotaz pro všechny linky v panelu, obnova každých 10 minut.
+ */
+function useDelayAverages(routeShortNames: string[]): DelayAverageMap {
+  const [map, setMap] = useState<DelayAverageMap>(() => new Map());
+  const key = useMemo(() => Array.from(new Set(routeShortNames)).sort().join("|"), [routeShortNames]);
+
+  useEffect(() => {
+    if (!key) return;
+    let cancelled = false;
+    const load = () => {
+      getAverageDelaysForRoutes(key.split("|")).then((m) => {
+        if (!cancelled) setMap(m);
+      });
+    };
+    load();
+    const t = setInterval(load, 10 * 60 * 1000);
+    return () => { cancelled = true; clearInterval(t); };
+  }, [key]);
+
+  return map;
+}
+
+/** Text predikce pro daný odjezd, nebo null když nemáme dost dat. */
+function getPredictedDelay(map: DelayAverageMap, departure: Departure): { text: string; late: boolean } | null {
+  const hour = new Date(departure.arrival_timestamp * 1000).getHours();
+  const avg = map.get(delayAverageKey(departure.route_short_name, hour));
+  if (!avg || avg.samples < MIN_PREDICTION_SAMPLES) return null;
+  if (avg.avg_delay_seconds < ON_TIME_THRESHOLD_SECONDS) {
+    return { text: "Obvykle včas", late: false };
+  }
+  return { text: `Obvykle +${Math.round(avg.avg_delay_seconds / 60)} min`, late: true };
+}
 
 interface TramDeparturesConnectedProps {
   stationKey: string; // Klíč stanice z ALL_STATIONS
@@ -29,24 +70,16 @@ const TramDeparturesConnectedComponent = ({
   const { getDeparturesForStation, time } = useDataContext();
   const stationData = getDeparturesForStation(stationKey);
   const { departures, loading, error } = stationData;
-  const timeOffset = time.timeOffset;
 
-  const [currentTime, setCurrentTime] = useState<number>(Math.floor((Date.now() + timeOffset) / 1000));
+  // Countdown bere čas přímo z DataContextu (ten už tiká 1× za sekundu
+  // a má započtený offset ze serveru). Dřív měl každý panel navíc vlastní
+  // setInterval, takže se tabule překreslovala 2× za sekundu na panel –
+  // na Raspberry Pi to zbytečně blokovalo hlavní vlákno a sekalo animace.
+  const currentTime = Math.floor(time.currentTime.getTime() / 1000);
 
-  // Aktualizace času každou sekundu pro kontinuální countdown
-  useEffect(() => {
-    const updateTime = () => {
-      const localTime = Date.now();
-      const adjustedTime = localTime + timeOffset;
-      setCurrentTime(Math.floor(adjustedTime / 1000));
-    };
-
-    updateTime();
-
-    const timer = setInterval(updateTime, 1000);
-
-    return () => clearInterval(timer);
-  }, [timeOffset]);
+  // Predikce zpoždění podle historie (linka × hodina odjezdu)
+  const routeNames = useMemo(() => departures.map((d) => d.route_short_name), [departures]);
+  const delayAverages = useDelayAverages(routeNames);
 
   const formatTime = (seconds: number) => {
     if (seconds < 60) return `${seconds}s`;
@@ -330,7 +363,7 @@ const TramDeparturesConnectedComponent = ({
 
   if (error) {
     return (
-      <Card className="shadow-lg bg-white/90 backdrop-blur-sm h-full border-2 border-gray-300">
+      <Card className="shadow-lg bg-white/90 h-full border-2 border-gray-300">
         <CardContent className="p-4 text-center h-full flex items-center justify-center">
           <div>
             <AlertTriangle className={`w-12 h-12 mx-auto mb-2 ${isRateLimited ? 'text-orange-500' : 'text-red-500'}`} />
@@ -377,6 +410,7 @@ const TramDeparturesConnectedComponent = ({
               const approachingInfo = getVehicleTypeInfo(departure);
               const serviceAlerts = getServiceAlerts(departure);
               const timeToArrival = departure.arrival_timestamp - currentTime;
+              const predictedDelay = departure.route_id?.startsWith("pidday-") ? null : getPredictedDelay(delayAverages, departure);
 
               return (
                 <div
@@ -566,6 +600,19 @@ const TramDeparturesConnectedComponent = ({
                              }}>
                         {delayInfo.text}
                       </Badge>
+                      {predictedDelay && (
+                        <Badge
+                          className={`${predictedDelay.late ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600'} justify-center lg:justify-start flex items-center gap-1`}
+                          title="Průměrné zpoždění linky v tuto hodinu za posledních 14 dní"
+                          style={{
+                            fontSize: `${Math.max(0.5, 0.8 * 1.0)}rem`,
+                            padding: `${Math.max(0.1, 0.2 * 1.0)}rem ${Math.max(0.2, 0.4 * 1.0)}rem`,
+                            gap: `${0.2 * 1.0}rem`
+                          }}>
+                          <History style={{ width: `${1.0 * 1.0}rem`, height: `${1.0 * 1.0}rem` }} />
+                          <span>{predictedDelay.text}</span>
+                        </Badge>
+                      )}
                     </div>
                   </div>
                   </div>

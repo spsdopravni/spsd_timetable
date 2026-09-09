@@ -29,6 +29,57 @@ export async function recordDelaySnapshot(args: {
   }).then(() => {}, () => {}); // fire-and-forget, errors ignorovány
 }
 
+const lastBoardSnapshot = new Map<string, number>(); // trip_id → timestamp ms
+const BOARD_SNAPSHOT_THROTTLE_MS = 10 * 60_000;
+
+/**
+ * Pasivní sběr zpoždění z odjezdů, které tabule stejně stahuje (každou
+ * minutu, všechny stanice). Díky tomu se historie plní i bez mobilní appky
+ * a predikce „obvykle +X min“ mají z čeho počítat.
+ *
+ * Throttle 10 min per spoj: každý spoj je v seznamu ~30 min, takže z něj
+ * vzniknou max. 3 řádky. Přeskakují se spoje bez reálného hlášení polohy.
+ */
+export function recordDelaySnapshotsFromDepartures(
+  departures: { trip_id?: string; route_short_name: string; route_type: number; delay?: number; delay_available?: boolean }[],
+): void {
+  const now = Date.now();
+  const rows: {
+    route_short_name: string;
+    route_type: number;
+    trip_id: string;
+    delay_seconds: number;
+    hour_of_day: number;
+    day_of_week: number;
+  }[] = [];
+  const d = new Date();
+
+  for (const dep of departures) {
+    if (!dep.trip_id || !dep.delay_available || dep.delay === undefined) continue;
+    const last = lastBoardSnapshot.get(dep.trip_id);
+    if (last && now - last < BOARD_SNAPSHOT_THROTTLE_MS) continue;
+    lastBoardSnapshot.set(dep.trip_id, now);
+    rows.push({
+      route_short_name: dep.route_short_name,
+      route_type: dep.route_type,
+      trip_id: dep.trip_id,
+      delay_seconds: Math.round(dep.delay),
+      hour_of_day: d.getHours(),
+      day_of_week: d.getDay(),
+    });
+  }
+
+  // Úklid mapy, ať při 24/7 provozu neroste donekonečna.
+  if (lastBoardSnapshot.size > 2000) {
+    for (const [k, ts] of lastBoardSnapshot) {
+      if (now - ts > 2 * 60 * 60_000) lastBoardSnapshot.delete(k);
+    }
+  }
+
+  if (rows.length === 0) return;
+  supabase.from("delay_snapshots").insert(rows).then(() => {}, () => {}); // fire-and-forget
+}
+
 interface DelayAverage {
   route_short_name: string;
   hour_of_day: number;
@@ -61,4 +112,42 @@ export async function getAverageDelay(
   const result: DelayAverage | null = error || !data ? null : data as DelayAverage;
   averagesCache.set(key, { data: result, ts: Date.now() });
   return result;
+}
+
+export type DelayAverageMap = Map<string, DelayAverage>; // klíč `${linka}-${hodina}`
+
+export const delayAverageKey = (routeShortName: string, hourOfDay: number) => `${routeShortName}-${hourOfDay}`;
+
+const bulkCache = new Map<string, { data: DelayAverageMap; ts: number }>();
+const BULK_CACHE_TTL_MS = 10 * 60 * 1000;
+
+/**
+ * Hromadně načte průměrná zpoždění (všechny hodiny) pro sadu linek – jeden
+ * dotaz pro celou tabuli místo dotazu per spoj. Cache 10 min.
+ */
+export async function getAverageDelaysForRoutes(routeShortNames: string[]): Promise<DelayAverageMap> {
+  const routes = Array.from(new Set(routeShortNames)).sort();
+  if (routes.length === 0) return new Map();
+
+  const cacheKey = routes.join("|");
+  const cached = bulkCache.get(cacheKey);
+  if (cached && Date.now() - cached.ts < BULK_CACHE_TTL_MS) return cached.data;
+
+  const map: DelayAverageMap = new Map();
+  try {
+    const { data, error } = await supabase
+      .from("delay_averages")
+      .select("route_short_name, hour_of_day, avg_delay_seconds, samples")
+      .in("route_short_name", routes);
+    if (!error && data) {
+      for (const row of data as DelayAverage[]) {
+        map.set(delayAverageKey(row.route_short_name, row.hour_of_day), row);
+      }
+    }
+  } catch {
+    // offline / chyba – prostě bez predikcí
+  }
+
+  bulkCache.set(cacheKey, { data: map, ts: Date.now() });
+  return map;
 }
