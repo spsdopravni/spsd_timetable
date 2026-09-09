@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { TramDeparturesConnected } from "@/components/TramDeparturesConnected";
+import { LiveClock } from "@/components/LiveClock";
 import { WeatherWidget } from "@/components/WeatherWidget";
 import { RouteInfo } from "@/components/RouteInfo";
 import { Settings } from "@/components/Settings";
+import { useDisplaySettings } from "@/hooks/useDisplaySettings";
 import { WeatherHeader } from "@/components/WeatherHeader";
 import { DailyRobot } from "@/components/DailyRobot";
 import { AlertBanner } from "@/components/AlertBanner";
@@ -10,10 +12,12 @@ import { MeteoStation } from "@/components/MeteoStation";
 import { ServiceAlerts } from "@/components/ServiceAlerts";
 import { Snowfall } from "@/components/Snowfall";
 import { ChristmasGarland } from "@/components/ChristmasGarland";
-import { useDataContext } from "@/context/DataContext";
+import { useDataContext, useSeasonal, useTime } from "@/context/DataContext";
 
 const Spsmotol = () => {
-  const { time, seasonalTheme } = useDataContext();
+  const time = useTime();
+  const { seasonalTheme } = useSeasonal();
+  const { getDeparturesForStation } = useDataContext();
   useEffect(() => {
     document.body.classList.add('tram-display');
     return () => document.body.classList.remove('tram-display');
@@ -97,40 +101,11 @@ const Spsmotol = () => {
   const [isDirectionFadingOut, setIsDirectionFadingOut] = useState(false);
   const [directionAnimationKey, setDirectionAnimationKey] = useState(0);
 
-  const [settings, setSettings] = useState(() => {
-    const saved = localStorage.getItem('tram-display-settings');
-    const defaultSettings = {
-      showWeatherInHeader: false,
-      showTimesInMinutes: true,
-      testAlert: false,
-      disableAnimations: false
-    };
-
-    if (saved) {
-      try {
-        const parsedSettings = JSON.parse(saved);
-        return {
-          ...defaultSettings,
-          ...parsedSettings,
-          showTimesInMinutes: true // Vždycky zapnutý odpočet
-        };
-      } catch (error) {
-        return defaultSettings;
-      }
-    }
-
-    return defaultSettings;
-  });
-
+  const { settings, set: setSetting, applyEco, reset: resetSettings, robotEnabled, snowfallEnabled } = useDisplaySettings();
 
   const [showSettings, setShowSettings] = useState(false);
   const [logoClickCount, setLogoClickCount] = useState(0);
   const [logoClickTimer, setLogoClickTimer] = useState<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    localStorage.setItem('tram-display-settings', JSON.stringify(settings));
-  }, [settings]);
-
 
   const handleLogoClick = () => {
     setLogoClickCount(prev => prev + 1);
@@ -147,13 +122,6 @@ const Spsmotol = () => {
     }, 500);
 
     setLogoClickTimer(timer);
-  };
-
-  const handleSettingChange = (key: string, value: any) => {
-    setSettings((prev) => ({
-      ...prev,
-      [key]: value
-    }));
   };
 
   const calculateStationIndex = (time: Date) => {
@@ -208,6 +176,20 @@ const Spsmotol = () => {
   const leftStationKey = currentStationIndex === 0 ? 'vozovnaRepy' : 'motolZlicin';
   const rightStationKey = currentStationIndex === 0 ? 'vozovnaCentrum' : 'motolNemocnice';
 
+  // Hlášení z obou právě zobrazených zastávek. Zkušební alert z Nastavení se
+  // přidá navrch, aby šlo ověřit, že se banner na tabuli opravdu objeví.
+  const activeAlerts = useMemo(() => {
+    const fromApi = [
+      ...(getDeparturesForStation(leftStationKey)?.alerts ?? []),
+      ...(getDeparturesForStation(rightStationKey)?.alerts ?? []),
+    ];
+    if (!settings.testAlert) return fromApi;
+    return [
+      { text: 'Zkušební hlášení — ověření, že se banner zobrazuje. Vypni v Nastavení.', priority: 99, category: 'info' },
+      ...fromApi,
+    ];
+  }, [getDeparturesForStation, leftStationKey, rightStationKey, settings.testAlert]);
+
   return (
       <>
       <div className="bg-gradient-to-br from-blue-50 via-white to-amber-50 flex flex-col overflow-hidden h-screen relative">
@@ -253,19 +235,7 @@ const Spsmotol = () => {
 
               {/* Right side - Time and Date */}
               <div className="flex flex-col items-end gap-3">
-                <div className="text-right">
-                  <div className="font-bold text-7xl">
-                    {currentTime.toLocaleTimeString('cs-CZ')}
-                  </div>
-                  <div className="text-blue-100 mt-2 text-3xl">
-                    {currentTime.toLocaleDateString('cs-CZ', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </div>
-                </div>
+                <LiveClock />
               </div>
             </div>
           </div>
@@ -273,6 +243,10 @@ const Spsmotol = () => {
           {/* Vanocni girlanda */}
           <ChristmasGarland />
         </div>
+
+        {/* Výluky a mimořádnosti z PID. AlertBanner byl do teď naimportovaný,
+            ale nikde nevykreslený, takže se hlášení neukazovala vůbec. */}
+        <AlertBanner alerts={activeAlerts} />
 
         {/* Meteostanice */}
         <MeteoStation />
@@ -288,7 +262,7 @@ const Spsmotol = () => {
           {/* Left panel - Směr Řepy nebo Směr Zličín */}
           <div className="flex-1 p-2 overflow-hidden flex flex-col min-h-0">
             {/* Direction header - elegant style */}
-            <div className={`${settings.disableAnimations ? '' : `direction-header-animation ${isDirectionFadingOut ? 'fade-out' : ''}`} bg-white/95 border-b-8 border-blue-600 text-gray-800 px-3 shadow-lg flex items-center justify-center rounded-lg`} style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }} key={`left-header-${directionAnimationKey}`}>
+            <div className={`${settings.motion !== 'full' ? '' : `direction-header-animation ${isDirectionFadingOut ? 'fade-out' : ''}`} bg-white/95 border-b-8 border-blue-600 text-gray-800 px-3 shadow-lg flex items-center justify-center rounded-lg`} style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }} key={`left-header-${directionAnimationKey}`}>
               <div className="flex items-center justify-center gap-2 w-full h-full">
                 <h2 className="font-bold leading-none" style={{ fontSize: 'clamp(1.75rem, 3.5vh, 2.5rem)' }}>
                   {React.isValidElement(leftStation.name) ? (
@@ -306,10 +280,10 @@ const Spsmotol = () => {
               <TramDeparturesConnected
                 key={`left-${leftStationKey}-${currentStationIndex}`}
                 stationKey={leftStationKey}
-                maxItems={7}
+                maxItems={settings.maxItems}
                 showTimesInMinutes={settings.showTimesInMinutes}
                 stationName={leftStation.simpleName || leftStation.textName || mainStationName}
-                disableAnimations={settings.disableAnimations}
+                disableAnimations={settings.motion !== 'full'}
               />
             </div>
           </div>
@@ -317,7 +291,7 @@ const Spsmotol = () => {
           {/* Right panel - Směr Centrum nebo Směr Nemocnice Motol */}
           <div className="flex-1 p-2 overflow-hidden flex flex-col min-h-0">
             {/* Direction header - elegant style */}
-            <div className={`${settings.disableAnimations ? '' : `direction-header-animation ${isDirectionFadingOut ? 'fade-out' : ''}`} bg-white/95 border-b-8 border-blue-600 text-gray-800 px-3 shadow-lg flex items-center justify-center rounded-lg`} style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }} key={`right-header-${directionAnimationKey}`}>
+            <div className={`${settings.motion !== 'full' ? '' : `direction-header-animation ${isDirectionFadingOut ? 'fade-out' : ''}`} bg-white/95 border-b-8 border-blue-600 text-gray-800 px-3 shadow-lg flex items-center justify-center rounded-lg`} style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }} key={`right-header-${directionAnimationKey}`}>
               <div className="flex items-center justify-center gap-2 w-full h-full">
                 <h2 className="font-bold leading-none" style={{ fontSize: 'clamp(1.75rem, 3.5vh, 2.5rem)' }}>
                   {React.isValidElement(rightStation.name) ? (
@@ -335,10 +309,10 @@ const Spsmotol = () => {
               <TramDeparturesConnected
                 key={`right-${rightStationKey}-${currentStationIndex}`}
                 stationKey={rightStationKey}
-                maxItems={7}
+                maxItems={settings.maxItems}
                 showTimesInMinutes={settings.showTimesInMinutes}
                 stationName={rightStation.simpleName || rightStation.textName || mainStationName}
-                disableAnimations={settings.disableAnimations}
+                disableAnimations={settings.motion !== 'full'}
               />
             </div>
           </div>
@@ -348,17 +322,21 @@ const Spsmotol = () => {
           isOpen={showSettings}
           onClose={() => setShowSettings(false)}
           settings={settings}
-          onSettingChange={handleSettingChange}
+          onSettingChange={setSetting}
+          onApplyEco={applyEco}
+          onReset={resetSettings}
         />
       </div>
 
       {/* Robot na celé šířce dole */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 w-full">
-        <DailyRobot />
-      </div>
+      {robotEnabled && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 w-full">
+          <DailyRobot />
+        </div>
+      )}
 
       {/* Sněžení v zimním období (27.11 - 26.12) */}
-      {seasonalTheme.showSnowfall && <Snowfall />}
+      {snowfallEnabled(seasonalTheme.showSnowfall) && <Snowfall />}
       </>
     );
 };

@@ -70,10 +70,21 @@ export default defineConfig(({ mode }) => ({
     },
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['lucide-react', 'clsx', 'tailwind-merge'],
-          'animation': ['framer-motion'],
+        // Pozor na react/jsx-runtime: v objektové podobě ho Rollup přiřadil
+        // k prvnímu chunku, který si ho vyžádal — a to byl framer-motion.
+        // Tabule pak parsovala 115 kB framer-motion, ze kterého nepoužije nic.
+        // Funkční podoba rozhoduje podle cesty a cyklus mezi chunky nevznikne.
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
+          if (/[\\/]node_modules[\\/](react|react-dom|scheduler|react-router|react-router-dom)[\\/]/.test(id)) {
+            return 'react-vendor';
+          }
+          if (id.includes('framer-motion') || id.includes('motion-dom') || id.includes('motion-utils')) {
+            return 'animation';
+          }
+          if (/[\\/]node_modules[\\/](lucide-react|clsx|tailwind-merge)[\\/]/.test(id)) {
+            return 'ui-vendor';
+          }
         }
       }
     },

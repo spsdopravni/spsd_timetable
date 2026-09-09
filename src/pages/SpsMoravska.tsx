@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { TramDeparturesConnected } from "@/components/TramDeparturesConnected";
 import { Settings } from "@/components/Settings";
+import { useDisplaySettings } from "@/hooks/useDisplaySettings";
 import { WeatherHeader } from "@/components/WeatherHeader";
 import { DailyRobot } from "@/components/DailyRobot";
 import { Snowfall } from "@/components/Snowfall";
 import { ChristmasGarland } from "@/components/ChristmasGarland";
 import { ServiceAlerts } from "@/components/ServiceAlerts";
-import { useDataContext } from "@/context/DataContext";
+import { useDataContext, useSeasonal, useTime } from "@/context/DataContext";
 
 const SpsMoravska = () => {
-  const { time, seasonalTheme, getDeparturesForStation } = useDataContext();
+  const time = useTime();
+  const { seasonalTheme } = useSeasonal();
+  const { getDeparturesForStation } = useDataContext();
 
   useEffect(() => {
     document.body.classList.add('tram-display');
@@ -84,21 +87,7 @@ const SpsMoravska = () => {
   const [metroDirections, setMetroDirections] = useState<MetroDirection[]>([]);
   const [activeMetroLine, setActiveMetroLine] = useState<"A" | "C">("A");
 
-  const [settings, setSettings] = useState(() => {
-    const saved = localStorage.getItem('tram-display-settings-moravska');
-    const defaultSettings = {
-      showWeatherInHeader: false,
-      showTimesInMinutes: true,
-      testAlert: false,
-      disableAnimations: false
-    };
-    if (saved) {
-      try {
-        return { ...defaultSettings, ...JSON.parse(saved), showTimesInMinutes: true };
-      } catch { return defaultSettings; }
-    }
-    return defaultSettings;
-  });
+  const { settings, set: setSetting, applyEco, reset: resetSettings, robotEnabled, snowfallEnabled } = useDisplaySettings('moravska');
 
   const [showSettings, setShowSettings] = useState(false);
   const [logoClickCount, setLogoClickCount] = useState(0);
@@ -175,10 +164,6 @@ const SpsMoravska = () => {
       setLogoClickCount(0);
     }, 500);
     setLogoClickTimer(timer);
-  };
-
-  const handleSettingChange = (key: string, value: any) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
   };
 
   const calculateStationIndex = (time: Date) => {
@@ -311,7 +296,7 @@ const SpsMoravska = () => {
         <div className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0">
           {/* Left */}
           <div className="flex-1 p-2 overflow-hidden flex flex-col min-h-0">
-            <div className={`${settings.disableAnimations ? '' : `direction-header-animation ${isDirectionFadingOut ? 'fade-out' : ''}`} bg-white/95 border-b-8 border-blue-600 text-gray-800 px-3 shadow-lg flex items-center justify-center rounded-lg`} style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }} key={`left-header-${directionAnimationKey}`}>
+            <div className={`${settings.motion !== 'full' ? '' : `direction-header-animation ${isDirectionFadingOut ? 'fade-out' : ''}`} bg-white/95 border-b-8 border-blue-600 text-gray-800 px-3 shadow-lg flex items-center justify-center rounded-lg`} style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }} key={`left-header-${directionAnimationKey}`}>
               <div className="flex items-center justify-center gap-2 w-full h-full">
                 <h2 className="font-bold leading-none" style={{ fontSize: 'clamp(1.75rem, 3.5vh, 2.5rem)' }}>
                   {(leftStation as any).directionJsx || leftStation.direction}
@@ -322,17 +307,17 @@ const SpsMoravska = () => {
               <TramDeparturesConnected
                 key={`left-${leftStationKey}-${currentStationIndex}`}
                 stationKey={leftStationKey}
-                maxItems={7}
+                maxItems={settings.maxItems}
                 showTimesInMinutes={settings.showTimesInMinutes}
                 stationName={leftStation.simpleName}
-                disableAnimations={settings.disableAnimations}
+                disableAnimations={settings.motion !== 'full'}
               />
             </div>
           </div>
 
           {/* Right */}
           <div className="flex-1 p-2 overflow-hidden flex flex-col min-h-0">
-            <div className={`${settings.disableAnimations ? '' : `direction-header-animation ${isDirectionFadingOut ? 'fade-out' : ''}`} bg-white/95 border-b-8 border-blue-600 text-gray-800 px-3 shadow-lg flex items-center justify-center rounded-lg`} style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }} key={`right-header-${directionAnimationKey}`}>
+            <div className={`${settings.motion !== 'full' ? '' : `direction-header-animation ${isDirectionFadingOut ? 'fade-out' : ''}`} bg-white/95 border-b-8 border-blue-600 text-gray-800 px-3 shadow-lg flex items-center justify-center rounded-lg`} style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }} key={`right-header-${directionAnimationKey}`}>
               <div className="flex items-center justify-center gap-2 w-full h-full">
                 <h2 className="font-bold leading-none" style={{ fontSize: 'clamp(1.75rem, 3.5vh, 2.5rem)' }}>
                   {(rightStation as any).directionJsx || rightStation.direction}
@@ -343,10 +328,10 @@ const SpsMoravska = () => {
               <TramDeparturesConnected
                 key={`right-${rightStationKey}-${currentStationIndex}`}
                 stationKey={rightStationKey}
-                maxItems={7}
+                maxItems={settings.maxItems}
                 showTimesInMinutes={settings.showTimesInMinutes}
                 stationName={rightStation.simpleName}
-                disableAnimations={settings.disableAnimations}
+                disableAnimations={settings.motion !== 'full'}
               />
             </div>
           </div>
@@ -356,15 +341,17 @@ const SpsMoravska = () => {
           isOpen={showSettings}
           onClose={() => setShowSettings(false)}
           settings={settings}
-          onSettingChange={handleSettingChange}
+          onSettingChange={setSetting}
+          onApplyEco={applyEco}
+          onReset={resetSettings}
         />
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 z-50 w-full">
-        <DailyRobot />
+        {robotEnabled && <DailyRobot />}
       </div>
 
-      {seasonalTheme.showSnowfall && <Snowfall />}
+      {snowfallEnabled(seasonalTheme.showSnowfall) && <Snowfall />}
     </>
   );
 };

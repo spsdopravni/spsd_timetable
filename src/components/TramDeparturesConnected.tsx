@@ -2,7 +2,7 @@ import { memo, useEffect, useMemo, useState } from "react";
 import { Clock, AlertTriangle, Info, Snowflake, Car, MapPin, Wrench, Bus, Wind, Accessibility, Calendar, ArrowRight, Moon, History } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useDataContext } from "@/context/DataContext";
+import { useTime, useStation } from "@/context/DataContext";
 import { getAverageDelaysForRoutes, delayAverageKey, type DelayAverageMap } from "@/utils/delayHistory";
 import type { Departure } from "@/types/pid";
 
@@ -60,15 +60,17 @@ interface TramDeparturesConnectedProps {
 
 const TramDeparturesConnectedComponent = ({
   stationKey,
-  maxItems = 5,
+  maxItems = 7,
   customTitle,
   showTimesInMinutes = false,
   stationName = "",
   disableAnimations = false,
   walkSeconds,
 }: TramDeparturesConnectedProps) => {
-  const { getDeparturesForStation, time } = useDataContext();
-  const stationData = getDeparturesForStation(stationKey);
+  const time = useTime();
+  // useStation zastávku zároveň přihlásí k odběru — provider stahuje
+  // jen to, co je opravdu na obrazovce (dřív všech 21 z ALL_STATIONS).
+  const stationData = useStation(stationKey);
   const { departures, loading, error } = stationData;
 
   // Countdown bere čas přímo z DataContextu (ten už tiká 1× za sekundu
@@ -385,7 +387,7 @@ const TramDeparturesConnectedComponent = ({
     );
   }
 
-  const limitedDepartures = departures.slice(0, 7);
+  const limitedDepartures = departures.slice(0, maxItems);
 
   return (
     <Card className="shadow-lg bg-white/90 h-full border-2 border-gray-300 flex flex-col overflow-hidden">

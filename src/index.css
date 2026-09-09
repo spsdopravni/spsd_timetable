@@ -105,8 +105,11 @@
     overflow: hidden;
   }
 
-  /* OPTIMALIZACE PRO LOW-END HARDWARE - Vypnout všechny animace a transice */
-  * {
+  /* OPTIMALIZACE PRO LOW-END HARDWARE — vypnout animace a transice.
+     Úroveň řídí data-motion na <html> (useDisplaySettings): bez atributu
+     nebo "reduced" = jen robot, "full" = vše, "off" = nic. Dřív to bylo
+     bezpodmínečné, takže přepínač animací v Nastavení nemohl fungovat. */
+  :root:not([data-motion="full"]) * {
     animation-duration: 0s !important;
     animation-delay: 0s !important;
     transition-duration: 0s !important;
@@ -114,7 +117,8 @@
   }
 
   /* Povolit animace pouze pro robota */
-  .robot-animation, .robot-animation * {
+  :root:not([data-motion="off"]) .robot-animation,
+  :root:not([data-motion="off"]) .robot-animation * {
     animation-duration: revert !important;
     animation-delay: revert !important;
     transition-duration: revert !important;
@@ -229,6 +233,29 @@
 .robot-fade {
   will-change: opacity;
   transition: opacity 0.5s linear !important;
+}
+
+/* Vypnutý pohyb (Nastavení → Animace → Vypnout). Musí stát AŽ ZA pravidly
+   robota výše — mají stejnou specificitu i !important, takže rozhoduje
+   pořadí. Robota samotného navíc stránky vůbec nevykreslí. */
+:root[data-motion="off"] .robot-sprite,
+:root[data-motion="off"] .robot-image,
+:root[data-motion="off"] .robot-fade,
+:root[data-motion="off"] .service-alert-fade {
+  transition: none !important;
+  animation: none !important;
+  will-change: auto;
+}
+
+/* Systémové „omezit pohyb" má poslední slovo. */
+@media (prefers-reduced-motion: reduce) {
+  .robot-sprite,
+  .robot-image,
+  .robot-fade,
+  .service-alert-fade {
+    transition: none !important;
+    animation: none !important;
+  }
 }
 
 /* Pruh mimořádností/výluk – prolínání mezi položkami (jen opacity) */

@@ -2,7 +2,17 @@ import type { Station, Departure } from "@/types/pid";
 import { getMockDepartures } from "./mockData";
 import { apiCache, cached } from "./apiCache";
 
-const API_BASE = "https://api.golemio.cz";
+/**
+ * Kam se chodí pro data.
+ *
+ * VITE_API_PROXY (např. "/api") zapne režim přes vlastní server: klient volá
+ * stejný origin a klíč k API se doplňuje až v nginxu. Bez něj se chodí přímo
+ * na Golemio a klíče musí být v buildu — což znamená, že si je kdokoli
+ * přečte z bundlu. Docker build proto proxy zapíná.
+ */
+const API_PROXY = import.meta.env.VITE_API_PROXY as string | undefined;
+const USE_PROXY = Boolean(API_PROXY);
+const API_BASE = USE_PROXY ? `${API_PROXY}/pid` : "https://api.golemio.cz";
 
 // Environment detection
 const isDevelopment = import.meta.env.MODE === 'development';
@@ -18,87 +28,111 @@ if (forceMockData !== undefined) {
   console.log('⚙️ Mock data forced via VITE_USE_MOCK_DATA:', forceMockData);
 }
 
-// API klíče pro různé endpointy
-const API_KEY_1 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzcwNCwiaWF0IjoxNzYwNzkxMjUwLCJleHAiOjExNzYwNzkxMjUwLCJpc3MiOiJnb2xlbWlvIiwianRpIjoiM2Y4MWJiMjItM2YxNC00ODgxLThlMDYtYjQ1YmRlOTYzZjk3In0.BR0653y2bfG0zxdkOYvDgvywRR9Z9nXB4NlatJXR38A";
-const API_KEY_2 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzcwNywiaWF0IjoxNzYwNzkxMjc4LCJleHAiOjExNzYwNzkxMjc4LCJpc3MiOiJnb2xlbWlvIiwianRpIjoiN2U2ZTViOWMtYjkyOS00NzZlLTk0MmItYTY4NzdkM2M2MjNjIn0._K4k4Mrfy1_cWiy3Za_DRrCOX4gfbrz8p0rVZypVFq8";
-let API_KEY_3 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDA0NiwiaWF0IjoxNzYwNzk0NjU3LCJleHAiOjExNzYwNzk0NjU3LCJpc3MiOiJnb2xlbWlvIiwianRpIjoiNzAwZmNkOGYtMzYyOS00MjZjLThmYTgtNTU2YTJlZmE1YmFlIn0.r6hVewQXnk8TaowFb7s7lDveyA6XYYGnxe_qlzUbhZM"; // Třetí API klíč pro rozšířené údaje
-const API_KEY_PRAGENSIS = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDI0MiwiaWF0IjoxNzY0MjQxNTA2LCJleHAiOjExNzY0MjQxNTA2LCJpc3MiOiJnb2xlbWlvIiwianRpIjoiNzJkZDIzMjktODZmNy00ZTQ5LTljMWUtZDBmMjMzMjY4MTE4In0.sqKPVMufNSNTPYXVyE4gBKcHLUoUdgutbXdbD3vkSNU"; // API klíč pro Pragensis
+// API klíče. V proxy režimu zůstávají prázdné a do bundlu se nedostanou —
+// klient místo nich posílá jen jméno slotu (hlavička X-Api-Slot) a skutečný
+// klíč doplní nginx. V přímém režimu se berou z .env při buildu.
+const API_KEY_1 = (import.meta.env.VITE_GOLEMIO_KEY_1 as string) || "";
+const API_KEY_2 = (import.meta.env.VITE_GOLEMIO_KEY_2 as string) || "";
+let API_KEY_3 = (import.meta.env.VITE_GOLEMIO_KEY_3 as string) || "";
+const API_KEY_PRAGENSIS = (import.meta.env.VITE_GOLEMIO_KEY_PRAGENSIS as string) || "";
+
+/** Jméno slotu pro proxy — nginx podle něj vybere skutečný klíč. */
+const SLOT_1 = "k1", SLOT_2 = "k2", SLOT_3 = "k3", SLOT_PRAGENSIS = "pragensis";
 
 // Mapování stanic na API klíče
+/** Stanice → jméno slotu (ne samotný klíč). */
 const STATION_API_MAPPING: {[key: string]: string} = {
   // Vozovna Motol - API klíč 1
-  "U865Z1P": API_KEY_1,
-  "U865Z2P": API_KEY_1,
+  "U865Z1P": SLOT_1,
+  "U865Z2P": SLOT_1,
 
   // Motol nástupiště C a D - API klíč 2
-  "U394Z3P": API_KEY_2,
-  "U394Z3": API_KEY_2,
-  "U394Z4P": API_KEY_2,
-  "U394Z4": API_KEY_2,
+  "U394Z3P": SLOT_2,
+  "U394Z3": SLOT_2,
+  "U394Z4P": SLOT_2,
+  "U394Z4": SLOT_2,
 
   // Vyšehrad metro C - API klíč Pragensis
-  "U527Z101P": API_KEY_PRAGENSIS,
-  "U527Z102P": API_KEY_PRAGENSIS,
+  "U527Z101P": SLOT_PRAGENSIS,
+  "U527Z102P": SLOT_PRAGENSIS,
 
   // Vyšehrad bus (noční) - API klíč Pragensis
-  "U527Z1P": API_KEY_PRAGENSIS,
-  "U527Z2P": API_KEY_PRAGENSIS,
+  "U527Z1P": SLOT_PRAGENSIS,
+  "U527Z2P": SLOT_PRAGENSIS,
 
   // Svatoplukova tram - API klíč Pragensis
-  "U724Z1P": API_KEY_PRAGENSIS,
-  "U724Z2P": API_KEY_PRAGENSIS,
+  "U724Z1P": SLOT_PRAGENSIS,
+  "U724Z2P": SLOT_PRAGENSIS,
 
   // Jana Masaryka - API klíč 3
-  "U354Z1P": API_KEY_3,
-  "U354Z2P": API_KEY_3,
+  "U354Z1P": SLOT_3,
+  "U354Z2P": SLOT_3,
 
   // Šumavská - API klíč 3
-  "U744Z1P": API_KEY_3,
-  "U744Z2P": API_KEY_3,
+  "U744Z1P": SLOT_3,
+  "U744Z2P": SLOT_3,
 
   // Náměstí Míru metro A - API klíč Pragensis
-  "U476Z101P": API_KEY_PRAGENSIS,
-  "U476Z102P": API_KEY_PRAGENSIS,
+  "U476Z101P": SLOT_PRAGENSIS,
+  "U476Z102P": SLOT_PRAGENSIS,
 
   // Výstaviště - API klíč Pragensis
-  "U532Z1P": API_KEY_PRAGENSIS,
-  "U532Z2P": API_KEY_PRAGENSIS,
-  "U532Z3P": API_KEY_PRAGENSIS,
-  "U532Z301": API_KEY_PRAGENSIS,
+  "U532Z1P": SLOT_PRAGENSIS,
+  "U532Z2P": SLOT_PRAGENSIS,
+  "U532Z3P": SLOT_PRAGENSIS,
+  "U532Z301": SLOT_PRAGENSIS,
 
   // Metro C — Vltavská + Nádraží Holešovice
-  "U100Z101P": API_KEY_PRAGENSIS,
-  "U100Z102P": API_KEY_PRAGENSIS,
-  "U115Z101P": API_KEY_PRAGENSIS,
-  "U115Z102P": API_KEY_PRAGENSIS,
+  "U100Z101P": SLOT_PRAGENSIS,
+  "U100Z102P": SLOT_PRAGENSIS,
+  "U115Z101P": SLOT_PRAGENSIS,
+  "U115Z102P": SLOT_PRAGENSIS,
 
   // Praha-Bubny
-  "U100Z301": API_KEY_PRAGENSIS,
+  "U100Z301": SLOT_PRAGENSIS,
 
   // Sparta tram (Den PID 2026)
-  "U692Z1P": API_KEY_PRAGENSIS,
-  "U692Z2P": API_KEY_PRAGENSIS,
+  "U692Z1P": SLOT_PRAGENSIS,
+  "U692Z2P": SLOT_PRAGENSIS,
 
   // Depo Kačerov — Den otevřených dveří (autobusová zastávka Depo Kačerov A/B)
-  "U79Z1P": API_KEY_PRAGENSIS,
-  "U79Z2P": API_KEY_PRAGENSIS,
+  "U79Z1P": SLOT_PRAGENSIS,
+  "U79Z2P": SLOT_PRAGENSIS,
 };
 
 // Funkce pro nastavení třetího API klíče
+/** Základ URL a autorizační hlavičky pro volání Golemia mimo tenhle modul. */
+export const golemioBase = (): string => API_BASE;
+export const golemioAuthHeaders = (stationId?: string): Record<string, string> =>
+  authHeaders(stationId ? getSlotForStation(stationId) : SLOT_1);
+
 export const setThirdApiKey = (key: string) => {
   API_KEY_3 = key;
 };
 
-const getApiKeyForStation = (stationId: string): string => {
-  const key = STATION_API_MAPPING[stationId] || API_KEY_1;
-  if (!key || key.trim() === '') {
-    return 'MISSING_API_KEY';
-  }
-  return key;
+// Funkce, ne konstanta: setThirdApiKey() mění API_KEY_3 za běhu a objekt
+// vytvořený při načtení modulu by si držel starou hodnotu.
+const keyForSlot = (slot: string): string => ({
+  [SLOT_1]: API_KEY_1,
+  [SLOT_2]: API_KEY_2,
+  [SLOT_3]: API_KEY_3,
+  [SLOT_PRAGENSIS]: API_KEY_PRAGENSIS,
+}[slot] || API_KEY_1);
+
+const getSlotForStation = (stationId: string): string =>
+  STATION_API_MAPPING[stationId] || SLOT_1;
+
+/**
+ * Autorizační hlavičky. V proxy režimu jde ven jen jméno slotu; skutečný
+ * klíč doplní nginx, takže se nikdy neobjeví v prohlížeči.
+ */
+const authHeaders = (slot: string): Record<string, string> => {
+  if (USE_PROXY) return { "X-Api-Slot": slot };
+  return { "X-Access-Token": keyForSlot(slot) || 'MISSING_API_KEY' };
 };
 
 const getHeadersForStation = (stationId: string) => ({
-  "X-Access-Token": getApiKeyForStation(stationId),
+  ...authHeaders(getSlotForStation(stationId)),
   "Content-Type": "application/json"
 });
 
@@ -147,7 +181,7 @@ export const getStopCoords = async (
   try {
     const r = await fetch(
       `${API_BASE}/v2/gtfs/stops/${encodeURIComponent(stopId)}`,
-      { headers: { "X-Access-Token": API_KEY_1 } },
+      { headers: authHeaders(SLOT_1) },
     );
     if (!r.ok) {
       stopCoordsCache.set(stopId, null);
@@ -184,7 +218,7 @@ export const findNextTripId = async (
   try {
     const url = `${API_BASE}/v2/pid/departureboards?ids=${encodeURIComponent(stopId)}&limit=30&minutesAfter=30`;
     const res = await fetch(url, {
-      headers: { "X-Access-Token": API_KEY_1, "Content-Type": "application/json" },
+      headers: { "X-Access-Token": SLOT_1, "Content-Type": "application/json" },
     });
     if (!res.ok) return null;
     const data = await res.json();
@@ -219,7 +253,7 @@ export const getTripStops = async (tripId: string): Promise<TripStop[]> => {
   try {
     const response = await fetch(
       `${API_BASE}/v2/gtfs/trips/${encodeURIComponent(tripId)}?includeStopTimes=true&includeStops=true`,
-      { headers: { "X-Access-Token": API_KEY_1, "Content-Type": "application/json" } }
+      { headers: { "X-Access-Token": SLOT_1, "Content-Type": "application/json" } }
     );
 
     if (!response.ok) return [];
@@ -264,7 +298,7 @@ export const searchStations = async (query: string): Promise<Station[]> => {
 
   try {
     const headers = {
-      "X-Access-Token": API_KEY_1,
+      "X-Access-Token": SLOT_1,
       "Content-Type": "application/json"
     };
 
@@ -407,7 +441,7 @@ export const getDepartures = async (stationIds: string | string[]): Promise<{ de
     console.log('🎭 DEV MODE: Returning mock data instead of calling API');
     // Simuluj malé zpoždění jako u API
     await new Promise(resolve => setTimeout(resolve, 300));
-    const mockData = { departures: getMockDepartures(), alerts: [] };
+    const mockData = getMockDepartures(); // { departures, alerts }
     apiCache.set(cacheKey, mockData, 'departures');
     return mockData;
   }
@@ -420,9 +454,8 @@ export const getDepartures = async (stationIds: string | string[]): Promise<{ de
     let allAlerts: any[] = [];
 
     // Použij API klíč podle první stanice v seznamu
-    const apiKey = getApiKeyForStation(ids[0]);
     const extendedHeaders = {
-      "X-Access-Token": apiKey,
+      ...authHeaders(getSlotForStation(ids[0])),
       "Content-Type": "application/json"
     };
 

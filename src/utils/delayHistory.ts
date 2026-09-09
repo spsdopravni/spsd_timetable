@@ -1,4 +1,17 @@
-import { supabase } from "./supabase";
+/**
+ * Supabase se načítá líně.
+ *
+ * Statický import sem tahal celý klient (~192 kB) do entry chunku, protože
+ * tenhle modul používá DataContext i TramDeparturesConnected. Na tabuli to
+ * je 192 kB, které blokují první vykreslení kvůli zápisu statistik, na kterém
+ * nezáleží. Takhle se stáhne až při prvním použití, po prvním snímku.
+ */
+type SupabaseClient = typeof import("./supabase")["supabase"];
+let supabasePromise: Promise<SupabaseClient> | null = null;
+const getSupabase = (): Promise<SupabaseClient> => {
+  if (!supabasePromise) supabasePromise = import("./supabase").then(m => m.supabase);
+  return supabasePromise;
+};
 
 const lastSnapshot = new Map<string, number>(); // trip_id → timestamp ms
 
@@ -18,7 +31,15 @@ export async function recordDelaySnapshot(args: {
   if (last && now - last < 60_000) return;
   lastSnapshot.set(args.tripId, now);
 
+  // Úklid, ať při 24/7 provozu neroste donekonečna (druhá mapa ho už má).
+  if (lastSnapshot.size > 2000) {
+    for (const [k, ts] of lastSnapshot) {
+      if (now - ts > 2 * 60 * 60_000) lastSnapshot.delete(k);
+    }
+  }
+
   const d = new Date();
+  const supabase = await getSupabase();
   await supabase.from("delay_snapshots").insert({
     route_short_name: args.routeShortName,
     route_type: args.routeType,
@@ -77,7 +98,9 @@ export function recordDelaySnapshotsFromDepartures(
   }
 
   if (rows.length === 0) return;
-  supabase.from("delay_snapshots").insert(rows).then(() => {}, () => {}); // fire-and-forget
+  getSupabase()
+    .then(sb => sb.from("delay_snapshots").insert(rows))
+    .then(() => {}, () => {}); // fire-and-forget
 }
 
 interface DelayAverage {
@@ -102,6 +125,7 @@ export async function getAverageDelay(
   const cached = averagesCache.get(key);
   if (cached && Date.now() - cached.ts < CACHE_TTL_MS) return cached.data;
 
+  const supabase = await getSupabase();
   const { data, error } = await supabase
     .from("delay_averages")
     .select("route_short_name, hour_of_day, avg_delay_seconds, samples")
@@ -135,6 +159,7 @@ export async function getAverageDelaysForRoutes(routeShortNames: string[]): Prom
 
   const map: DelayAverageMap = new Map();
   try {
+    const supabase = await getSupabase();
     const { data, error } = await supabase
       .from("delay_averages")
       .select("route_short_name, hour_of_day, avg_delay_seconds, samples")

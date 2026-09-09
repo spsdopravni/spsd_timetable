@@ -42,19 +42,20 @@
     <meta name="msapplication-config" content="/browserconfig.xml" />
 
     <!-- Preconnect pro rychlejší načítání externích zdrojů -->
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
     <link rel="preconnect" href="https://api.golemio.cz" />
     <link rel="preconnect" href="https://api.weatherapi.com" />
     
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <!-- Font Awesome se importuje v src/main.tsx (self-hostovaný přes Vite).
+         Blokující <link> na cdnjs tu byl důvod, proč tabule po výpadku proudu
+         bez internetu chvíli visela na prázdné stránce. -->
     
     <!-- Manifest pro PWA support -->
     <link rel="manifest" href="/manifest.json" />
 
-    <!-- Firebase SDK (loaded in HTML for iOS PWA compatibility) -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js"></script>
+    <!-- Firebase SDK — jen pro mobilní PWA (/m*). Na desktopové tabuli se
+         nenačítá vůbec: dřív to byly dva blokující <script> z gstatic a inline
+         init, který při nedostupné síti hodil "firebase is not defined" a
+         zabil celou stránku. -->
     <script>
       window.firebaseConfig = {
         apiKey: "AIzaSyBw9fYvEkAJRmeD8QO23G3uRw5LXp_v3b0",
@@ -64,7 +65,32 @@
         messagingSenderId: "471719692247",
         appId: "1:471719692247:web:87ec4d504bb77239c12d92"
       };
-      if (!firebase.apps.length) firebase.initializeApp(window.firebaseConfig);
+      (function () {
+        var p = location.pathname;
+        if (p !== '/m' && p.indexOf('/m/') !== 0) return;
+
+        function load(src) {
+          return new Promise(function (res, rej) {
+            var el = document.createElement('script');
+            el.src = src; el.async = false;
+            el.onload = res; el.onerror = rej;
+            document.head.appendChild(el);
+          });
+        }
+
+        var B = 'https://www.gstatic.com/firebasejs/9.22.0/';
+        load(B + 'firebase-app-compat.js')
+          .then(function () { return load(B + 'firebase-messaging-compat.js'); })
+          .then(function () {
+            if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+              firebase.initializeApp(window.firebaseConfig);
+            }
+          })
+          .catch(function () {
+            // Bez sítě prostě nebudou notifikace. Stránka musí žít dál.
+            console.warn('Firebase SDK se nepodařilo načíst, notifikace vypnuty.');
+          });
+      })();
     </script>
   </head>
   <body>

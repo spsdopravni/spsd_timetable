@@ -1,0 +1,137 @@
+# Šablona — nginx image ji při startu prožene envsubst a doplní ${PROMENNE}.
+# Díky tomu jsou klíče k API v prostředí kontejneru, ne v obrazu ani v bundlu.
+
+# Klient posílá jen jméno slotu (X-Api-Slot), skutečný klíč se doplní tady.
+map $http_x_api_slot $golemio_key {
+    default   "${GOLEMIO_KEY_1}";
+    "k1"      "${GOLEMIO_KEY_1}";
+    "k2"      "${GOLEMIO_KEY_2}";
+    "k3"      "${GOLEMIO_KEY_3}";
+    "pragensis" "${GOLEMIO_KEY_PRAGENSIS}";
+}
+
+# Sdílená cache pro obě tabule. Bez ní jde na Golemio každý request z každé
+# obrazovky zvlášť; takhle se stejný dotaz odbaví jednou.
+proxy_cache_path /var/cache/nginx/api levels=1:2 keys_zone=api:10m
+                 max_size=64m inactive=10m use_temp_path=off;
+
+server {
+    listen ${NGINX_PORT};
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Tabule běží 24/7 na jednom místě; access log jen pro chyby, ať se
+    # nezaplní disk.
+    access_log off;
+    error_log /var/log/nginx/error.log warn;
+
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css application/javascript application/json
+               image/svg+xml application/manifest+json font/woff2;
+
+    # ── statika ──────────────────────────────────────────────────────
+    # Assety mají hash v názvu, takže je lze cachovat natrvalo.
+    # Jen add_header, ne `expires` — obojí dohromady posílá Cache-Control dvakrát.
+    location /assets/ {
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        try_files $uri =404;
+    }
+
+    location /webfonts/ {
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        try_files $uri =404;
+    }
+
+    # index.html se naopak cachovat nesmí — jinak kiosk po redeployi drží
+    # starý manifest a lazy chunky mu přestanou existovat.
+    location = /index.html {
+        add_header Cache-Control "no-store, must-revalidate";
+    }
+
+    location = /healthz {
+        access_log off;
+        add_header Content-Type text/plain;
+        return 200 "ok\n";
+    }
+
+    # ── výluky a mimořádnosti ────────────────────────────────────────
+    # api/pid-alerts.ts je Vercel serverless funkce, kterou tenhle kontejner
+    # neumí spustit. Přesná shoda (`location =`) má přednost před /api/pid/
+    # níž — bez ní by /api/pid-alerts spadlo na SPA fallback a vrátilo HTML.
+    location = /api/pid-alerts {
+        proxy_pass ${ALERTS_UPSTREAM}/api/pid-alerts;
+        proxy_set_header Host $proxy_host;
+        proxy_ssl_server_name on;
+
+        proxy_cache api;
+        proxy_cache_valid 200 5m;
+        proxy_cache_use_stale error timeout updating http_429 http_500 http_502 http_503 http_504;
+        proxy_cache_background_update on;
+        add_header X-Cache-Status $upstream_cache_status;
+
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 10s;
+    }
+
+    # ── PID / Golemio ────────────────────────────────────────────────
+    location /api/pid/ {
+        proxy_pass ${GOLEMIO_UPSTREAM}/;
+        proxy_set_header Host api.golemio.cz;
+        proxy_set_header X-Access-Token $golemio_key;
+        proxy_set_header X-Api-Slot "";
+        proxy_ssl_server_name on;
+
+        proxy_cache api;
+        proxy_cache_valid 200 20s;
+        proxy_cache_key "$request_uri|$http_x_api_slot";
+        # Když Golemio neodpovídá nebo limituje, radši vydej starší odpověď
+        # než nechat tabuli prázdnou.
+        proxy_cache_use_stale error timeout updating http_429 http_500 http_502 http_503 http_504;
+        proxy_cache_background_update on;
+        proxy_cache_lock on;
+        add_header X-Cache-Status $upstream_cache_status;
+
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 10s;
+    }
+
+    # ── počasí ───────────────────────────────────────────────────────
+    # Pojmenovaná skupina v location, aby šel klíč přilepit k dotazu.
+    # (rewrite ... break se s proxy_pass s URI bije, proto takhle.)
+    location ~ ^/api/weather/(?<wpath>.*)$ {
+        set $weather_key "${WEATHER_KEY}";
+        proxy_pass ${WEATHER_UPSTREAM}/v1/$wpath?key=$weather_key&$args;
+        proxy_set_header Host api.weatherapi.com;
+        proxy_ssl_server_name on;
+
+        proxy_cache api;
+        proxy_cache_valid 200 10m;
+        proxy_cache_key "$wpath|$args";
+        proxy_cache_use_stale error timeout updating http_429 http_500 http_502 http_503 http_504;
+        proxy_cache_background_update on;
+        add_header X-Cache-Status $upstream_cache_status;
+
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 10s;
+    }
+
+    # ── meteostanice ve škole ────────────────────────────────────────
+    # Tohle dřív existovalo jen ve vite.config.ts pod `server`, takže to
+    # v produkci nefungovalo vůbec.
+    location /meteo/ {
+        proxy_pass ${METEO_UPSTREAM}/;
+        proxy_connect_timeout 2s;
+        proxy_read_timeout 3s;
+        # ESP umí přijmout spojení a pak už neodpovědět; ať to nedrží spojení.
+        proxy_next_upstream error timeout;
+    }
+
+    # ── SPA fallback ─────────────────────────────────────────────────
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
