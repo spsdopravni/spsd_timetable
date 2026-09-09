@@ -1,0 +1,9 @@
+[Unit]
+Description=SPSD tabule - restart kiosku kazdou noc ve 3:30
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

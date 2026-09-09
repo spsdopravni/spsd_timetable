@@ -1,0 +1,44 @@
+[Unit]
+Description=SPSD tabule - Chromium kiosk
+After=graphical.target tabule-web.service
+Wants=tabule-web.service
+
+[Service]
+Type=simple
+User=pi
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/pi/.Xauthority
+# URL se generuje pri instalaci (install.sh), vcetne routy
+EnvironmentFile=/etc/default/tabule
+
+# Vypnout uspavani obrazovky - jinak to po hodinach zcerna a vypada to jako pad
+ExecStartPre=-/usr/bin/xset s off
+ExecStartPre=-/usr/bin/xset -dpms
+ExecStartPre=-/usr/bin/xset s noblank
+# Chromium si po tvrdem padu pamatuje "crashed" stav a pri startu ukaze dialog
+ExecStartPre=-/bin/sh -c "sed -i 's/\"exit_type\":\"Crashed\"/\"exit_type\":\"Normal\"/; s/\"exited_cleanly\":false/\"exited_cleanly\":true/' /home/pi/.config/chromium/Default/Preferences 2>/dev/null || true"
+
+ExecStart=/usr/bin/chromium-browser \
+  --kiosk \
+  --app=${TABULE_URL} \
+  --user-data-dir=/home/pi/.config/chromium \
+  --noerrdialogs \
+  --disable-infobars \
+  --disable-session-crashed-bubble \
+  --disable-features=Translate,TranslateUI \
+  --no-first-run \
+  --check-for-update-interval=31536000 \
+  --disable-pinch \
+  --overscroll-history-navigation=0 \
+  --autoplay-policy=no-user-gesture-required \
+  --remote-debugging-port=9222 \
+  --enable-gpu-rasterization \
+  --ignore-gpu-blocklist \
+  --use-gl=egl \
+  --disk-cache-size=33554432
+
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=graphical.target

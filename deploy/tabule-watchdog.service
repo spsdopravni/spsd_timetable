@@ -1,0 +1,14 @@
+[Unit]
+Description=SPSD tabule - watchdog (kontroluje ze stranka opravdu zije)
+After=tabule-kiosk.service
+
+[Service]
+Type=simple
+ExecStart=/opt/tabule/deploy/tabule-watchdog.sh
+Restart=always
+RestartSec=30
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -11,7 +11,10 @@ const DailyRobotComponent = ({ barColor, customMessages = [], robotImage }: { ba
   const [showBackground, setShowBackground] = useState(false);
   const [showText, setShowText] = useState(false);
   const [messageCounter, setMessageCounter] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
+  // Běh animace držíme v ref, ne ve state: kdyby to byl state, každá jeho
+  // změna by restartovala efekt níž a tím zahodila 60s interval (viz komentář
+  // u efektu). Do renderu tahle hodnota stejně nevstupuje.
+  const isAnimatingRef = useRef(false);
 
   const getDayName = useCallback(() => {
     const days = ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota'];
@@ -183,51 +186,56 @@ const DailyRobotComponent = ({ barColor, customMessages = [], robotImage }: { ba
 
   // Postupná animace - robot jede z prava doleva a zpět
   useEffect(() => {
+    // Fázové timeouty jedné otočky robota. Bez tohohle pole zůstávaly po
+    // odmountování viset a dostřelovaly setState do mrtvé komponenty.
+    const phaseTimers: ReturnType<typeof setTimeout>[] = [];
+    const push = (t: ReturnType<typeof setTimeout>) => { phaseTimers.push(t); return t; };
+
     const startAnimation = () => {
       // Pokud už animace běží, přeskoč
-      if (isAnimating) {
+      if (isAnimatingRef.current) {
         return;
       }
 
-      setIsAnimating(true);
+      isAnimatingRef.current = true;
       setMessageCounter(prev => prev + 1); // Změna textu při každém zobrazení
       setIsVisible(true);
       setRobotPhase('movingLeft');
 
       // Robot dorazí doleva po 4 sekundách
-      setTimeout(() => {
+      push(setTimeout(() => {
         setRobotPhase('atLeft');
-      }, 4000);
+      }, 4000));
 
       // Robot se začne vracet doprava po 2 sekundách
-      setTimeout(() => {
+      push(setTimeout(() => {
         setRobotPhase('movingRight');
         setShowBackground(true);
-      }, 6000);
+      }, 6000));
 
       // Robot dorazí doprava s pozadím
-      setTimeout(() => {
+      push(setTimeout(() => {
         setRobotPhase('atRight');
         setShowText(true);
-      }, 10000);
+      }, 10000));
 
       // Text a pozadí zmizí po 15 sekundách
-      setTimeout(() => {
+      push(setTimeout(() => {
         setShowText(false);
         setShowBackground(false);
-      }, 15000);
+      }, 15000));
 
       // Robot odjíždí doprava po 16 sekundách (po zmizení textu)
-      setTimeout(() => {
+      push(setTimeout(() => {
         setRobotPhase('movingAway');
-      }, 16000);
+      }, 16000));
 
       // Vše úplně zmizí po 19 sekundách
-      setTimeout(() => {
+      push(setTimeout(() => {
         setRobotPhase('hidden');
         setIsVisible(false);
-        setIsAnimating(false); // Animace skončila
-      }, 19000);
+        isAnimatingRef.current = false; // Animace skončila
+      }, 19000));
     };
 
     // První zobrazení po 2 sekundách
@@ -239,8 +247,13 @@ const DailyRobotComponent = ({ barColor, customMessages = [], robotImage }: { ba
     return () => {
       clearTimeout(initialTimer);
       clearInterval(showTimer);
+      phaseTimers.forEach(clearTimeout);
     };
-  }, [isAnimating]); // Závislost na isAnimating
+    // Prázdné deps schválně. Dřív tu bylo [isAnimating], jenže startAnimation
+    // hned na začátku isAnimating měnil → efekt se cleanupnul a spustil znovu
+    // → 60s interval se zahodil dřív, než jednou tiknul, a robot jezdil
+    // s periodou ~21 s místo 60 s (naměřeno: mountedPct 90 %, movingPct 53 %).
+  }, []);
 
   return (
     <AnimatePresence>

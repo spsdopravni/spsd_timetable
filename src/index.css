@@ -127,11 +127,10 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Reduce paint/composite for better performance */
-  img, video {
-    transform: translateZ(0);
-    backface-visibility: hidden;
-  }
+  /* Dřív tu bylo img, video { transform: translateZ(0); backface-visibility:
+     hidden } — plošné povyšování každého obrázku na vlastní kompozitní vrstvu.
+     Na tabuli to dělalo 10-20 GPU textur navíc bez užitku; kompozici necháváme
+     jen na tom, co se opravdu hýbe (robot má willChange nastavený sám). */
 
   /* Skrýt scrollbar pro všechny prohlížeče */
   * {

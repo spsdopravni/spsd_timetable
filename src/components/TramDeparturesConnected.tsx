@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from "react";
+import { useMemo, memo } from "react";
 import { Clock, AlertTriangle, Info, Snowflake, Car, MapPin, Wrench, Bus, Wind, Accessibility, Calendar, ArrowRight, Moon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +19,7 @@ interface TramDeparturesConnectedProps {
 
 const TramDeparturesConnectedComponent = ({
   stationKey,
-  maxItems = 5,
+  maxItems = 7,
   customTitle,
   showTimesInMinutes = false,
   stationName = "",
@@ -31,22 +31,14 @@ const TramDeparturesConnectedComponent = ({
   const { departures, loading, error } = stationData;
   const timeOffset = time.timeOffset;
 
-  const [currentTime, setCurrentTime] = useState<number>(Math.floor((Date.now() + timeOffset) / 1000));
-
-  // Aktualizace času každou sekundu pro kontinuální countdown
-  useEffect(() => {
-    const updateTime = () => {
-      const localTime = Date.now();
-      const adjustedTime = localTime + timeOffset;
-      setCurrentTime(Math.floor(adjustedTime / 1000));
-    };
-
-    updateTime();
-
-    const timer = setInterval(updateTime, 1000);
-
-    return () => clearInterval(timer);
-  }, [timeOffset]);
+  // Countdown čte vteřinový tik z DataContextu místo vlastního intervalu.
+  // Dvě instance téhle komponenty na tabuli znamenaly dva další 1s timery
+  // navíc ke globálnímu — tři nesynchronizované tiky za sekundu, které React
+  // nemá jak sbatchovat, tedy až 3 rekonciliace stromu za sekundu místo jedné.
+  const currentTime = useMemo(
+    () => Math.floor(time.currentTime.getTime() / 1000),
+    [time.currentTime]
+  );
 
   const formatTime = (seconds: number) => {
     if (seconds < 60) return `${seconds}s`;
@@ -352,7 +344,7 @@ const TramDeparturesConnectedComponent = ({
     );
   }
 
-  const limitedDepartures = departures.slice(0, 7);
+  const limitedDepartures = departures.slice(0, maxItems);
 
   return (
     <Card className="shadow-lg bg-white/90 h-full border-2 border-gray-300 flex flex-col overflow-hidden">
