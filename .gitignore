@@ -36,3 +36,6 @@ bench/robot-robot.json
 # generuje scripts/fa-subset.mjs pri kazdem buildu
 src/styles/fontawesome-subset.css
 public/webfonts
+
+# docker
+.env.docker

@@ -32,10 +32,18 @@ while true; do
     continue
   fi
 
-  # 3) Servíruje se jeste web?
-  if ! curl -sf --max-time 10 -o /dev/null "http://127.0.0.1:8080/"; then
-    log "web server neodpovida, restartuji tabule-web"
-    systemctl restart tabule-web.service
+  # 3) Zije jeste zdroj stranky? Kdyz hosti skolni server, restart lokalni
+  #    sluzby nema smysl - jen to zalogujeme, at je v journalu videt proc
+  #    tabule visi na stare cache.
+  ORIGIN=$(sed -n 's|^TABULE_URL=\(https\?://[^/]*\).*|\1|p' /etc/default/tabule 2>/dev/null)
+  ORIGIN=${ORIGIN:-http://127.0.0.1:8080}
+  if ! curl -sf --max-time 10 -o /dev/null "${ORIGIN}/healthz"; then
+    if systemctl is-enabled --quiet tabule-web.service 2>/dev/null; then
+      log "lokalni web neodpovida, restartuji tabule-web"
+      systemctl restart tabule-web.service
+    else
+      log "zdroj ${ORIGIN} neodpovida (hosti ho jiny stroj)"
+    fi
     continue
   fi
 

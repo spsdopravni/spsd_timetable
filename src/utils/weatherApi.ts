@@ -2,8 +2,11 @@
 import type { WeatherData } from "@/types/weather";
 import { apiCache } from "./apiCache";
 
-const WEATHER_API_KEY = "8877ab34e77243f995a161549251806";
-const WEATHER_BASE = "https://api.weatherapi.com/v1";
+// Viz pidApi.ts: v proxy režimu klíč doplní nginx a v bundlu není.
+const API_PROXY = import.meta.env.VITE_API_PROXY as string | undefined;
+const USE_PROXY = Boolean(API_PROXY);
+const WEATHER_API_KEY = (import.meta.env.VITE_WEATHER_KEY as string) || "";
+const WEATHER_BASE = USE_PROXY ? `${API_PROXY}/weather` : "https://api.weatherapi.com/v1";
 
 // Funkce pro parsování času ve formátu "6:30 AM" nebo "18:45"
 const parseTimeString = (timeStr: string, date: string): number => {
@@ -104,7 +107,7 @@ export const getWeather = async (lat: number, lon: number): Promise<WeatherData>
 
   try {
     const response = await fetch(
-      `${WEATHER_BASE}/forecast.json?key=${WEATHER_API_KEY}&q=${lat},${lon}&days=1&aqi=no&alerts=no&lang=cs`
+      `${WEATHER_BASE}/forecast.json?${USE_PROXY ? "" : `key=${WEATHER_API_KEY}&`}q=${lat},${lon}&days=1&aqi=no&alerts=no&lang=cs`
     );
 
     if (!response.ok) {

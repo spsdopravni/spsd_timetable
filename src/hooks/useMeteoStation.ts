@@ -211,13 +211,20 @@ export function useMeteoStation() {
           const res = await fetch(`${BASE}${s.path}`, { signal: AbortSignal.timeout(FETCH_TIMEOUT) });
           if (!res.ok) throw new Error(res.statusText);
           const json = await res.json();
-          return { key: s.key, value: json.value as number };
+          // Přijmi jen skutečné číslo. Když ESP (nebo cokoli, co sedí na té
+          // adrese) vrátí jiný tvar, nesmí se undefined dostat do stavu —
+          // komponenta na něm pak volá .toFixed() a shodí celou tabuli.
+          const num = typeof json?.value === 'number' ? json.value : Number(json?.value);
+          if (!Number.isFinite(num)) throw new Error('nečíselná hodnota');
+          return { key: s.key, value: num };
         }),
         ...TEXT_SENSORS.map(async (s) => {
           const res = await fetch(`${BASE}${s.path}`, { signal: AbortSignal.timeout(FETCH_TIMEOUT) });
           if (!res.ok) throw new Error(res.statusText);
           const json = await res.json();
+          if (json?.value === undefined || json?.value === null) throw new Error('chybí hodnota');
           const value = s.transform ? s.transform(json.value) : json.value;
+          if (typeof value === 'number' && !Number.isFinite(value)) throw new Error('nečíselná hodnota');
           return { key: s.key, value };
         }),
       ]);

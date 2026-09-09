@@ -8,6 +8,7 @@ import { getTripStops, findNextTripId, type TripStop } from "@/utils/pidApi";
 import { saveNotification, getActiveNotifications, requestPushPermission, cancelNotificationById } from "@/utils/notificationService";
 import { recordDelaySnapshot, getAverageDelay } from "@/utils/delayHistory";
 import type { Departure } from "@/types/pid";
+import { golemioBase, golemioAuthHeaders } from "@/utils/pidApi";
 
 /* ── local notification (confirmation) ─────────────────────── */
 
@@ -402,8 +403,8 @@ export function DepartureTracker({ departure, currentTime, stationName, walkMinu
     const poll = async () => {
       try {
         const res = await fetch(
-          `https://api.golemio.cz/v2/vehiclepositions?routeShortName=${routeNum}&limit=30`,
-          { headers: { "X-Access-Token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzcwNCwiaWF0IjoxNzYwNzkxMjUwLCJleHAiOjExNzYwNzkxMjUwLCJpc3MiOiJnb2xlbWlvIiwianRpIjoiM2Y4MWJiMjItM2YxNC00ODgxLThlMDYtYjQ1YmRlOTYzZjk3In0.BR0653y2bfG0zxdkOYvDgvywRR9Z9nXB4NlatJXR38A" } }
+          `${golemioBase()}/v2/vehiclepositions?routeShortName=${routeNum}&limit=30`,
+          { headers: golemioAuthHeaders() }
         );
         if (!res.ok) return;
         const data = await res.json();

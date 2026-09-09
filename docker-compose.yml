@@ -1,0 +1,43 @@
+services:
+  tabule:
+    build:
+      context: .
+      args:
+        # true = běží na mock datech, hodí se pro zkoušku bez API klíčů
+        VITE_USE_MOCK_DATA: "false"
+    image: spsd-tabule:latest
+    container_name: spsd-tabule
+    restart: unless-stopped
+
+    # Server hostí víc projektů, proto jen port na localhost a reverse proxy
+    # před tím. Chceš-li to vystavit napřímo, změň na "8080:80".
+    ports:
+      - "127.0.0.1:8080:80"
+
+    env_file:
+      - .env.docker
+
+    environment:
+      NGINX_PORT: "80"
+      GOLEMIO_UPSTREAM: "https://api.golemio.cz"
+      WEATHER_UPSTREAM: "https://api.weatherapi.com"
+      # Meteostanice ve školní síti; kontejner na ni musí dosáhnout.
+      METEO_UPSTREAM: "${METEO_UPSTREAM:-http://10.0.10.208}"
+
+    # Cache nginxu do tmpfs — na SSD serveru je to zbytečný zápis a po
+    # restartu se stejně naplní za pár sekund.
+    tmpfs:
+      - /var/cache/nginx:size=128m
+
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
