@@ -32,3 +32,7 @@ bench/traces
 bench/latest.json
 bench/cpu-probe.html
 bench/robot-robot.json
+
+# generuje scripts/fa-subset.mjs pri kazdem buildu
+src/styles/fontawesome-subset.css
+public/webfonts
