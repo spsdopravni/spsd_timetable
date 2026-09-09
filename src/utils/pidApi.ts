@@ -407,7 +407,7 @@ export const getDepartures = async (stationIds: string | string[]): Promise<{ de
     console.log('🎭 DEV MODE: Returning mock data instead of calling API');
     // Simuluj malé zpoždění jako u API
     await new Promise(resolve => setTimeout(resolve, 300));
-    const mockData = { departures: getMockDepartures(), alerts: [] };
+    const mockData = getMockDepartures(); // { departures, alerts }
     apiCache.set(cacheKey, mockData, 'departures');
     return mockData;
   }

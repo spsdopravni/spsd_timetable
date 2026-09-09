@@ -22,3 +22,13 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# bench
+dist-bench
+dist-dbg
+bench/results
+bench/snapshots
+bench/traces
+bench/latest.json
+bench/cpu-probe.html
+bench/robot-robot.json
