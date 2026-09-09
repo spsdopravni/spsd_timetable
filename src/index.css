@@ -97,8 +97,11 @@
     @apply border-border;
   }
 
-  body {
+  html, body {
     @apply bg-background text-foreground;
+  }
+
+  body.tram-display {
     overflow: hidden;
   }
 
@@ -124,11 +127,12 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Reduce paint/composite for better performance */
-  img, video {
-    transform: translateZ(0);
-    backface-visibility: hidden;
-  }
+  /*
+   * Pozn.: dřívější globální `img { transform: translateZ(0) }` bylo odstraněno.
+   * Povyšovalo každou ikonku (metro, logo, …) na samostatnou GPU vrstvu, což na
+   * Raspberry Pi spotřebovává paměť GPU a zpomaluje kompozici. Vrstvu dostává
+   * jen to, co se opravdu hýbe (robot).
+   */
 
   /* Skrýt scrollbar pro všechny prohlížeče */
   * {
@@ -164,6 +168,72 @@
   :-ms-fullscreen *::-webkit-scrollbar {
     display: none !important;
   }
+}
+
+/* =========================================================================
+ * Robot (DailyRobot) – animace čistě přes CSS transitions.
+ * Pohyb i prolínání běží jen na `transform` a `opacity`, které Chromium
+ * animuje na kompozitoru (GPU) mimo hlavní JS vlákno. Díky tomu se robot
+ * na Raspberry Pi netrhá, i když React zrovna překresluje odjezdy.
+ * Durations mají !important, protože globální reset výše nuluje všechny
+ * transition-duration.
+ * ========================================================================= */
+.robot-sprite {
+  bottom: 0;
+  right: 0;
+  will-change: transform, opacity;
+  transition-property: transform, opacity;
+  transition-timing-function: linear;
+  transition-duration: 1s !important;
+  /* Výchozí stav = schovaný vpravo za okrajem */
+  transform: translate3d(calc(100vw + 50px), 0, 0);
+  opacity: 0;
+}
+
+.robot-sprite.robot-phase-hidden {
+  transform: translate3d(calc(100vw + 50px), 0, 0);
+  opacity: 0;
+  transition-duration: 1s !important;
+}
+
+.robot-sprite.robot-phase-left {
+  transform: translate3d(calc(-100vw + 50px), 0, 0);
+  opacity: 1;
+  transition-duration: 4s, 0.3s !important;
+}
+
+.robot-sprite.robot-phase-right {
+  transform: translate3d(calc(-85vw + 50px), 0, 0);
+  opacity: 1;
+  transition-duration: 4s, 0.3s !important;
+}
+
+.robot-sprite.robot-phase-away {
+  transform: translate3d(100vw, 0, 0);
+  opacity: 1;
+  transition-duration: 3s, 0.3s !important;
+}
+
+/* Otočení robota podle směru jízdy */
+.robot-image {
+  transform: scaleX(1);
+  transition: transform 0.3s ease-in-out !important;
+  backface-visibility: hidden;
+}
+
+.robot-image.robot-image-flipped {
+  transform: scaleX(-1);
+}
+
+/* Lišta a text pod robotem – jen opacity */
+.robot-fade {
+  will-change: opacity;
+  transition: opacity 0.5s linear !important;
+}
+
+/* Pruh mimořádností/výluk – prolínání mezi položkami (jen opacity) */
+.service-alert-fade {
+  transition: opacity 0.4s ease !important;
 }
 
 /* Alert Banner Scroll Animation */
@@ -428,6 +498,24 @@
     opacity: 0;
     transform: translateX(-30px);
   }
+}
+
+@keyframes mobileExitLeft {
+  0% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(-80px); }
+}
+
+@keyframes mobileExitRight {
+  0% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(80px); }
+}
+
+.mobile-slide-left {
+  animation: mobileExitLeft 0.15s ease-in forwards;
+}
+
+.mobile-slide-right {
+  animation: mobileExitRight 0.15s ease-in forwards;
 }
 
 .direction-header-animation {

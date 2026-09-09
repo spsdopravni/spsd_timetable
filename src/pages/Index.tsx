@@ -1,419 +1,583 @@
-import React, { useState, useEffect } from "react";
-import { TramDepartures } from "@/components/TramDepartures";
-import { WeatherWidget } from "@/components/WeatherWidget";
-import { RouteInfo } from "@/components/RouteInfo";
-import { Settings } from "@/components/Settings";
-import { WeatherHeader } from "@/components/WeatherHeader";
-import { DailyRobot } from "@/components/DailyRobot";
-import { AlertBanner } from "@/components/AlertBanner";
+import { useEffect, useMemo } from "react";
+import { motion } from "framer-motion";
+
+function useIsMobile() {
+  return useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      || window.innerWidth < 768;
+  }, []);
+}
+
+const TECH = [
+  "React 18", "TypeScript", "Vite", "Tailwind CSS",
+  "Framer Motion", "React Router v6", "PID Golemio API", "WeatherAPI.com",
+];
+
+const STATS = [
+  { value: "20+", label: "komponent" },
+  { value: "~5 000", label: "řádků kódu" },
+  { value: "12", label: "zastávek" },
+  { value: "8", label: "sezónních témat" },
+  { value: "< 2s", label: "načtení" },
+  { value: "24/7", label: "provoz" },
+];
+
+const FEATURES = [
+  { icon: "fa-solid fa-train-tram", title: "Real-time odjezdy", desc: "Data z PID Golemio API, aktualizace každých 60 s." },
+  { icon: "fa-solid fa-rotate", title: "Rotace zastávek", desc: "Automatické přepínání Vozovna Motol ↔ metro Motol každých 15 s." },
+  { icon: "fa-solid fa-cloud-sun", title: "Počasí", desc: "Teplota, vlhkost, vítr a UV index pro lepší přípravu na cestu." },
+  { icon: "fa-solid fa-shield-halved", title: "Záložní data", desc: "Při výpadku API se zobrazí poslední platná data s upozorněním." },
+  { icon: "fa-solid fa-display", title: "55\" displej", desc: "Navrženo pro fullscreen na TV u vchodu — vysoký kontrast, velké písmo." },
+  { icon: "fa-solid fa-masks-theater", title: "Sezónní maskot", desc: "8 variant robota podle ročního období — Vánoce, Halloween a další." },
+];
+
+const PROBLEMS = [
+  { icon: "fa-solid fa-circle-exclamation", text: "Stovky studentů Střední průmyslové školy dopravní, a.s. denně čekají na tramvaj, ale uvnitř školy nejsou žádné informace o odjezdech." },
+  { icon: "fa-solid fa-stopwatch", text: "Zbytečný spěch na zastávku nebo čekání venku v mrazu — bez přesné informace nelze plánovat." },
+  { icon: "fa-solid fa-mobile-screen", text: "Mobilní aplikace jako PID Lítačka vyžadují aktivní vyhledávání — pro pasivní zobrazení nevhodné." },
+];
+
+// --- Animace ---
+const EASE = [0.22, 1, 0.36, 1] as const;
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 28 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: EASE } },
+};
+
+const stagger = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.09, delayChildren: 0.05 } },
+};
+
+// Společné props pro scroll-reveal kontejner
+const reveal = {
+  initial: "hidden",
+  whileInView: "show",
+  viewport: { once: true, margin: "-80px" },
+} as const;
 
 const Index = () => {
-  const stations = [
-    {
-      id: "U865Z1P",
-      name: "Vozovna (Centrum)",
-      displayName: "Vozovna Motol (Centrum)",
-      textName: "Vozovna Motol (Centrum)",
-      simpleName: "Vozovna Motol",
-      direction: "Centrum",
-      lat: 50.0755,
-      lon: 14.4037
-    },
-    {
-      id: "U865Z2P",
-      name: "Vozovna Motol (Řepy)",
-      displayName: "Vozovna Motol (Řepy)",
-      textName: "Vozovna Motol (Řepy)",
-      simpleName: "Vozovna Motol",
-      direction: "Řepy",
-      lat: 50.0755,
-      lon: 14.4037
-    },
-    {
-      id: ["U394Z3P", "U394Z3"],
-      name: (
-        <div className="inline-flex items-center gap-2" style={{ borderRadius: '0.5rem' }}>
-          Zličín
-          <img src="/pictures/metroB.svg" alt="Metro B" className="flex-shrink-0" style={{ width: '1em', height: '1em', marginTop: '0.15em' }} onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.outerHTML = '<span class="inline-flex items-center justify-center bg-yellow-500 text-white font-bold rounded flex-shrink-0" style="width: 1em; height: 1em; font-size: 0.6em; margin-top: 0.15em" title="Metro B">B</span>';
-          }} />
-        </div>
-      ),
-      displayName: (
-        <img src="/pictures/metroB.svg" alt="Metro B" className="flex-shrink-0" style={{ width: '1em', height: '1em', marginTop: '0.15em' }} onError={(e) => {
-          const target = e.target as HTMLImageElement;
-          target.outerHTML = '<span class="inline-flex items-center justify-center bg-yellow-500 text-white font-bold rounded flex-shrink-0" style="width: 1em; height: 1em; font-size: 0.6em; margin-top: 0.15em" title="Metro B">B</span>';
-        }} />
-      ),
-      direction: "Zličín",
-      textName: "Zličín Metro B",
-      simpleName: "Motol",
-      lat: 50.0675,
-      lon: 14.3365
-    },
-    {
-      id: ["U394Z4P", "U394Z4"],
-      name: (
-        <div className="inline-flex items-center gap-2" style={{ borderRadius: '0.5rem' }}>
-          Nemocnice Motol
-          <img src="/pictures/metroA.svg" alt="Metro A" className="flex-shrink-0" style={{ width: '1em', height: '1em' }} onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.outerHTML = '<span class="inline-flex items-center justify-center bg-green-600 text-white font-bold rounded flex-shrink-0" style="width: 1em; height: 1em; font-size: 0.6em; margin-top: 0.15em" title="Metro A">A</span>';
-          }} />
-        </div>
-      ),
-      displayName: (
-        <div className="inline-flex items-center gap-2" style={{ borderRadius: '0.5rem' }}>
-          Nemocnice Motol
-          <img src="/pictures/metroA.svg" alt="Metro A" className="flex-shrink-0" style={{ width: '1em', height: '1em'}} onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.outerHTML = '<span class="inline-flex items-center justify-center bg-green-600 text-white font-bold rounded flex-shrink-0" style="width: 1em; height: 1em; font-size: 0.6em; margin-top: 0.15em" title="Metro A">A</span>';
-          }} />
-        </div>
-      ),
-      direction: "Nemocnice Motol",
-      textName: "Nemocnice Motol Metro A",
-      simpleName: "Motol",
-      lat: 50.0677,
-      lon: 14.3357
-    }
-  ];
-
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [currentStationIndex, setCurrentStationIndex] = useState(0);
-  const [timeOffset, setTimeOffset] = useState(0); // Offset mezi serverovým a lokálním časem
-  const [isDirectionFadingOut, setIsDirectionFadingOut] = useState(false);
-  const [directionAnimationKey, setDirectionAnimationKey] = useState(0);
-
-  const [settings, setSettings] = useState(() => {
-    const saved = localStorage.getItem('tram-display-settings');
-    const defaultSettings = {
-      showWeatherInHeader: false,
-      showTimesInMinutes: true,
-      testAlert: false,
-      snowyLogo: false,
-      disableAnimations: false
-    };
-
-    if (saved) {
-      try {
-        const parsedSettings = JSON.parse(saved);
-        return {
-          ...defaultSettings,
-          ...parsedSettings,
-          showTimesInMinutes: true // Vždycky zapnutý odpočet
-        };
-      } catch (error) {
-        return defaultSettings;
-      }
-    }
-
-    return defaultSettings;
-  });
-
-  // Helper funkce pro získání správné cesty k logu
-  const getLogoPath = () => {
-    return settings.snowyLogo
-      ? "/pictures/snow_spsd.png"
-      : "/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png";
-  };
-
-  const [showSettings, setShowSettings] = useState(false);
-  const [logoClickCount, setLogoClickCount] = useState(0);
-  const [logoClickTimer, setLogoClickTimer] = useState<NodeJS.Timeout | null>(null);
+  const isMobile = useIsMobile();
+  const boardLink = isMobile ? "/m" : "/menu";
 
   useEffect(() => {
-    localStorage.setItem('tram-display-settings', JSON.stringify(settings));
-  }, [settings]);
-
-
-  const handleLogoClick = () => {
-    setLogoClickCount(prev => prev + 1);
-    
-    if (logoClickTimer) {
-      clearTimeout(logoClickTimer);
-    }
-    
-    const timer = setTimeout(() => {
-      if (logoClickCount + 1 >= 3) {
-        setShowSettings(true);
-      }
-      setLogoClickCount(0);
-    }, 500);
-    
-    setLogoClickTimer(timer);
-  };
-
-  const handleSettingChange = (key: string, value: any) => {
-    setSettings((prev) => ({
-      ...prev,
-      [key]: value
-    }));
-  };
-
-  // Synchronizace času s WorldTimeAPI
-  const fetchWorldTime = async (): Promise<Date | null> => {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s timeout
-
-      const response = await fetch('https://worldtimeapi.org/api/timezone/Europe/Prague', {
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        return null;
-      }
-
-      const data = await response.json();
-      const serverTime = new Date(data.datetime);
-      return serverTime;
-    } catch (error) {
-      // Fallback na lokální čas
-      return null;
-    }
-  };
-
-  const calculateStationIndex = (time: Date) => {
-    const totalSeconds = time.getHours() * 3600 + time.getMinutes() * 60 + time.getSeconds();
-    const cyclePosition = totalSeconds % 30; // 30 sekundový cyklus (15s + 15s)
-
-    // 0 = Vozovna Motol (0-15 sekund)
-    // 1 = Motol (15-30 sekund)
-    if (cyclePosition < 15) {
-      return 0;
-    } else {
-      return 1;
-    }
-  };
-
-  // Inicializace a synchronizace času
-  useEffect(() => {
-    const initializeTime = async () => {
-      const serverTime = await fetchWorldTime();
-
-      if (serverTime) {
-        const localTime = new Date();
-        const offset = serverTime.getTime() - localTime.getTime();
-        setTimeOffset(offset);
-        // setWorldTime(serverTime);
-      } else {
-        // Fallback na lokální čas
-        setTimeOffset(0);
-        // setWorldTime(new Date());
-      }
-    };
-
-    initializeTime();
-
-    // Re-synchronizace každých 10 minut (600000 ms) - optimalizováno pro 1 GB RAM
-    const syncInterval = setInterval(async () => {
-      const serverTime = await fetchWorldTime();
-      if (serverTime) {
-        const localTime = new Date();
-        const offset = serverTime.getTime() - localTime.getTime();
-        setTimeOffset(offset);
-        // setWorldTime(serverTime);
-      }
-    }, 600000); // 10 minut
-
-    return () => {
-      clearInterval(syncInterval);
-    };
+    document.body.style.overflow = 'auto';
+    return () => { document.body.style.overflow = ''; };
   }, []);
 
-  useEffect(() => {
-    const updateTimeAndStation = () => {
-      // Použij offset pro přesný čas
-      const localTime = new Date();
-      const adjustedTime = new Date(localTime.getTime() + timeOffset);
-      setCurrentTime(adjustedTime);
-
-      const newStationIndex = calculateStationIndex(adjustedTime);
-
-      if (newStationIndex !== currentStationIndex) {
-        // Start fade out animation
-        setIsDirectionFadingOut(true);
-
-        // After fade out, change station
-        setTimeout(() => {
-          setCurrentStationIndex(newStationIndex);
-          setDirectionAnimationKey(prev => prev + 1);
-          setIsDirectionFadingOut(false);
-        }, 400); // 300ms fade out + 100ms buffer
-      }
-    };
-
-    // Inicializace při prvním načtení
-    updateTimeAndStation();
-
-    // Update každou sekundu
-    const timer = setInterval(updateTimeAndStation, 1000);
-
-    return () => {
-      clearInterval(timer);
-    };
-  }, [currentStationIndex, timeOffset]);
-
-  const motolStations = [
-    stations[2],
-    stations[3]
-  ];
-
-  const vozovnaStations = [
-    stations[0],
-    stations[1]
-  ];
-
-  // Normal split view mode - vždy jedna zastávka, obě směry
-  // currentStationIndex 0 = Vozovna Motol (Řepy + Centrum)
-  // currentStationIndex 1 = Motol (Zličín + Nemocnice)
-
-  const leftStation = currentStationIndex === 0 ? vozovnaStations[1] : motolStations[0]; // Řepy nebo Zličín
-  const rightStation = currentStationIndex === 0 ? vozovnaStations[0] : motolStations[1]; // Centrum nebo Nemocnice
-  const mainStationName = currentStationIndex === 0 ? "Vozovna Motol" : "Motol";
-
   return (
-      <>
-      <div className="bg-gradient-to-br from-blue-50 via-white to-amber-50 flex flex-col overflow-hidden h-screen relative">
-        {/* Unified header for split view */}
-        <div
-          className="text-white shadow-lg relative"
-          style={{
-            backgroundImage: `url('/pictures/b1729e07-3fec-4e02-8298-7438ffe7f242.png')`,
-            backgroundSize: 'auto',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'repeat',
-            height: '13.5vh',
-            minHeight: '112px'
-          }}
-        >
-          <div className="absolute inset-0 bg-blue-900/80"></div>
+    <div className="min-h-screen bg-gray-950 text-white">
 
-          <div className="px-1 sm:px-4 lg:px-6 py-2 sm:py-4 lg:py-6 relative z-10 h-full flex items-center">
-            <div className="grid grid-cols-1 lg:grid-cols-3 w-full gap-4 items-center">
-              {/* Left side - Logo and Weather */}
-              <div className="flex items-center gap-4 sm:gap-6 lg:gap-8 justify-start">
-                <div className="flex-shrink-0 cursor-pointer" onClick={handleLogoClick}>
-                  <img
-                    src={getLogoPath()}
-                    alt="Logo školy"
-                    className="object-contain w-56 h-40 sm:w-64 md:w-80 lg:w-96 xl:w-[28rem] sm:h-40 md:h-40 lg:h-40 xl:h-40"
-                  />
-                </div>
-
-                {settings.showWeatherInHeader && (
-                  <div className="bg-white/20 backdrop-blur-sm rounded-2xl px-6 py-4 shadow-xl border-2 border-white/30">
-                    <WeatherHeader lat={50.0755} lon={14.4378} />
-                  </div>
-                )}
-              </div>
-
-              {/* Center - název zastávky */}
-              <div className="text-center">
-                <h1 className="font-bold leading-tight text-6xl" key={`main-station-${currentStationIndex}`}>
-                  {mainStationName}
-                </h1>
-              </div>
-
-              {/* Right side - Time and Date */}
-              <div className="flex flex-col items-end gap-3">
-                <div className="text-right">
-                  <div className="font-bold text-7xl">
-                    {currentTime.toLocaleTimeString('cs-CZ')}
-                  </div>
-                  <div className="text-blue-100 mt-2 text-3xl">
-                    {currentTime.toLocaleDateString('cs-CZ', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
+      {/* NAV */}
+      <nav className="sticky top-0 z-50 border-b border-white/10 backdrop-blur-md" style={{ background: 'rgba(15,23,42,0.85)' }}>
+        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src="/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png" alt="Střední průmyslová škola dopravní, a.s." className="h-8 object-contain" />
+            <span className="font-bold text-white hidden sm:block">Odjezdová tabule</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <a href="https://github.com/spsdopravni/spsd_timetable" target="_blank" rel="noopener noreferrer"
+               className="text-gray-400 hover:text-white transition-colors text-sm flex items-center gap-1.5">
+              <i className="fa-brands fa-github"></i>
+              <span className="hidden sm:inline">GitHub</span>
+            </a>
+            <a href={boardLink}
+               className="bg-blue-600 hover:bg-blue-500 transition-colors text-white text-sm font-semibold px-4 py-1.5 rounded-lg flex items-center gap-2">
+              <i className="fa-solid fa-train-tram"></i>
+              Otevřít tabuli
+            </a>
           </div>
         </div>
+      </nav>
 
-        {/* Content area */}
-        <div className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0">
-          {/* Left panel - Směr Řepy nebo Směr Zličín */}
-          <div className="flex-1 p-2 overflow-hidden flex flex-col min-h-0">
-            {/* Direction header - elegant style */}
-            <div className={`${settings.disableAnimations ? '' : `direction-header-animation ${isDirectionFadingOut ? 'fade-out' : ''}`} bg-white/95 border-b-8 border-blue-600 text-gray-800 px-3 mb-2 shadow-lg flex items-center justify-center rounded-lg`} style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }} key={`left-header-${directionAnimationKey}`}>
-              <div className="flex items-center justify-center gap-2 w-full h-full">
-                <h2 className="font-bold leading-none" style={{ fontSize: 'clamp(1.75rem, 3.5vh, 2.5rem)' }}>
-                  {React.isValidElement(leftStation.name) ? (
-                    <div className="flex items-center justify-center gap-2">
-                      {leftStation.name}
-                    </div>
-                  ) : leftStation.direction}
-                </h2>
-              </div>
-            </div>
+      {/* HERO */}
+      <div className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #0f172a 100%)' }}>
+        <div className="absolute inset-0 opacity-10"
+             style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
-            <div
-              className={`flex-1`}
-            >
-              <TramDepartures
-                key={`left-${Array.isArray(leftStation.id) ? leftStation.id.join(',') : leftStation.id}-${currentStationIndex}`}
-                stationId={leftStation.id}
-                  maxItems={7}
-                showTimesInMinutes={settings.showTimesInMinutes}
-                stationName={leftStation.simpleName || leftStation.textName || mainStationName}
-                disableAnimations={settings.disableAnimations}
-              />
-            </div>
-          </div>
-
-          {/* Right panel - Směr Centrum nebo Směr Nemocnice Motol */}
-          <div className="flex-1 p-2 overflow-hidden flex flex-col min-h-0">
-            {/* Direction header - elegant style */}
-            <div className={`${settings.disableAnimations ? '' : `direction-header-animation ${isDirectionFadingOut ? 'fade-out' : ''}`} bg-white/95 border-b-8 border-blue-600 text-gray-800 px-3 mb-2 shadow-lg flex items-center justify-center rounded-lg`} style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }} key={`right-header-${directionAnimationKey}`}>
-              <div className="flex items-center justify-center gap-2 w-full h-full">
-                <h2 className="font-bold leading-none" style={{ fontSize: 'clamp(1.75rem, 3.5vh, 2.5rem)' }}>
-                  {React.isValidElement(rightStation.name) ? (
-                    <div className="flex items-center justify-center gap-2">
-                      {rightStation.name}
-                    </div>
-                  ) : rightStation.direction}
-                </h2>
-              </div>
-            </div>
-
-            <div
-              className={`flex-1`}
-            >
-              <TramDepartures
-                key={`right-${Array.isArray(rightStation.id) ? rightStation.id.join(',') : rightStation.id}-${currentStationIndex}`}
-                stationId={rightStation.id}
-                  maxItems={7}
-                showTimesInMinutes={settings.showTimesInMinutes}
-                stationName={rightStation.simpleName || rightStation.textName || mainStationName}
-                disableAnimations={settings.disableAnimations}
-              />
-            </div>
-          </div>
-        </div>
-
-        <Settings
-          isOpen={showSettings}
-          onClose={() => setShowSettings(false)}
-          settings={settings}
-          onSettingChange={handleSettingChange}
+        {/* Animovaný glow */}
+        <motion.div
+          aria-hidden
+          className="absolute -top-32 -right-32 w-[36rem] h-[36rem] rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.28) 0%, transparent 70%)' }}
+          animate={{ scale: [1, 1.15, 1], opacity: [0.7, 1, 0.7] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
         />
+        <motion.div
+          aria-hidden
+          className="absolute -bottom-40 -left-24 w-[30rem] h-[30rem] rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.18) 0%, transparent 70%)' }}
+          animate={{ scale: [1.1, 1, 1.1], opacity: [0.5, 0.85, 0.5] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        />
+
+        <div className="relative z-10 max-w-6xl mx-auto px-6 py-20 lg:py-28">
+          {/* Prize badge */}
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: EASE }}
+            className="inline-flex items-center gap-2 bg-yellow-400/15 border border-yellow-400/30 text-yellow-300 text-xs font-semibold px-3 py-1.5 rounded-full mb-8"
+          >
+            <i className="fa-solid fa-trophy"></i>
+            Cena poroty · Cena děkana Fakulty dopravní ČVUT 2026 · Moderní technologie v dopravě
+          </motion.div>
+
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            {/* Left */}
+            <motion.div variants={stagger} initial="hidden" animate="show">
+              <motion.p variants={fadeUp} className="text-blue-400 text-sm font-semibold uppercase tracking-widest mb-4">
+                Střední průmyslová škola dopravní, a.s. · Praha
+              </motion.p>
+              <motion.h1 variants={fadeUp} className="text-5xl lg:text-6xl font-black leading-[1.05] mb-6">
+                Odjezdová<br />
+                <span className="text-blue-400">tabule</span>
+              </motion.h1>
+              <motion.p variants={fadeUp} className="text-gray-300 text-lg leading-relaxed mb-8 max-w-lg">
+                Webová aplikace zobrazující real-time odjezdy tramvají PID na velkoplošném displeji u vstupu do školy. Žádná obsluha, žádná instalace — jen prohlížeč.
+              </motion.p>
+              <motion.div variants={fadeUp} className="flex flex-wrap gap-3">
+                <motion.a href={boardLink}
+                   whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
+                   className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 transition-colors text-white font-bold px-6 py-3 rounded-xl shadow-lg shadow-blue-900/40">
+                  <i className="fa-solid fa-train-tram"></i>
+                  Tabule Střední průmyslová škola dopravní, a.s. — Motol
+                </motion.a>
+                <motion.a href="https://github.com/spsdopravni/spsd_timetable" target="_blank" rel="noopener noreferrer"
+                   whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
+                   className="inline-flex items-center gap-2 border border-white/20 hover:border-white/40 text-white font-semibold px-6 py-3 rounded-xl transition-colors">
+                  <i className="fa-brands fa-github"></i>
+                  Zdrojový kód
+                </motion.a>
+              </motion.div>
+            </motion.div>
+
+            {/* Right — screenshot tabule */}
+            <motion.div
+              className="hidden lg:block"
+              initial={{ opacity: 0, x: 40, rotateY: 8 }}
+              animate={{ opacity: 1, x: 0, rotateY: 0 }}
+              transition={{ duration: 0.8, ease: EASE, delay: 0.2 }}
+            >
+              <motion.img
+                src="/pictures/tabule-screenshot.png"
+                alt="Ukázka odjezdové tabule"
+                className="rounded-2xl shadow-2xl border border-white/10 w-full object-cover"
+                whileHover={{ scale: 1.02, y: -4 }}
+                transition={{ duration: 0.4, ease: EASE }}
+              />
+            </motion.div>
+          </div>
+        </div>
       </div>
 
-      {/* Robot na celé šířce dole */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 w-full">
-        <DailyRobot />
+      {/* STATS */}
+      <div className="border-y border-white/10" style={{ background: 'rgba(255,255,255,0.03)' }}>
+        <div className="max-w-6xl mx-auto px-6 py-10">
+          <motion.div
+            variants={stagger} {...reveal}
+            className="grid grid-cols-3 md:grid-cols-6 gap-6 text-center"
+          >
+            {STATS.map((s, i) => (
+              <motion.div key={i} variants={fadeUp}>
+                <div className="text-2xl font-black text-blue-400 mb-0.5">{s.value}</div>
+                <div className="text-xs text-gray-500">{s.label}</div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
       </div>
-      </>
-    );
+
+      {/* PROBLÉM */}
+      <div className="max-w-6xl mx-auto px-6 py-24">
+        <div className="grid lg:grid-cols-2 gap-16 items-start">
+          <motion.div variants={stagger} {...reveal}>
+            <motion.p variants={fadeUp} className="text-blue-400 text-xs font-semibold uppercase tracking-widest mb-4">Proč to vzniklo</motion.p>
+            <motion.h2 variants={fadeUp} className="text-3xl font-black mb-8">Problém, který každý u nás zná</motion.h2>
+            <div className="space-y-6">
+              {PROBLEMS.map((item, i) => (
+                <motion.div key={i} variants={fadeUp} className="flex gap-4">
+                  <i className={`${item.icon} text-blue-500 text-xl flex-shrink-0 mt-0.5`}></i>
+                  <p className="text-gray-400 leading-relaxed">{item.text}</p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          <motion.div
+            variants={fadeUp} {...reveal}
+            className="rounded-2xl border border-white/10 p-8" style={{ background: 'rgba(255,255,255,0.04)' }}
+          >
+            <p className="text-blue-400 text-xs font-semibold uppercase tracking-widest mb-4">Řešení</p>
+            <h3 className="text-xl font-bold mb-6">Webová tabule na 55" displeji</h3>
+            <div className="space-y-3">
+              {[
+                "Real-time odjezdy přímo z PID API Golemio",
+                "Automatická rotace mezi zastávkami každých 15 sekund",
+                "Aktuální počasí a předpověď",
+                "Fullscreen bez obsluhy — jen zapnout TV",
+                "Záložní data při výpadku internetu",
+                "Sezónní témata maskota — 8 variant",
+              ].map((t, i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <i className="fa-solid fa-check text-blue-500 mt-1 flex-shrink-0 text-sm"></i>
+                  <span className="text-gray-300 text-sm">{t}</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* FUNKCE */}
+      <div className="border-t border-white/10" style={{ background: 'rgba(255,255,255,0.02)' }}>
+        <div className="max-w-6xl mx-auto px-6 py-24">
+          <motion.div variants={stagger} {...reveal}>
+            <motion.p variants={fadeUp} className="text-blue-400 text-xs font-semibold uppercase tracking-widest mb-3">Co umí</motion.p>
+            <motion.h2 variants={fadeUp} className="text-3xl font-black mb-12">Klíčové funkce</motion.h2>
+          </motion.div>
+          <motion.div variants={stagger} {...reveal} className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {FEATURES.map((f, i) => (
+              <motion.div
+                key={i}
+                variants={fadeUp}
+                whileHover={{ y: -6 }}
+                transition={{ duration: 0.25, ease: EASE }}
+                className="group rounded-xl border border-white/10 p-6 hover:border-blue-500/40 transition-colors" style={{ background: 'rgba(255,255,255,0.04)' }}
+              >
+                <div className="w-10 h-10 rounded-lg bg-blue-900/60 flex items-center justify-center mb-4 group-hover:bg-blue-700/70 transition-colors">
+                  <i className={`${f.icon} text-blue-400 text-lg`}></i>
+                </div>
+                <h3 className="font-bold mb-2">{f.title}</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">{f.desc}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </div>
+
+      {/* ARCHITEKTURA */}
+      <div className="max-w-6xl mx-auto px-6 py-24">
+        <motion.div variants={stagger} {...reveal}>
+          <motion.p variants={fadeUp} className="text-blue-400 text-xs font-semibold uppercase tracking-widest mb-3">Jak to funguje</motion.p>
+          <motion.h2 variants={fadeUp} className="text-3xl font-black mb-12">Architektura</motion.h2>
+        </motion.div>
+        <motion.div variants={stagger} {...reveal} className="grid md:grid-cols-3 gap-6">
+          {[
+            {
+              step: "01", icon: "fa-solid fa-database", title: "Datové zdroje",
+              items: ["PID Golemio API — real-time odjezdy", "WeatherAPI.com — počasí", "WorldTimeAPI — sync času"],
+            },
+            {
+              step: "02", icon: "fa-brands fa-react", title: "Frontend (React)",
+              items: ["React 18 + TypeScript", "DataContext — centrální stav", "Cache 20 s — méně API volání"],
+            },
+            {
+              step: "03", icon: "fa-solid fa-display", title: "Zobrazení",
+              items: ["Zabezpečené HTTPS připojení", "Fullscreen na 55\" TV", "timetable.brozovec.eu"],
+            },
+          ].map((col, i) => (
+            <motion.div
+              key={i}
+              variants={fadeUp}
+              whileHover={{ y: -6 }}
+              transition={{ duration: 0.25, ease: EASE }}
+              className="rounded-xl border border-white/10 p-6" style={{ background: 'rgba(255,255,255,0.04)' }}
+            >
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-10 h-10 rounded-lg bg-blue-900/60 flex items-center justify-center flex-shrink-0">
+                  <i className={`${col.icon} text-blue-400`}></i>
+                </div>
+                <h3 className="font-bold text-lg">{col.title}</h3>
+              </div>
+              <ul className="space-y-2">
+                {col.items.map((item, j) => (
+                  <li key={j} className="text-gray-400 text-sm flex gap-2">
+                    <i className="fa-solid fa-arrow-right text-blue-600 flex-shrink-0 mt-0.5 text-xs"></i>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
+
+      {/* MASKOTI */}
+      <div className="border-t border-white/10" style={{ background: 'rgba(255,255,255,0.02)' }}>
+        <div className="max-w-6xl mx-auto px-6 py-24">
+          <motion.div variants={stagger} {...reveal}>
+            <motion.p variants={fadeUp} className="text-blue-400 text-xs font-semibold uppercase tracking-widest mb-3">Sezónní témata</motion.p>
+            <motion.h2 variants={fadeUp} className="text-3xl font-black mb-4">8 variant maskota</motion.h2>
+            <motion.p variants={fadeUp} className="text-gray-400 mb-10 max-w-lg">Školní robot se mění podle ročního období a svátků. Vánoce, Halloween, Velikonoce, Nový rok a další.</motion.p>
+          </motion.div>
+          <motion.div variants={stagger} {...reveal} className="flex flex-wrap gap-6 items-end">
+            {[
+              { src: "/pictures/robotz.png", label: "Klasický" },
+              { src: "/pictures/robot-spring.png", label: "Jaro" },
+              { src: "/pictures/robot-summer.png", label: "Léto" },
+              { src: "/pictures/robot-autumn.png", label: "Podzim" },
+              { src: "/pictures/robot-winter.png", label: "Zima" },
+              { src: "/pictures/robot-halloween.png", label: "Halloween" },
+              { src: "/pictures/robot-christmas.png", label: "Vánoce" },
+              { src: "/pictures/robot-newyear.png", label: "Nový rok" },
+            ].map((r, i) => (
+              <motion.div key={i} variants={fadeUp} className="text-center">
+                <motion.img
+                  src={r.src} alt={r.label}
+                  className="h-20 object-contain mx-auto mb-2 drop-shadow-lg"
+                  whileHover={{ y: -8, scale: 1.08 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                />
+                <span className="text-gray-500 text-xs">{r.label}</span>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </div>
+
+      {/* PERSONALIZOVANÉ TABULE */}
+      <div className="border-t border-white/10 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #1a1a1a 0%, #0f172a 60%, #1a1a1a 100%)' }}>
+        <div className="absolute top-0 left-0 right-0 h-1" style={{ background: '#FDD835' }} />
+        <div className="absolute bottom-0 left-0 right-0 h-1" style={{ background: '#FDD835' }} />
+
+        <div className="max-w-6xl mx-auto px-6 py-24">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left — text */}
+            <motion.div variants={stagger} {...reveal}>
+              <motion.p variants={fadeUp} className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#FDD835' }}>
+                Na míru pro vaši akci
+              </motion.p>
+              <motion.h2 variants={fadeUp} className="text-3xl lg:text-4xl font-black mb-6 leading-tight">
+                Děláme personalizované<br />
+                tabule pro <span style={{ color: '#FDD835' }}>vaše akce</span>
+              </motion.h2>
+              <motion.p variants={fadeUp} className="text-gray-300 text-lg leading-relaxed mb-6">
+                Chystáte festival, konferenci nebo sportovní akci? Navrhneme tabuli v barvách a stylu vaší akce — s vlastním logem, maskotem a zastávkami MHD v okolí.
+              </motion.p>
+              <motion.ul variants={stagger} className="space-y-3 mb-8">
+                {[
+                  "Vlastní branding — logo, barvy, typografie",
+                  "Maskot vaší akce na místě robota",
+                  "Výběr konkrétních zastávek a linek",
+                  "Nasazení na libovolný TV nebo projektor",
+                ].map((t, i) => (
+                  <motion.li key={i} variants={fadeUp} className="flex items-start gap-3">
+                    <i className="fa-solid fa-check mt-1 flex-shrink-0 text-sm" style={{ color: '#FDD835' }}></i>
+                    <span className="text-gray-300">{t}</span>
+                  </motion.li>
+                ))}
+              </motion.ul>
+              <motion.a
+                variants={fadeUp}
+                href="mailto:broz979171@mot.sps-dopravni.cz?subject=Personalizovan%C3%A1%20tabule%20pro%20akci"
+                whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
+                className="inline-flex items-center gap-2 font-bold px-6 py-3 rounded-xl transition-all shadow-lg"
+                style={{ background: '#FDD835', color: '#1a1a1a' }}
+              >
+                <i className="fa-solid fa-envelope"></i>
+                Mám zájem o tabuli
+              </motion.a>
+            </motion.div>
+
+            {/* Right — Bikefest showcase */}
+            <motion.div
+              className="relative"
+              initial={{ opacity: 0, scale: 0.92 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 0.7, ease: EASE }}
+            >
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl border" style={{ borderColor: 'rgba(253, 216, 53, 0.3)' }}>
+                <img
+                  src="/pictures/bikefest-tabule.png"
+                  alt="Prague Bike Fest — personalizovaná tabule"
+                  className="w-full object-cover"
+                />
+              </div>
+              {/* Bikefest robot overlay */}
+              <motion.img
+                src="/pictures/robot-bikefest.png"
+                alt="Bikefest maskot"
+                className="absolute -bottom-6 -right-4 lg:-right-8 h-32 lg:h-40 object-contain drop-shadow-2xl"
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              />
+              {/* Bikefest badge */}
+              <div
+                className="absolute -top-3 left-4 lg:left-6 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 shadow-lg"
+                style={{ background: '#FDD835', color: '#1a1a1a' }}
+              >
+                <i className="fa-solid fa-bicycle"></i>
+                Prague Bike Fest 2026
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </div>
+
+      {/* KDE NÁS NAJDETE */}
+      <div className="max-w-6xl mx-auto px-6 py-24">
+        <motion.div variants={stagger} {...reveal}>
+          <motion.p variants={fadeUp} className="text-blue-400 text-xs font-semibold uppercase tracking-widest mb-3">Kde nás najdete</motion.p>
+          <motion.h2 variants={fadeUp} className="text-3xl font-black mb-4">Akce a budovy</motion.h2>
+          <motion.p variants={fadeUp} className="text-gray-400 mb-10 max-w-lg">Naše tabule fungují v budovách Střední průmyslové školy dopravní a na vybraných akcích.</motion.p>
+        </motion.div>
+
+        <motion.div variants={stagger} {...reveal} className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {/* Budovy školy */}
+          <motion.div variants={fadeUp} whileHover={{ y: -6 }} transition={{ duration: 0.25, ease: EASE }} className="rounded-xl border border-white/10 p-6" style={{ background: 'rgba(255,255,255,0.04)' }}>
+            <div className="w-10 h-10 rounded-lg bg-blue-900/60 flex items-center justify-center mb-4">
+              <i className="fa-solid fa-building text-blue-400 text-lg"></i>
+            </div>
+            <h3 className="font-bold text-lg mb-2">Budovy školy</h3>
+            <p className="text-gray-400 text-sm leading-relaxed">Odjezdové tabule fungují v budovách Střední průmyslové školy dopravní, a.s. — Motol a Moravská.</p>
+          </motion.div>
+
+          {/* Maker Faire Prague */}
+          <motion.div variants={fadeUp} whileHover={{ y: -6 }} transition={{ duration: 0.25, ease: EASE }} className="rounded-xl border border-white/10 p-6" style={{ background: 'rgba(255,255,255,0.04)' }}>
+            <img src="/pictures/makerfaire-logo.svg" alt="Maker Faire Prague" className="h-10 object-contain mb-4" />
+            <h3 className="font-bold text-lg mb-2">Maker Faire Prague</h3>
+            <p className="text-gray-400 text-sm leading-relaxed">Výstaviště Praha · největší festival kreativity, vědy a technologií. Tabule s vlastním maskotem na stánku školy.</p>
+          </motion.div>
+
+          {/* Den PID — Letná */}
+          <motion.div variants={fadeUp} whileHover={{ y: -6 }} transition={{ duration: 0.25, ease: EASE }} className="rounded-xl border border-white/10 p-6" style={{ background: 'rgba(255,255,255,0.04)' }}>
+            <img src="/pictures/pid-logo-white.svg" alt="Den PID" className="h-10 object-contain mb-4" />
+            <h3 className="font-bold text-lg mb-2">Den PID — Letná</h3>
+            <p className="text-gray-400 text-sm leading-relaxed">Letenská pláň · sobota 16. května 2026 · 10:00–17:00. Tabule speciální linky PID3.</p>
+          </motion.div>
+
+          {/* Den PID — Vozovna Motol */}
+          <motion.div variants={fadeUp} whileHover={{ y: -6 }} transition={{ duration: 0.25, ease: EASE }} className="rounded-xl border border-white/10 p-6" style={{ background: 'rgba(255,255,255,0.04)' }}>
+            <img src="/pictures/pid-logo-white.svg" alt="Den PID" className="h-10 object-contain mb-4" />
+            <h3 className="font-bold text-lg mb-2">Den PID — Vozovna Motol</h3>
+            <p className="text-gray-400 text-sm leading-relaxed">Autobusový Den PID · 16. května 2026. Tabule v historické vozovně z roku 1936.</p>
+          </motion.div>
+
+          {/* Depo Kačerov — Den otevřených dveří */}
+          <motion.div variants={fadeUp} whileHover={{ y: -6 }} transition={{ duration: 0.25, ease: EASE }} className="rounded-xl border border-white/10 p-6" style={{ background: 'rgba(255,255,255,0.04)' }}>
+            <img src="/pictures/dpp-logo.svg" alt="Depo Kačerov" className="h-10 object-contain mb-4" />
+            <h3 className="font-bold text-lg mb-2">Depo Kačerov</h3>
+            <p className="text-gray-400 text-sm leading-relaxed">Den otevřených dveří · sobota 6. června 2026 · 10.00–16.00. Nejstarší depo pražského metra (linka C).</p>
+          </motion.div>
+
+          {/* Prague Bike Fest */}
+          <motion.div variants={fadeUp} whileHover={{ y: -6 }} transition={{ duration: 0.25, ease: EASE }} className="rounded-xl border border-white/10 p-6" style={{ background: 'rgba(255,255,255,0.04)' }}>
+            <img src="/pictures/bikefest-logo.svg" alt="Prague Bike Fest" className="h-10 object-contain mb-4" />
+            <h3 className="font-bold text-lg mb-2">Prague Bike Fest 2026</h3>
+            <p className="text-gray-400 text-sm leading-relaxed">25.–26. dubna 2026 · Výstaviště Praha. Speciální tabule s vlastním designem a maskotem.</p>
+          </motion.div>
+
+          {/* Schola Pragensis */}
+          <motion.div variants={fadeUp} whileHover={{ y: -6 }} transition={{ duration: 0.25, ease: EASE }} className="rounded-xl border border-white/10 p-6" style={{ background: 'rgba(255,255,255,0.04)' }}>
+            <img src="/pictures/schola-pragensis-logo.svg" alt="Schola Pragensis" className="h-10 object-contain mb-4" />
+            <h3 className="font-bold text-lg mb-2">Schola Pragensis</h3>
+            <p className="text-gray-400 text-sm leading-relaxed">Veletrh středních škol v Kongresovém centru Praha. Tabule pro návštěvníky přímo na akci.</p>
+          </motion.div>
+        </motion.div>
+      </div>
+
+      {/* TECH */}
+      <div className="max-w-6xl mx-auto px-6 py-24">
+        <motion.div variants={stagger} {...reveal}>
+          <motion.p variants={fadeUp} className="text-blue-400 text-xs font-semibold uppercase tracking-widest mb-3">Stack</motion.p>
+          <motion.h2 variants={fadeUp} className="text-3xl font-black mb-8">Použité technologie</motion.h2>
+        </motion.div>
+        <motion.div variants={stagger} {...reveal} className="flex flex-wrap gap-2">
+          {TECH.map((t, i) => (
+            <motion.span
+              key={i}
+              variants={fadeUp}
+              whileHover={{ y: -3, borderColor: 'rgba(96,165,250,0.5)' }}
+              className="border border-white/15 text-gray-300 text-sm px-4 py-2 rounded-lg"
+              style={{ background: 'rgba(255,255,255,0.05)' }}
+            >
+              {t}
+            </motion.span>
+          ))}
+        </motion.div>
+      </div>
+
+      {/* TÝM */}
+      <div className="border-t border-white/10" style={{ background: 'rgba(255,255,255,0.02)' }}>
+        <div className="max-w-6xl mx-auto px-6 py-24">
+          <motion.div variants={stagger} {...reveal}>
+            <motion.p variants={fadeUp} className="text-blue-400 text-xs font-semibold uppercase tracking-widest mb-3">Autoři</motion.p>
+            <motion.h2 variants={fadeUp} className="text-3xl font-black mb-10">Tým</motion.h2>
+          </motion.div>
+          <motion.div variants={stagger} {...reveal} className="grid gap-5 sm:grid-cols-2 max-w-2xl">
+            {[
+              { name: "Adam \"Brozovec\" Brož", cls: "Student SPŠD", email: "broz979171@mot.sps-dopravni.cz" },
+              { name: "Štefan \"Hatsuko\" Barát", cls: "Student SPŠD", email: "Barat70671@mot.sps-dopravni.cz" },
+            ].map((a, i) => (
+              <motion.div key={i} variants={fadeUp} whileHover={{ y: -6 }} transition={{ duration: 0.25, ease: EASE }} className="rounded-xl border border-white/10 p-6" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                <div className="w-12 h-12 rounded-full bg-blue-900/60 flex items-center justify-center mb-4">
+                  <i className="fa-solid fa-user text-blue-400 text-lg"></i>
+                </div>
+                <h3 className="font-bold text-lg">{a.name}</h3>
+                <p className="text-gray-500 text-sm mb-3">{a.cls}</p>
+                {a.email && (
+                  <a href={`mailto:${a.email}`} className="text-blue-400 text-sm hover:text-blue-300 transition-colors break-all flex items-center gap-1.5">
+                    <i className="fa-solid fa-envelope text-xs flex-shrink-0"></i>
+                    {a.email}
+                  </a>
+                )}
+              </motion.div>
+            ))}
+          </motion.div>
+          <p className="text-gray-600 text-sm mt-8">Střední průmyslová škola dopravní, a.s.</p>
+        </div>
+      </div>
+
+      {/* CTA */}
+      <div className="border-t border-white/10" style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%)' }}>
+        <motion.div
+          variants={stagger} {...reveal}
+          className="max-w-6xl mx-auto px-6 py-24 text-center"
+        >
+          <motion.h2 variants={fadeUp} className="text-4xl font-black mb-4">Vyzkoušejte si to</motion.h2>
+          <motion.p variants={fadeUp} className="text-gray-400 mb-8 text-lg">Běží na <span className="text-white font-semibold">timetable.brozovec.eu</span> · 24/7 · bez obsluhy</motion.p>
+          <motion.div variants={fadeUp} className="flex flex-wrap gap-4 justify-center">
+            <motion.a href={boardLink}
+               whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
+               className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 transition-colors text-white font-bold px-8 py-4 rounded-xl shadow-lg shadow-blue-900/40 text-lg">
+              <i className="fa-solid fa-train-tram"></i>
+              Tabule Střední průmyslová škola dopravní, a.s. — Motol
+            </motion.a>
+            <motion.a href="https://github.com/spsdopravni/spsd_timetable" target="_blank" rel="noopener noreferrer"
+               whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
+               className="inline-flex items-center gap-2 border border-white/20 hover:border-white/40 text-white font-semibold px-8 py-4 rounded-xl transition-colors text-lg">
+              <i className="fa-brands fa-github"></i>
+              GitHub
+            </motion.a>
+          </motion.div>
+        </motion.div>
+      </div>
+
+      {/* FOOTER */}
+      <footer className="border-t border-white/10 py-8 text-center text-gray-600 text-sm space-y-1">
+        <p>
+          © 2026{" "}
+          <a href="https://brozovec.eu" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-400 transition-colors">
+            Adam &quot;Brozovec&quot; Brož
+          </a>
+          {" · "}Střední průmyslová škola dopravní, a.s. · Data: PID Golemio API
+        </p>
+        <p className="text-gray-700 text-xs">
+          Created and designed by{" "}
+          <a href="https://brozovec.eu" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-blue-400 transition-colors font-semibold">
+            Adam &quot;Brozovec&quot; Brož
+          </a>
+          {" & "}
+          <span className="text-gray-500 font-semibold">Štefan &quot;Hatsuko&quot; Barát</span>
+        </p>
+      </footer>
+
+    </div>
+  );
 };
 
 export default Index;

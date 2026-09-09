@@ -1,0 +1,630 @@
+import { memo, useEffect, useMemo, useState } from "react";
+import { Clock, AlertTriangle, Info, Snowflake, Car, MapPin, Wrench, Bus, Wind, Accessibility, Calendar, ArrowRight, Moon, History } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useDataContext } from "@/context/DataContext";
+import { getAverageDelaysForRoutes, delayAverageKey, type DelayAverageMap } from "@/utils/delayHistory";
+import type { Departure } from "@/types/pid";
+
+// Predikce se ukazuje až od tolika pozorování (méně = náhoda).
+const MIN_PREDICTION_SAMPLES = 5;
+// Zpoždění pod tuhle mez považujeme za „obvykle včas“.
+const ON_TIME_THRESHOLD_SECONDS = 60;
+
+/**
+ * Historické průměrné zpoždění linek podle hodiny dne (view delay_averages).
+ * Jeden hromadný dotaz pro všechny linky v panelu, obnova každých 10 minut.
+ */
+function useDelayAverages(routeShortNames: string[]): DelayAverageMap {
+  const [map, setMap] = useState<DelayAverageMap>(() => new Map());
+  const key = useMemo(() => Array.from(new Set(routeShortNames)).sort().join("|"), [routeShortNames]);
+
+  useEffect(() => {
+    if (!key) return;
+    let cancelled = false;
+    const load = () => {
+      getAverageDelaysForRoutes(key.split("|")).then((m) => {
+        if (!cancelled) setMap(m);
+      });
+    };
+    load();
+    const t = setInterval(load, 10 * 60 * 1000);
+    return () => { cancelled = true; clearInterval(t); };
+  }, [key]);
+
+  return map;
+}
+
+/** Text predikce pro daný odjezd, nebo null když nemáme dost dat. */
+function getPredictedDelay(map: DelayAverageMap, departure: Departure): { text: string; late: boolean } | null {
+  const hour = new Date(departure.arrival_timestamp * 1000).getHours();
+  const avg = map.get(delayAverageKey(departure.route_short_name, hour));
+  if (!avg || avg.samples < MIN_PREDICTION_SAMPLES) return null;
+  if (avg.avg_delay_seconds < ON_TIME_THRESHOLD_SECONDS) {
+    return { text: "Obvykle včas", late: false };
+  }
+  return { text: `Obvykle +${Math.round(avg.avg_delay_seconds / 60)} min`, late: true };
+}
+
+interface TramDeparturesConnectedProps {
+  stationKey: string; // Klíč stanice z ALL_STATIONS
+  maxItems?: number;
+  customTitle?: string;
+  showTimesInMinutes?: boolean;
+  stationName?: string;
+  disableAnimations?: boolean;
+  // Volitelný walk time v sekundách (z GPS) — pokud je dán, používá se pro
+  // stíháš/nestíháš místo hardcoded heuristic per stanice.
+  walkSeconds?: number;
+}
+
+const TramDeparturesConnectedComponent = ({
+  stationKey,
+  maxItems = 5,
+  customTitle,
+  showTimesInMinutes = false,
+  stationName = "",
+  disableAnimations = false,
+  walkSeconds,
+}: TramDeparturesConnectedProps) => {
+  const { getDeparturesForStation, time } = useDataContext();
+  const stationData = getDeparturesForStation(stationKey);
+  const { departures, loading, error } = stationData;
+
+  // Countdown bere čas přímo z DataContextu (ten už tiká 1× za sekundu
+  // a má započtený offset ze serveru). Dřív měl každý panel navíc vlastní
+  // setInterval, takže se tabule překreslovala 2× za sekundu na panel –
+  // na Raspberry Pi to zbytečně blokovalo hlavní vlákno a sekalo animace.
+  const currentTime = Math.floor(time.currentTime.getTime() / 1000);
+
+  // Predikce zpoždění podle historie (linka × hodina odjezdu)
+  const routeNames = useMemo(() => departures.map((d) => d.route_short_name), [departures]);
+  const delayAverages = useDelayAverages(routeNames);
+
+  const formatTime = (seconds: number) => {
+    if (seconds < 60) return `${seconds}s`;
+    const minutes = Math.floor(seconds / 60);
+    return `${minutes} min`;
+  };
+
+  const formatVehicleNumber = (vehicleNumber: string, routeNumber: string, tripNumber: string) => {
+    if (vehicleNumber && routeNumber && tripNumber) {
+      return `#${vehicleNumber} na ${routeNumber}/${tripNumber}`;
+    }
+    return `#${vehicleNumber}`;
+  };
+
+  const getDelayBadge = (delay: number) => {
+    if (delay <= 0) return { text: "Včas", color: "bg-green-100 text-green-800" };
+    const minutes = Math.floor(delay / 60);
+    if (minutes === 0) return { text: "Včas", color: "bg-green-100 text-green-800" };
+    if (delay <= 60) return { text: `+${minutes} min`, color: "bg-yellow-100 text-yellow-800" };
+    return { text: `+${minutes} min`, color: "bg-red-100 text-red-800" };
+  };
+
+  const getVehicleTypeInfo = (departure: Departure) => {
+    const timeToArrival = departure.arrival_timestamp - currentTime;
+
+    if (timeToArrival <= 120 && timeToArrival > 0) {
+      const vehicleType = getVehicleType(departure.route_type);
+      return `${vehicleType} se blíži do stanice`;
+    }
+
+    return null;
+  };
+
+  const getVehicleType = (routeType: number) => {
+    switch (routeType) {
+      case 0: return "Tramvaj";
+      case 1: return "Metro";
+      case 2: return "Vlak";
+      case 3: return "Autobus";
+      default: return "Vozidlo";
+    }
+  };
+
+  const getRouteColor = (routeType: number, routeName?: string) => {
+    switch (routeType) {
+      case 0: return "bg-red-100 text-red-800";
+      case 3: return "bg-blue-100 text-blue-800";
+      case 1: return "bg-red-100 text-red-800";
+      case 2: return "bg-purple-100 text-purple-800";
+      default: return "bg-red-100 text-red-800";
+    }
+  };
+
+  const hasAirConditioning = (departure: Departure) => {
+    return departure.air_conditioning || false;
+  };
+
+  const getDirectionDisplay = (departure: Departure) => {
+    const routeNumber = departure.route_short_name;
+    const headsign = departure.headsign;
+    const headsignLower = headsign?.toLowerCase() || '';
+
+    if (routeNumber === "174" && headsign && headsignLower.includes("luka")) {
+      return (
+        <div className="flex items-center gap-2">
+          <span>{headsign}</span>
+          <img
+            src="/pictures/metroB.svg"
+            alt="Metro B"
+            className="inline-block align-middle"
+            style={{ width: `${Math.max(1.6, 2.8 * 1.0)}rem`, height: `${Math.max(1.6, 2.8 * 1.0)}rem`, verticalAlign: 'middle' }}
+          />
+          <ArrowRight style={{ width: `${Math.max(1.6, 2.8 * 1.0)}rem`, height: `${Math.max(1.6, 2.8 * 1.0)}rem` }} className="text-blue-600" />
+          <span className="text-orange-600 font-medium">301/352</span>
+        </div>
+      );
+    }
+
+    if (headsign && headsignLower.includes("dejvická")) {
+      return (
+        <div className="flex items-center gap-2">
+          <span>{headsign}</span>
+          <img
+            src="/pictures/metroA.svg"
+            alt="Metro A"
+            className="inline-block align-middle"
+            style={{ width: `${Math.max(1.6, 2.8 * 1.0)}rem`, height: `${Math.max(1.6, 2.8 * 1.0)}rem`, verticalAlign: 'middle' }}
+          />
+        </div>
+      );
+    }
+
+    if (headsign && headsignLower.includes("zličín") &&
+        !headsignLower.includes("obchodní centrum") &&
+        !headsignLower.includes("obchodního centra")) {
+      return (
+        <div className="flex items-center gap-2">
+          <span>{headsign}</span>
+          <img
+            src="/pictures/metroB.svg"
+            alt="Metro B"
+            className="inline-block align-middle"
+            style={{ width: `${Math.max(1.6, 2.8 * 1.0)}rem`, height: `${Math.max(1.6, 2.8 * 1.0)}rem`, verticalAlign: 'middle' }}
+          />
+        </div>
+      );
+    }
+
+    // PID Day 2026 — ikony partnerů u tras které vedou kolem SPŠD / Muzea MHD
+    if (departure.route_id?.startsWith("pidday-") && routeNumber?.startsWith("PID")) {
+      const showsSpsd = routeNumber === "PID3";                       // Motol = SPŠD
+      const showsMhd = ["PID3", "PID4", "PID5"].includes(routeNumber); // Vozovna Střešovice = Muzeum MHD
+      if (showsSpsd || showsMhd) {
+        return (
+          <div className="flex items-center gap-2">
+            <span>{headsign}</span>
+            {showsSpsd && (
+              <img
+                src="/pictures/spsd-logo-vertical.png"
+                alt="SPŠD"
+                title="Trasa kolem SPŠ dopravní (Modulová železnice v Motole)"
+                className="inline-block align-middle"
+                style={{ height: `${Math.max(2.5, 4.0 * 1.0)}rem`, width: 'auto', verticalAlign: 'middle' }}
+              />
+            )}
+            {showsMhd && (
+              <img
+                src="/pictures/muzeum-mhd.png"
+                alt="Muzeum MHD"
+                title="Trasa kolem Muzea MHD ve Střešovicích"
+                className="inline-block align-middle"
+                style={{ height: `${Math.max(1.8, 3.0 * 1.0)}rem`, width: 'auto', verticalAlign: 'middle' }}
+              />
+            )}
+          </div>
+        );
+      }
+    }
+
+    return headsign;
+  };
+
+  const isSchoolTram = (departure: Departure, stationName: string) => {
+    const vehicleNumber = departure.vehicle_number;
+    const station = stationName.toLowerCase();
+
+    if ((vehicleNumber === "8466" || vehicleNumber === "8467") &&
+        station.includes("vozovna motol")) {
+      return true;
+    }
+
+    return false;
+  };
+
+  const getServiceAlerts = (departure: Departure) => {
+    const alerts = [];
+
+    const headsign = departure.headsign?.toLowerCase() || '';
+
+    const isShortened = headsign.includes('jen do') || headsign.includes('pouze do');
+    const isToDepot = headsign.includes('vozovna') && !headsign.includes('ústředn');
+
+    if (isShortened) {
+      alerts.push({
+        icon: <AlertTriangle className="w-5 h-5 text-yellow-600" style={{ width: `${1.5 * 1.0}rem`, height: `${1.5 * 1.0}rem` }} />,
+        text: "Zkrácená jízda",
+        color: "bg-yellow-100 text-yellow-800"
+      });
+    }
+
+    // Pokračování linky se nyní bere dynamicky z Golemio infotexts
+    // (departure.continues_as) a zobrazuje jako badge vedle headsignu.
+
+    if (departure.alert_hash) {
+      if (departure.alert_hash === 'canceled') {
+        alerts.push({
+          icon: <AlertTriangle className="w-5 h-5 text-red-600" style={{ width: `${1.5 * 1.0}rem`, height: `${1.5 * 1.0}rem` }} />,
+          text: "Zrušeno",
+          color: "bg-red-100 text-red-800"
+        });
+      } else {
+        alerts.push({
+          icon: <Info className="w-5 h-5 text-blue-600" style={{ width: `${1.5 * 1.0}rem`, height: `${1.5 * 1.0}rem` }} />,
+          text: "Výluka/Omezení",
+          color: "bg-blue-100 text-blue-800"
+        });
+      }
+    }
+
+    return alerts;
+  };
+
+  const formatDisplayTime = (departure: Departure) => {
+    const timeToArrival = departure.arrival_timestamp - currentTime;
+
+    if (showTimesInMinutes) {
+      const minutes = Math.floor(timeToArrival / 60);
+
+      // GPS-based stíháš/nestíháš — má přednost před hardcoded heuristikou.
+      if (walkSeconds !== undefined && walkSeconds > 0) {
+        if (timeToArrival < walkSeconds) return 'Nestíháš';
+        if (timeToArrival < walkSeconds + 60) return 'Stíháš';
+        return `${minutes} min`;
+      }
+
+      const station = stationName.toLowerCase();
+      if ((station.includes('motol') && !station.includes('vozovna')) && minutes < 4) {
+        return 'Nestíháš';
+      }
+
+      if (station.includes('vozovna motol') || station.includes('vozovna')) {
+        const headsign = departure.headsign?.toLowerCase() || '';
+        const direction = departure.trip_headsign?.toLowerCase() || '';
+        const combinedInfo = `${headsign} ${direction}`.toLowerCase();
+
+        if (combinedInfo.includes('centrum')) {
+          if (timeToArrival < 30) {
+            return 'Nestíháš';
+          } else if (timeToArrival < 60) {
+            return 'Stíháš';
+          }
+        }
+        else if (combinedInfo.includes('řepy') || combinedInfo.includes('repy')) {
+          if (timeToArrival < 50) {
+            return 'Nestíháš';
+          } else if (timeToArrival < 60) {
+            return 'Stíháš';
+          }
+        }
+        else if (timeToArrival < 60) {
+          return 'Stíháš';
+        }
+      }
+      else if ((station.includes('motol') && !station.includes('vozovna')) && timeToArrival < 60) {
+        return 'Nestíháš';
+      }
+      else if (station.includes('vyšehrad') || station.includes('vysehrad')) {
+        if (timeToArrival < 60) {
+          return 'Nestíháš';
+        } else if (timeToArrival < 120) {
+          return 'Stíháš';
+        }
+      }
+      else if (station.includes('svatoplukova')) {
+        if (timeToArrival < 60) {
+          return 'Nestíháš';
+        } else if (timeToArrival < 120) {
+          return 'Stíháš';
+        }
+      }
+      // Jana Masaryka - 2 min chůze (120s)
+      else if (station.includes('jana masaryka')) {
+        if (timeToArrival < 120) {
+          return 'Nestíháš';
+        } else if (timeToArrival < 180) {
+          return 'Stíháš';
+        }
+      }
+      // Šumavská - 4 min chůze (240s)
+      else if (station.includes('šumavská') || station.includes('sumavska')) {
+        if (timeToArrival < 240) {
+          return 'Nestíháš';
+        } else if (timeToArrival < 300) {
+          return 'Stíháš';
+        }
+      }
+      else if (timeToArrival < 60) {
+        return '<1 min';
+      }
+
+      return `${minutes} min`;
+    } else {
+      return new Date(departure.arrival_timestamp * 1000).toLocaleTimeString('cs-CZ', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+  };
+
+  const isRateLimited = error?.includes('limit');
+
+  if (error) {
+    return (
+      <Card className="shadow-lg bg-white/90 h-full border-2 border-gray-300">
+        <CardContent className="p-4 text-center h-full flex items-center justify-center">
+          <div>
+            <AlertTriangle className={`w-12 h-12 mx-auto mb-2 ${isRateLimited ? 'text-orange-500' : 'text-red-500'}`} />
+            <p className="text-gray-700 mb-2 text-lg" style={{ fontSize: `${1.25 * 1.0}rem` }}>{error}</p>
+            <p className="text-gray-600 text-base" style={{ fontSize: `${1 * 1.0}rem` }}>
+              Další pokus za chvíli
+            </p>
+            {isRateLimited && (
+              <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                <p className="text-orange-800 text-sm" style={{ fontSize: `${0.8 * 1.0}rem` }}>
+                  API má omezený počet požadavků za minutu.<br/>
+                  Automaticky zkusím znovu za chvíli.
+                </p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const limitedDepartures = departures.slice(0, 7);
+
+  return (
+    <Card className="shadow-lg bg-white/90 h-full border-2 border-gray-300 flex flex-col overflow-hidden">
+      <CardContent
+        className="flex-1 p-2 flex flex-col min-h-full"
+        style={{ paddingTop: `${0.5 * 1.0}rem` }}
+      >
+        <div className="flex-1 flex flex-col">
+        {limitedDepartures.length === 0 && !loading ? (
+          <div className="text-center py-8 text-gray-600 flex-1 flex items-center justify-center">
+            <div>
+              <Info className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 mx-auto mb-2 sm:mb-4 text-gray-400" style={{ width: `${Math.max(3, 4 * 1.0)}rem`, height: `${Math.max(3, 4 * 1.0)}rem` }} />
+              <p style={{ fontSize: `${Math.max(1.8, 2.8 * 1.0)}rem` }}>Žádné odjezdy do 30 min</p>
+              <p style={{ fontSize: `${Math.max(1.4, 2.2 * 1.0)}rem` }}>Zkontrolujte později</p>
+            </div>
+          </div>
+        ) : (limitedDepartures.length > 0 || loading) ? (
+          <div className="flex-1 flex flex-col space-y-1" style={{ minHeight: 0 }}>
+            {limitedDepartures.map((departure, index) => {
+              const delay = departure.delay || 0;
+              const delayInfo = getDelayBadge(delay);
+              const approachingInfo = getVehicleTypeInfo(departure);
+              const serviceAlerts = getServiceAlerts(departure);
+              const timeToArrival = departure.arrival_timestamp - currentTime;
+              const predictedDelay = departure.route_id?.startsWith("pidday-") ? null : getPredictedDelay(delayAverages, departure);
+
+              return (
+                <div
+                  key={`departure-${departure.route_short_name}-${departure.trip_id}-${departure.departure_timestamp}`}
+                  className={disableAnimations ? '' : 'departure-card-animation'}
+                >
+                  <div
+                  className={`flex flex-col lg:flex-row items-start lg:items-center justify-between rounded-lg border relative flex-1 gap-1 sm:gap-2 lg:gap-0 ${
+                    isSchoolTram(departure, stationName)
+                      ? 'border-gray-100'
+                      : 'border-gray-100 bg-white'
+                  }`}
+                  style={{
+                    padding: `${Math.max(0.3, 0.6 * 1.0)}rem`,
+                    marginBottom: `${0.3 * 1.0}rem`,
+                    minHeight: `${Math.max(4, 6 * 1.0)}rem`,
+                    ...(isSchoolTram(departure, stationName) && {
+                      background: 'linear-gradient(to right, rgba(235, 93, 67, 0.2), rgba(235, 93, 67, 0.15))',
+                      borderColor: '#EB5D43',
+                      boxShadow: '0 2px 8px rgba(235, 93, 67, 0.4)'
+                    })
+                  }}
+                >
+
+                  <div className="flex items-center w-full lg:w-auto" style={{ gap: `${Math.max(0.6, 1.0 * 1.0)}rem` }}>
+                    <div className={`rounded-lg flex items-center justify-center ${departure.route_color ? '' : getRouteColor(departure.route_type, departure.route_short_name)}`}
+                         style={{
+                           width: departure.route_short_name.length > 2 ?
+                             `${Math.max(3.5, 5.25 * 1.0)}rem` :
+                             `${Math.max(3.0, 4.5 * 1.0)}rem`,
+                           height: `${Math.max(3.0, 4.5 * 1.0)}rem`,
+                           minWidth: departure.route_short_name.length > 2 ?
+                             `${Math.max(3.5, 5.25 * 1.0)}rem` :
+                             `${Math.max(3.0, 4.5 * 1.0)}rem`,
+                           ...(departure.route_color ? {
+                             backgroundColor: `#${departure.route_color}`,
+                             color: `#${departure.route_text_color || 'ffffff'}`,
+                           } : {})
+                         }}>
+                      <span className="font-bold" style={{
+                        fontSize: departure.route_short_name.length > 2 ?
+                          `${Math.max(1.25, 2.25 * 1.0)}rem` :
+                          `${Math.max(1.5, 3.0 * 1.0)}rem`
+                      }}>
+                        {departure.route_short_name}
+                      </span>
+                    </div>
+
+                    <div className="flex-1">
+                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-1" style={{ marginBottom: `${0.1 * 1.0}rem` }}>
+                        <div className="flex items-center gap-1 flex-wrap" style={{ gap: `${0.4 * 1.0}rem` }}>
+                          <span className="font-bold text-gray-900" style={{ fontSize: `${Math.max(1.6, 2.8 * 1.0)}rem` }}>
+                            {getDirectionDisplay(departure)}
+                          </span>
+                          {departure.continues_as && (
+                            <span
+                              className="inline-flex items-center gap-1 rounded-md bg-amber-100 text-amber-800 font-bold px-2 py-0.5"
+                              style={{ fontSize: `${Math.max(0.9, 1.4 * 1.0)}rem` }}
+                              title={`Pokračuje jako ${departure.continues_as}${departure.continues_direction ? " směr " + departure.continues_direction : ""}`}
+                            >
+                              <i className="fas fa-arrow-right" />
+                              {departure.continues_as}
+                            </span>
+                          )}
+                          {departure.wheelchair_accessible && (
+                            <i className="fas fa-wheelchair text-blue-600" style={{ fontSize: `${Math.max(0.9, 1.4 * 1.0)}rem` }}></i>
+                          )}
+                          {hasAirConditioning(departure) && (
+                            <i className="fas fa-snowflake text-blue-500" style={{ fontSize: `${Math.max(0.9, 1.4 * 1.0)}rem` }} title="Klimatizace"></i>
+                          )}
+                        </div>
+                      </div>
+
+                      {!departure.route_id?.startsWith("pidday-") && (
+                        <div className="flex items-center gap-1 sm:gap-2 text-gray-600" style={{
+                          fontSize: `${Math.max(0.7, 1.2 * 1.0)}rem`,
+                          gap: `${Math.max(0.2, 0.3 * 1.0)}rem`
+                        }}>
+                          <div className="flex items-center gap-1" style={{ gap: `${0.3 * 1.0}rem` }}>
+                            <Clock className="w-3 h-3 sm:w-4 sm:h-4" style={{ width: `${Math.max(0.6, 1.2 * 1.0)}rem`, height: `${Math.max(0.6, 1.2 * 1.0)}rem` }} />
+                            {formatTime(timeToArrival)}
+                          </div>
+                          <div className="flex items-center gap-1" style={{ gap: `${0.3 * 1.0}rem` }}>
+                            <MapPin className="w-3 h-3 sm:w-4 sm:h-4" style={{ width: `${Math.max(0.6, 1.2 * 1.0)}rem`, height: `${Math.max(0.6, 1.2 * 1.0)}rem` }} />
+                            <span className="max-w-full" title={departure.current_stop || 'Poloha neznámá'}>
+                              {departure.current_stop || 'Poloha neznámá'}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+
+                      {serviceAlerts.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1" style={{
+                          gap: `${0.4 * 1.0}rem`,
+                          marginTop: `${0.2 * 1.0}rem`
+                        }}>
+                          {serviceAlerts.map((alert, alertIndex) => (
+                            <Badge key={alertIndex} className={`${alert.color} flex items-center gap-1`}
+                                   style={{
+                                     fontSize: `${1.0 * 1.0}rem`,
+                                     padding: `${0.3 * 1.0}rem ${0.5 * 1.0}rem`,
+                                     gap: `${0.2 * 1.0}rem`,
+                                     ...(alert.customStyle || {})
+                                   }}>
+                              {alert.icon}
+                              <span>{alert.text}</span>
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+
+                    </div>
+                  </div>
+
+                  <div className="text-center lg:text-right flex-shrink-0 w-full lg:w-auto flex flex-col items-center lg:items-end" style={{ gap: `${Math.max(0.2, 0.3 * 1.0)}rem` }}>
+                    <div className="flex items-center gap-2">
+                      {(() => {
+                        const display = formatDisplayTime(departure);
+                        const isStihas = showTimesInMinutes && (display.includes('Stíháš') || display.includes('Nestíháš'));
+                        if (isStihas) {
+                          return (
+                            <div className="font-bold" style={{
+                              fontSize: `${Math.max(2.2, 4.0 * 1.0)}rem`,
+                              color: display.includes('Nestíháš') ? '#dc2626' : '#16a34a'
+                            }}>
+                              {display}
+                            </div>
+                          );
+                        }
+                        return (
+                          <div className="font-bold text-gray-900" style={{ fontSize: `${Math.max(2.2, 4.0 * 1.0)}rem` }}>
+                            {display}
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {isSchoolTram(departure, stationName) && (
+                        <Badge className="text-white justify-center lg:justify-start flex items-center gap-1"
+                               style={{
+                                 fontSize: `${Math.max(0.5, 0.8 * 1.0)}rem`,
+                                 padding: `${Math.max(0.1, 0.2 * 1.0)}rem ${Math.max(0.2, 0.4 * 1.0)}rem`,
+                                 backgroundColor: '#EB5D43',
+                                 gap: `${0.2 * 1.0}rem`
+                               }}>
+                          <img src="/pictures/tramvaj.svg" alt="Tramvaj" style={{ width: `${1.0 * 1.0}rem`, height: `${1.0 * 1.0}rem`, filter: 'brightness(0) invert(1)' }} />
+                          <span>Školní Tramvaj</span>
+                        </Badge>
+                      )}
+                      {departure.is_night && (
+                        <Badge className="bg-indigo-100 text-indigo-800 justify-center lg:justify-start flex items-center gap-1"
+                               style={{
+                                 fontSize: `${Math.max(0.5, 0.8 * 1.0)}rem`,
+                                 padding: `${Math.max(0.1, 0.2 * 1.0)}rem ${Math.max(0.2, 0.4 * 1.0)}rem`,
+                                 gap: `${0.2 * 1.0}rem`
+                               }}>
+                          <Moon style={{ width: `${1.0 * 1.0}rem`, height: `${1.0 * 1.0}rem` }} />
+                          <span>Noční linka</span>
+                        </Badge>
+                      )}
+                      {(departure.headsign?.toLowerCase().includes('vozovna') && !departure.headsign?.toLowerCase().includes('ústředn') && !departure.route_id?.startsWith('pidday-')) && (
+                        <Badge className="bg-orange-100 text-orange-800 justify-center lg:justify-start flex items-center gap-1"
+                               style={{
+                                 fontSize: `${Math.max(0.5, 0.8 * 1.0)}rem`,
+                                 padding: `${Math.max(0.1, 0.2 * 1.0)}rem ${Math.max(0.2, 0.4 * 1.0)}rem`,
+                                 gap: `${0.2 * 1.0}rem`
+                               }}>
+                          <Wrench style={{ width: `${1.0 * 1.0}rem`, height: `${1.0 * 1.0}rem` }} />
+                          <span>Jízda do vozovny</span>
+                        </Badge>
+                      )}
+                      {approachingInfo && (
+                        <Badge className="bg-green-100 text-green-800 justify-center lg:justify-start"
+                               style={{
+                                 fontSize: `${Math.max(0.5, 0.8 * 1.0)}rem`,
+                                 padding: `${Math.max(0.1, 0.2 * 1.0)}rem ${Math.max(0.2, 0.4 * 1.0)}rem`
+                               }}>
+                          Blíží se
+                        </Badge>
+                      )}
+                      <Badge className={`${delayInfo.color} justify-center lg:justify-start`}
+                             style={{
+                               fontSize: `${Math.max(0.5, 0.8 * 1.0)}rem`,
+                               padding: `${Math.max(0.1, 0.2 * 1.0)}rem ${Math.max(0.2, 0.4 * 1.0)}rem`
+                             }}>
+                        {delayInfo.text}
+                      </Badge>
+                      {predictedDelay && (
+                        <Badge
+                          className={`${predictedDelay.late ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600'} justify-center lg:justify-start flex items-center gap-1`}
+                          title="Průměrné zpoždění linky v tuto hodinu za posledních 14 dní"
+                          style={{
+                            fontSize: `${Math.max(0.5, 0.8 * 1.0)}rem`,
+                            padding: `${Math.max(0.1, 0.2 * 1.0)}rem ${Math.max(0.2, 0.4 * 1.0)}rem`,
+                            gap: `${0.2 * 1.0}rem`
+                          }}>
+                          <History style={{ width: `${1.0 * 1.0}rem`, height: `${1.0 * 1.0}rem` }} />
+                          <span>{predictedDelay.text}</span>
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+export const TramDeparturesConnected = memo(TramDeparturesConnectedComponent);

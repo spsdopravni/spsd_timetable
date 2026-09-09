@@ -1,27 +1,37 @@
-
 {
-  "name": "Odjezdová tabule Praha Motol",
-  "short_name": "Praha Motol",
-  "description": "Živá odjezdová tabule pro zastávky v oblasti Praha Motol s real-time informacemi o tramvajích a autobusech",
-  "start_url": "/",
+  "name": "SPŠD Odjezdy",
+  "short_name": "SPŠD Odjezdy",
+  "description": "Odjezdy MHD pro studenty SPŠD Praha",
+  "start_url": "/m",
   "display": "standalone",
-  "background_color": "#1f2937",
-  "theme_color": "#1f2937",
-  "orientation": "landscape-primary",
-  "categories": ["transport", "utilities", "productivity"],
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "orientation": "any",
   "lang": "cs",
   "icons": [
     {
-      "src": "/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png",
+      "src": "/pictures/robotz-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/pictures/fedda8c8-51ba-4dc4-a842-29979e71d4a8.png",
+      "src": "/pictures/robotz-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/pictures/robotz-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/pictures/robotz-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

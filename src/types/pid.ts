@@ -18,6 +18,8 @@ export interface Departure {
   arrival_timestamp: number;
   departure_timestamp: number;
   delay?: number;
+  /** true = zpoždění je skutečně naměřené (vozidlo hlásí polohu), ne výchozí 0 */
+  delay_available?: boolean;
 
   // Informace o trase
   route_short_name: string;
@@ -28,6 +30,13 @@ export interface Departure {
   route_text_color?: string;
   headsign: string;
   is_night?: boolean;
+
+  // Pokud spoj pokračuje jako jiná linka — z infotexts Golemia
+  // (např. "Linka 6 pokračuje z Nádraží Holešovice jako nová linka 34")
+  continues_as?: string;
+  continues_from?: string;
+  continues_direction?: string;
+  last_stop_name?: string;
 
   // Trip informace
   trip_id?: string;

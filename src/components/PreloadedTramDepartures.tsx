@@ -129,7 +129,7 @@ export const PreloadedTramDepartures = ({
   const getRouteTypeColor = (routeType: number) => {
     switch (routeType) {
       case 0: return 'bg-blue-600';
-      case 1: return 'bg-green-600';
+      case 1: return 'bg-red-600'; // Metro - červená
       case 3: return 'bg-red-600';
       case 11: return 'bg-yellow-600';
       default: return 'bg-gray-600';

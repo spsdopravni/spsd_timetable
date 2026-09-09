@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { X, Eye, EyeOff, AlertTriangle, Snowflake } from 'lucide-react';
+import { X, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -11,7 +11,6 @@ interface SettingsProps {
     showWeatherInHeader: boolean;
     showTimesInMinutes: boolean;
     testAlert: boolean;
-    snowyLogo: boolean;
     disableAnimations: boolean;
   };
   onSettingChange: (key: string, value: any) => void;
@@ -59,25 +58,6 @@ export const Settings = ({ isOpen, onClose, settings, onSettingChange }: Setting
             >
               <AlertTriangle className="w-4 h-4" />
               {settings.testAlert ? 'Aktivní' : 'Aktivovat'}
-            </Button>
-          </div>
-
-          {/* Zasněžené logo */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div>
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <Snowflake className="w-5 h-5" />
-                Zasněžené logo
-              </h3>
-              <p className="text-sm text-gray-600">Zimní varianta loga školy se sněhovou vločkou</p>
-            </div>
-            <Button
-              variant={settings.snowyLogo ? "default" : "outline"}
-              onClick={() => onSettingChange('snowyLogo', !settings.snowyLogo)}
-              className="flex items-center gap-2"
-            >
-              <Snowflake className="w-4 h-4" />
-              {settings.snowyLogo ? 'Zapnuto' : 'Vypnuto'}
             </Button>
           </div>
 

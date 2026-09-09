@@ -2,12 +2,44 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
+import basicSsl from "@vitejs/plugin-basic-ssl";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
-    port: 8080,
+    port: 3000,
+    proxy: {
+      '/meteo': {
+        target: 'http://10.0.10.208',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/meteo/, ''),
+      },
+      // Vercel serverless funkce (api/*.ts) lokálně neběží – při vývoji
+      // a v `vite preview` (Raspberry Pi) se /api bere z produkce.
+      // Přepsat lze přes VITE_API_PROXY_TARGET.
+      '/api': {
+        target: process.env.VITE_API_PROXY_TARGET || 'https://timetable.brozovec.eu',
+        changeOrigin: true,
+        secure: true,
+      },
+    },
+  },
+  // `vite preview` (spouští se na Raspberry Pi přes `npm run dev`) má mít
+  // stejné proxy jako dev server – explicitně, aby to nezáviselo na defaultu.
+  preview: {
+    proxy: {
+      '/meteo': {
+        target: 'http://10.0.10.208',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/meteo/, ''),
+      },
+      '/api': {
+        target: process.env.VITE_API_PROXY_TARGET || 'https://timetable.brozovec.eu',
+        changeOrigin: true,
+        secure: true,
+      },
+    },
   },
   plugins: [
     react(),
@@ -26,26 +58,29 @@ export default defineConfig(({ mode }) => ({
         drop_console: true,
         drop_debugger: true,
         pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn'],
-        passes: 3,
-        unsafe: true,
-        unsafe_comps: true,
-        unsafe_math: true,
-        unsafe_methods: true
+        passes: 2,
+        ecma: 2020,
       },
       mangle: {
         safari10: true
+      },
+      format: {
+        comments: false,
       }
     },
     rollupOptions: {
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['lucide-react', 'clsx', 'tailwind-merge']
+          'ui-vendor': ['lucide-react', 'clsx', 'tailwind-merge'],
+          'animation': ['framer-motion'],
         }
       }
     },
     chunkSizeWarningLimit: 1000,
-    target: 'es2015',
+    target: 'es2020',
     cssCodeSplit: true,
+    sourcemap: false,
+    reportCompressedSize: false,
   }
 }));

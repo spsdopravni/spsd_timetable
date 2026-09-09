@@ -1,0 +1,6 @@
+project_id = "yfcjsfuqeonmkjgetqsy"
+
+# check-notifications je veřejný — invokuje se z prohlížeče bez JWT.
+# Bez tohoto flagu Supabase gateway vrací 401.
+[functions.check-notifications]
+verify_jwt = false

@@ -1,7 +1,8 @@
-import { useState, useEffect, memo } from "react";
+import { useState, useEffect, memo, useMemo, useCallback } from "react";
 import { Clock, AlertTriangle, Info, Snowflake, Car, MapPin, Wrench, Bus, Wind, Accessibility, Calendar, ArrowRight, Moon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { DepartureListSkeleton } from "@/components/DepartureListSkeleton";
 import { getDepartures, setThirdApiKey } from "@/utils/pidApi";
 import type { Departure } from "@/types/pid";
 
@@ -12,172 +13,108 @@ interface TramDeparturesProps {
   showTimesInMinutes?: boolean;
   stationName?: string;
   disableAnimations?: boolean;
+  timeOffset?: number;
 }
 
-const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTimesInMinutes = false, stationName = "", disableAnimations = false }: TramDeparturesProps) => {
+const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTimesInMinutes = false, stationName = "", disableAnimations = false, timeOffset = 0 }: TramDeparturesProps) => {
   const [departures, setDepartures] = useState<Departure[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [nextDepartures, setNextDepartures] = useState<Departure[]>([]);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [error, setError] = useState<string | null>(null);
-  const [retryDelay, setRetryDelay] = useState(60000);
   const [isRateLimited, setIsRateLimited] = useState(false);
-  const [previousStationId, setPreviousStationId] = useState<string | string[]>("");
-  const [retryCount, setRetryCount] = useState(0);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [currentTime, setCurrentTime] = useState<number>(Math.floor(Date.now() / 1000));
-  const [animationKey, setAnimationKey] = useState(0);
-  const [isFadingOut, setIsFadingOut] = useState(false);
 
-  const fetchDepartures = async (isRetry = false) => {
+  const fetchDepartures = useCallback(async () => {
     try {
       setError(null);
       setIsRateLimited(false);
 
-      // Předčítání dat na pozadí
       const result = await getDepartures(stationId);
       const { departures: departuresData } = result;
 
-      if (departuresData.length === 0 && retryCount < 3) {
-        setRetryCount(prev => prev + 1);
-        setTimeout(() => fetchDepartures(true), 5000);
-        return;
-      }
-
-      // Vždy bez animací pro úsporu RAM
+      // Tiché update bez animací
       setDepartures(departuresData);
       setLastUpdate(new Date());
-      setRetryDelay(120000); // 2 min
-      setRetryCount(0);
-      setIsUpdating(false);
-      setAnimationKey(prev => prev + 1); // Trigger animation
     } catch (error: any) {
-
-      if (error.message === 'RATE_LIMIT' || error.message === 'RATE_LIMIT_PROTECTION') {
-        setError("API limit dosažen - čekám déle...");
+      if (error.message === 'RATE_LIMIT' || error.message?.includes('429')) {
+        setError("API limit - čekám...");
         setIsRateLimited(true);
-        setRetryDelay(120000);
-      } else if (error.message?.includes('429') || error.message?.includes('too many')) {
-        setError("Příliš mnoho požadavků - čekám déle...");
-        setIsRateLimited(true);
-        setRetryDelay(prev => Math.min(prev * 2, 300000));
-      } else if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
-        setError("Chyba autentifikace - zkontrolujte API klíče");
-        setRetryDelay(300000); // 5 minut
+      } else if (error.message?.includes('401')) {
+        setError("Chyba API klíče");
       } else {
-        setError("Chyba při načítání odjezdů");
-        setRetryDelay(120000);
+        setError("Chyba načítání");
       }
     } finally {
       setLoading(false);
-      setIsUpdating(false);
     }
-  };
+  }, [stationId]);
 
+  // Prvotní načtení dat a pravidelný refresh každých 60 sekund
   useEffect(() => {
     // Přidáme globální funkci pro nastavení třetího API klíče (pokud není nastaven)
     (window as any).setThirdApiKey = setThirdApiKey;
 
-    const stationChanged = JSON.stringify(previousStationId) !== JSON.stringify(stationId);
+    // Načteme data při prvním renderování
+    fetchDepartures();
 
-    if (stationChanged) {
-      setRetryCount(0);
-      setPreviousStationId(stationId);
+    // Pak refreshujeme každých 60 sekund
+    const interval = setInterval(() => {
+      fetchDepartures();
+    }, 60000);
 
-      // Preload data first - načteme data na pozadí
-      const preloadData = async () => {
-        try {
-          const result = await getDepartures(stationId);
-          setNextDepartures(result.departures);
-
-          // Při prvním načtení žádná animace
-          if (isInitialLoad || departures.length === 0) {
-            setDepartures(result.departures);
-            setLastUpdate(new Date());
-            setLoading(false);
-            setIsInitialLoad(false);
-            return;
-          }
-
-          // Fade out -> změna dat -> fade in animace
-          // 1. Fade out (700ms total - includes stagger)
-          setIsFadingOut(true);
-
-          // 2. Po fade out změníme data
-          setTimeout(() => {
-            setDepartures(result.departures);
-            setLastUpdate(new Date());
-            setAnimationKey(prev => prev + 1);
-            setIsFadingOut(false);
-            setIsUpdating(false);
-          }, 700);
-        } catch (error) {
-          // If preload fails, fall back to normal fetch
-          setIsUpdating(false);
-          setLoading(false);
-          fetchDepartures();
-        }
-      };
-
-      preloadData();
-    }
+    return () => clearInterval(interval);
   }, [stationId]);
 
+  // Aktualizace času každé 2 sekundy pro kontinuální countdown (snížená zátěž CPU)
   useEffect(() => {
-    if (JSON.stringify(previousStationId) === JSON.stringify(stationId)) {
-      const interval = setInterval(() => {
-        fetchDepartures();
-      }, retryDelay);
+    const updateTime = () => {
+      const localTime = Date.now();
+      const adjustedTime = localTime + timeOffset;
+      setCurrentTime(Math.floor(adjustedTime / 1000));
+    };
 
-      return () => clearInterval(interval);
-    }
-  }, [stationId, retryDelay, previousStationId]);
+    updateTime(); // Okamžitě nastavit správný čas
 
-  // Aktualizace času každou sekundu pro kontinuální countdown
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(Math.floor(Date.now() / 1000));
-    }, 1000);
+    const timer = setInterval(updateTime, 2000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [timeOffset]);
 
-  const formatTime = (seconds: number) => {
+  const formatTime = useCallback((seconds: number) => {
     if (seconds < 60) return `${seconds}s`;
     const minutes = Math.floor(seconds / 60);
     return `${minutes} min`;
-  };
+  }, []);
 
-  const formatVehicleNumber = (vehicleNumber: string, routeNumber: string, tripNumber: string) => {
+  const formatVehicleNumber = useCallback((vehicleNumber: string, routeNumber: string, tripNumber: string) => {
     // Formát: #9418 na 9/18 (vozidlo na lince/číslo spoje)
     if (vehicleNumber && routeNumber && tripNumber) {
       // Použijeme extrahované číslo spoje z GTFS trip_id
       return `#${vehicleNumber} na ${routeNumber}/${tripNumber}`;
     }
     return `#${vehicleNumber}`;
-  };
+  }, []);
 
-  const getDelayBadge = (delay: number) => {
+  const getDelayBadge = useCallback((delay: number) => {
     if (delay <= 0) return { text: "Včas", color: "bg-green-100 text-green-800" };
     const minutes = Math.floor(delay / 60);
     if (minutes === 0) return { text: "Včas", color: "bg-green-100 text-green-800" };
     if (delay <= 60) return { text: `+${minutes} min`, color: "bg-yellow-100 text-yellow-800" };
     return { text: `+${minutes} min`, color: "bg-red-100 text-red-800" };
-  };
+  }, []);
 
-  const getVehicleTypeInfo = (departure: Departure) => {
+  const getVehicleTypeInfo = useCallback((departure: Departure) => {
     const timeToArrival = departure.arrival_timestamp - currentTime;
 
     if (timeToArrival <= 120 && timeToArrival > 0) {
       const vehicleType = getVehicleType(departure.route_type);
-      return `${vehicleType} se blíži do stanice`;
+      return `${vehicleType} se blíží do stanice`;
     }
 
     return null;
-  };
+  }, [currentTime]);
 
-  const getVehicleType = (routeType: number) => {
+  const getVehicleType = useCallback((routeType: number) => {
     switch (routeType) {
       case 0: return "Tramvaj";
       case 1: return "Metro";
@@ -185,17 +122,17 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
       case 3: return "Autobus";
       default: return "Vozidlo";
     }
-  };
+  }, []);
 
-  const getRouteColor = (routeType: number) => {
+  const getRouteColor = useCallback((routeType: number, routeName?: string) => {
     switch (routeType) {
       case 0: return "bg-red-100 text-red-800";
       case 3: return "bg-blue-100 text-blue-800";
-      case 1: return "bg-green-100 text-green-800";
+      case 1: return "bg-red-100 text-red-800"; // Metro - červená
       case 2: return "bg-purple-100 text-purple-800";
       default: return "bg-red-100 text-red-800";
     }
-  };
+  }, []);
 
   const hasAirConditioning = (departure: Departure) => {
     // Stejně jako low_floor - používá departure.air_conditioning
@@ -256,6 +193,7 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
       );
     }
 
+
     return headsign;
   };
 
@@ -272,7 +210,7 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
     return false;
   };
 
-  const getServiceAlerts = (departure: Departure) => {
+  const getServiceAlerts = useCallback((departure: Departure) => {
     const alerts = [];
 
     const headsign = departure.headsign?.toLowerCase() || '';
@@ -316,9 +254,9 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
     }
 
     return alerts;
-  };
+  }, []);
 
-  const formatDisplayTime = (departure: Departure) => {
+  const formatDisplayTime = useCallback((departure: Departure) => {
     const timeToArrival = departure.arrival_timestamp - currentTime;
 
     if (showTimesInMinutes) {
@@ -361,6 +299,22 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
       else if ((station.includes('motol') && !station.includes('vozovna')) && timeToArrival < 60) {
         return 'Nestíháš';
       }
+      // Vyšehrad metro - pod 60s nestíháš, pod 120s stíháš
+      else if (station.includes('vyšehrad') || station.includes('vysehrad')) {
+        if (timeToArrival < 60) {
+          return 'Nestíháš';
+        } else if (timeToArrival < 120) {
+          return 'Stíháš';
+        }
+      }
+      // Svatoplukova tramvaje - pod 60s nestíháš, pod 120s stíháš
+      else if (station.includes('svatoplukova')) {
+        if (timeToArrival < 60) {
+          return 'Nestíháš';
+        } else if (timeToArrival < 120) {
+          return 'Stíháš';
+        }
+      }
       // Ostatní stanice
       else if (timeToArrival < 60) {
         return '<1 min';
@@ -373,9 +327,12 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
         minute: '2-digit'
       });
     }
-  };
+  }, [currentTime, showTimesInMinutes, stationName]);
 
-  // Removed loading state to prevent layout disruption
+  // Show skeleton during initial loading
+  if (loading && departures.length === 0) {
+    return <DepartureListSkeleton itemCount={maxItems || 7} />;
+  }
 
   if (error) {
     return (
@@ -385,7 +342,7 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
             <AlertTriangle className={`w-12 h-12 mx-auto mb-2 ${isRateLimited ? 'text-orange-500' : 'text-red-500'}`} />
             <p className="text-gray-700 mb-2 text-lg" style={{ fontSize: `${1.25 * 1.0}rem` }}>{error}</p>
             <p className="text-gray-600 text-base" style={{ fontSize: `${1 * 1.0}rem` }}>
-              Další pokus za {Math.round(retryDelay / 1000)} sekund
+              Další pokus za chvíli
             </p>
             {isRateLimited && (
               <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
@@ -401,8 +358,25 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
     );
   }
 
-  // Limit departures to exactly 7 items
-  const limitedDepartures = departures.slice(0, 7);
+  // Memoized processing of departures for better performance
+  const processedDepartures = useMemo(() => {
+    return departures.slice(0, maxItems || 7).map(departure => {
+      const timeToArrival = departure.arrival_timestamp - currentTime;
+      const delay = departure.delay || 0;
+      return {
+        ...departure,
+        timeToArrival,
+        delay,
+        delayInfo: getDelayBadge(delay),
+        serviceAlerts: getServiceAlerts(departure),
+        formattedTime: formatDisplayTime(departure),
+        routeColor: getRouteColor(departure.route_type, departure.route_short_name)
+      };
+    }).filter(dep => dep.timeToArrival > 0);
+  }, [departures, currentTime, maxItems, getDelayBadge, formatDisplayTime, getRouteColor]);
+
+  // Legacy compatibility
+  const limitedDepartures = processedDepartures;
 
   return (
     <Card className="shadow-lg bg-white/90 h-full border-2 border-gray-300 flex flex-col overflow-hidden">
@@ -411,7 +385,7 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
         style={{ paddingTop: `${0.5 * 1.0}rem` }}
       >
         <div className="flex-1 flex flex-col">
-        {limitedDepartures.length === 0 && !isUpdating && !loading ? (
+        {limitedDepartures.length === 0 && !loading ? (
           <div className="text-center py-8 text-gray-600 flex-1 flex items-center justify-center">
             <div>
               <Info className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 mx-auto mb-2 sm:mb-4 text-gray-400" style={{ width: `${Math.max(3, 4 * 1.0)}rem`, height: `${Math.max(3, 4 * 1.0)}rem` }} />
@@ -419,7 +393,7 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
               <p style={{ fontSize: `${Math.max(1.4, 2.2 * 1.0)}rem` }}>Zkontrolujte později</p>
             </div>
           </div>
-        ) : (limitedDepartures.length > 0 || isUpdating || loading) ? (
+        ) : (limitedDepartures.length > 0 || loading) ? (
           <div className="flex-1 flex flex-col space-y-1" style={{ minHeight: 0 }}>
             {limitedDepartures.map((departure, index) => {
               const delay = departure.delay || 0;
@@ -430,8 +404,8 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
 
               return (
                 <div
-                  key={`departure-${departure.route_short_name}-${departure.trip_id}-${departure.departure_timestamp}-${animationKey}`}
-                  className={disableAnimations ? '' : `departure-card-animation ${isFadingOut ? 'fade-out' : ''}`}
+                  key={`departure-${departure.route_short_name}-${departure.trip_id}-${departure.departure_timestamp}`}
+                  className={disableAnimations ? '' : 'departure-card-animation'}
                 >
                   <div
                   className={`flex flex-col lg:flex-row items-start lg:items-center justify-between rounded-lg border relative flex-1 gap-1 sm:gap-2 lg:gap-0 ${
@@ -452,7 +426,7 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
                 >
 
                   <div className="flex items-center w-full lg:w-auto" style={{ gap: `${Math.max(0.6, 1.0 * 1.0)}rem` }}>
-                    <div className={`rounded-lg flex items-center justify-center ${getRouteColor(departure.route_type)}`}
+                    <div className={`rounded-lg flex items-center justify-center ${getRouteColor(departure.route_type, departure.route_short_name)}`}
                          style={{
                            width: departure.route_short_name.length > 2 ?
                              `${Math.max(3.5, 5.25 * 1.0)}rem` :
