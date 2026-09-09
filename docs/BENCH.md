@@ -1150,3 +1150,48 @@ je meteostanice. Zisk z registru se projeví až v provozu proti Golemiu.
 **Než začneš měřit vlastní optimalizaci:** pusť `npm run bench` dvakrát za
 sebou na tomtéž commitu. Rozdíl, který ti vyjde, je hranice, pod kterou
 nesmíš interpretovat žádné zlepšení.
+
+## 10. Kumulativní výsledek (proložené A/B, `ca791fe` → `HEAD`)
+
+`--route /spsmotol --minutes 2 --cpu 6`, střídavě A-B-A-B v jedné relaci,
+medián ze dvou běhů na větev:
+
+| metrika | původní | nyní | změna |
+|---|---:|---:|---:|
+| CPU celkem (ms/s) | 129,1 | **45,2** | −65 % |
+| z toho JS (ms/s) | 27,9 | **11,1** | −60 % |
+| z toho styly (ms/s) | 20,7 | **3,8** | −82 % |
+| přepočtů stylů / s | 37,0 | **12,8** | −66 % |
+| JS při startu (kB) | 570 | **277** | −51 % |
+| FCP (ms) | 446 | **298** | −33 % |
+| LCP (ms) | 748 | **566** | −24 % |
+| load (ms) | 275 | **136** | −51 % |
+| požadavků / min | 439,5 | **81,9** | −81 % |
+
+## 11. Co ještě zbývá
+
+Změřený strop: s vypnutým robotem, animacemi i sněžením (`--settings
+motion=off,showRobot=false,snowfall=off`) padne CPU na ~37 ms/s. To je
+podlaha, kterou dělá React, data a meteopanel. Robot po přepisu na CSS
+stojí ~9 ms/s místo původních 24.
+
+Nezpracované, seřazeno podle odhadovaného přínosu:
+
+1. **Pořád 12,8 přepočtů stylů za sekundu**, i když je robot levný. Zbývá
+   dohledat, co je spouští — kandidáti jsou opacity přechody pruhu s textem
+   a vteřinová změna textu hodin.
+2. **Obrázky.** Hlavička je 288 kB PNG (784×736), robot 171–249 kB každý,
+   favicon 156 kB v rozlišení 489×510 px. Na Macu se to neprojeví, na Pi to
+   je paměť a GPU textury. Převést na WebP a zmenšit na skutečně zobrazované
+   rozměry.
+3. **Snowfall chunk (46 kB)** se stahuje celý rok, i když sněžení běží
+   41 dní. Načítat přes dynamický import.
+4. **`setExtras` uvnitř `setData` updateru** (`useMeteoStation.ts`) — vedlejší
+   efekt v reduceru, každý poll dělá dvojí render.
+5. **Globální `*` pravidla s `!important`** v `index.css` — teď už jen dvě,
+   ale pořád platí na každý element.
+
+Mimo frontend, ale s větším dopadem než cokoli výše: **proxovat Golemio
+a meteostanici přes školní server**. Dvě tabule by sdílely jednu cache, klíč
+k API by zmizel z klientského bundlu a Pi by místo desítek requestů za
+minutu stahovalo jeden hotový JSON.
