@@ -105,20 +105,43 @@
     overflow: hidden;
   }
 
-  /* OPTIMALIZACE PRO LOW-END HARDWARE - Vypnout všechny animace a transice */
-  * {
+  /* OPTIMALIZACE PRO LOW-END HARDWARE
+     Úroveň pohybu řídí data-motion na <html> (useDisplaySettings).
+     Dřív tu bylo plošné vypnutí bez podmínky, takže přepínač animací
+     v Nastavení nemohl fungovat — přepínal třídy, jejichž animace už byly
+     zabité. Výchozí stav bez atributu = reduced, ať se nic nezmění
+     stránkám, které Nastavení nemají. */
+  :root:not([data-motion="full"]) * {
     animation-duration: 0s !important;
     animation-delay: 0s !important;
     transition-duration: 0s !important;
     transition-delay: 0s !important;
   }
 
-  /* Povolit animace pouze pro robota */
-  .robot-animation, .robot-animation * {
+  /* reduced (a stránky bez Nastavení, kde atribut chybí): robot se hýbat
+     smí, karty a směry ne. */
+  :root:not([data-motion="full"]):not([data-motion="off"]) .robot-animation,
+  :root:not([data-motion="full"]):not([data-motion="off"]) .robot-animation * {
     animation-duration: revert !important;
     animation-delay: revert !important;
     transition-duration: revert !important;
     transition-delay: revert !important;
+  }
+
+  /* off: nehýbe se vůbec nic, včetně robota. */
+  :root[data-motion="off"] *,
+  :root[data-motion="off"] .robot-animation,
+  :root[data-motion="off"] .robot-animation * {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* Systémové nastavení "omezit pohyb" má poslední slovo. */
+  @media (prefers-reduced-motion: reduce) {
+    *, .robot-animation, .robot-animation * {
+      animation: none !important;
+      transition: none !important;
+    }
   }
 
   /* Hardware acceleration optimizations */
