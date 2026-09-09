@@ -38,6 +38,7 @@ export async function runSession(args) {
   const { page, client, net, console_, loadMs } = await openPage(browser, {
     url: server.url, route: args.route, cpuRate: args.cpu,
     speed: args.speed, floorMs: args.floor, minScaledMs: args.minScaled,
+    settings: args.settings,
   });
 
   const snapDir = path.join(ROOT, 'bench', 'snapshots');

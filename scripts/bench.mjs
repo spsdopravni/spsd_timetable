@@ -21,7 +21,17 @@ const args = parseArgs(process.argv.slice(2), {
   gcEachSample: false,
   snapshots: false,
   trace: false,
+  settings: '',
 });
+
+// --settings motion=off,showRobot=false — předvyplní nastavení tabule,
+// aby šla změřit cena jednotlivých funkcí (robot, sněžení, animace).
+if (typeof args.settings === 'string') {
+  args.settings = Object.fromEntries(args.settings.split(',').filter(Boolean).map(pair => {
+    const [k, v] = pair.split('=');
+    return [k, v === 'true' ? true : v === 'false' ? false : /^\d+$/.test(v) ? Number(v) : v];
+  }));
+}
 
 const report = await runSession(args);
 const file = saveReport(report, { label: args.label, route: args.route });

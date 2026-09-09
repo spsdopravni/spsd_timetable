@@ -119,16 +119,33 @@
   }
 
   /* reduced (a stránky bez Nastavení, kde atribut chybí): robot se hýbat
-     smí, karty a směry ne. */
-  :root:not([data-motion="full"]):not([data-motion="off"]) .robot-animation,
-  :root:not([data-motion="full"]):not([data-motion="off"]) .robot-animation * {
-    animation-duration: revert !important;
-    animation-delay: revert !important;
-    transition-duration: revert !important;
-    transition-delay: revert !important;
+     smí, karty a směry ne.
+
+     Pozor na `revert`: to zahazuje autorské styly, takže by sebralo i inline
+     transition robota. Proto se sem píše konkrétní hodnota — pravidlo se
+     třídou (0,1,0) přebije plošné `*` (0,0,0), obojí !important, takže
+     rozhoduje specificita. Přesun běží na kompozitoru, doba jde z inline
+     --robot-dur podle právě probíhající fáze. */
+  :root:not([data-motion="full"]):not([data-motion="off"]) .robot-animation {
+    transition: transform var(--robot-dur, 0ms) linear, opacity 500ms linear !important;
+  }
+  :root:not([data-motion="full"]):not([data-motion="off"]) .robot-sprite {
+    transition: transform 300ms ease-in-out !important;
+  }
+
+  /* Stín robota je drahý přes velkou plochu; na tabuli ho drž nízko. */
+  .robot-sprite {
+    filter: drop-shadow(2px 2px 6px rgba(0, 0, 0, .35));
   }
 
   /* off: nehýbe se vůbec nic, včetně robota. */
+  :root[data-motion="full"] .robot-animation {
+    transition: transform var(--robot-dur, 0ms) linear, opacity 500ms linear;
+  }
+  :root[data-motion="full"] .robot-sprite {
+    transition: transform 300ms ease-in-out;
+  }
+
   :root[data-motion="off"] *,
   :root[data-motion="off"] .robot-animation,
   :root[data-motion="off"] .robot-animation * {

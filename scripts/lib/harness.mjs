@@ -81,7 +81,7 @@ export async function launch({ cpuRate, headless, offline, width = 1920, height 
   return browser;
 }
 
-export async function openPage(browser, { url, route, cpuRate, speed, floorMs, minScaledMs }) {
+export async function openPage(browser, { url, route, cpuRate, speed, floorMs, minScaledMs, settings }) {
   const page = (await browser.pages())[0] || (await browser.newPage());
   const net = { requests: 0, finished: 0, failed: 0, byHost: {}, jsBytes: 0, docs: [] };
   page.on('request', (r) => {
@@ -105,6 +105,17 @@ export async function openPage(browser, { url, route, cpuRate, speed, floorMs, m
   page.on('pageerror', (e) => { if (console_.errors.length < 30) console_.errors.push('pageerror: ' + String(e).slice(0, 200)); });
 
   await page.evaluateOnNewDocument(installProbe, { speed, floorMs, minScaledMs });
+
+  // Předvyplnit nastavení tabule (useDisplaySettings) ještě před startem Reactu.
+  // Díky tomu jde změřit cenu jednotlivých funkcí zvlášť: --settings robot=off
+  if (settings && Object.keys(settings).length) {
+    await page.evaluateOnNewDocument((s) => {
+      try {
+        localStorage.setItem('tram-display-settings', JSON.stringify(s));
+        localStorage.setItem('tram-display-settings-moravska', JSON.stringify(s));
+      } catch {}
+    }, settings);
+  }
 
   const client = await page.createCDPSession();
   await client.send('Performance.enable', { timeDomain: 'timeTicks' });

@@ -1,8 +1,17 @@
 import React, { useState, useEffect, useRef, memo, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import funFacts from '@/data/fun_facts.json';
 import nameDays from '@/data/name_days.json';
 import { useSeasonal } from '@/context/DataContext';
+/** Cílová pozice a doba přesunu pro každou fázi průjezdu robota. */
+const ROBOT_PHASES: Record<string, { x: string; ms: number }> = {
+  hidden:      { x: 'calc(100vw + 50px)',  ms: 0 },
+  movingLeft:  { x: 'calc(-100vw + 50px)', ms: 4000 },
+  atLeft:      { x: 'calc(-100vw + 50px)', ms: 0 },
+  movingRight: { x: 'calc(-85vw + 50px)',  ms: 4000 },
+  atRight:     { x: 'calc(-85vw + 50px)',  ms: 0 },
+  movingAway:  { x: 'calc(100vw)',         ms: 3000 },
+};
+
 const DailyRobotComponent = ({ barColor, customMessages = [], robotImage }: { barColor?: string; customMessages?: string[]; robotImage?: string }) => {
   const { seasonalTheme } = useSeasonal();
   const [currentMessage, setCurrentMessage] = useState('');
@@ -255,102 +264,70 @@ const DailyRobotComponent = ({ barColor, customMessages = [], robotImage }: { ba
     // s periodou ~21 s místo 60 s (naměřeno: mountedPct 90 %, movingPct 53 %).
   }, []);
 
+  // Kam a jak dlouho pro každou fázi. Dřív to řešil framer-motion, jenže ten
+  // neumí interpolovat calc() na kompozitoru — dopočítával ho v JS a přepisoval
+  // inline styl každý snímek. Naměřeno: robot sám dělal 12,3 přepočtů stylů za
+  // sekundu a 24 ze 64 ms CPU. CSS transition na transform zvládne totéž
+  // na kompozitoru: styl se zapíše jednou za fázi, ne 60× za sekundu.
+  const phase = ROBOT_PHASES[robotPhase] ?? ROBOT_PHASES.hidden;
+  const facingLeft = robotPhase === 'movingRight' || robotPhase === 'atRight' || robotPhase === 'movingAway';
+
   return (
-    <AnimatePresence>
-      {isVisible && (
-        <>
-          {/* Pozadí s textem */}
-          <motion.div
-            className={`robot-animation fixed bottom-0 left-0 right-0 h-24 z-40 shadow-lg ${barColor ? '' : 'bg-gradient-to-l from-blue-900 via-blue-800 to-blue-900/95'}`}
-            style={{
-              willChange: 'opacity',
-              transform: 'translateZ(0)',
-              ...(barColor ? { background: barColor } : {})
-            }}
-            initial={{ opacity: 0 }}
-            animate={{
-              opacity: showBackground ? 1 : 0
-            }}
-            exit={{ opacity: 0 }}
-            transition={{
-              duration: 0.5,
-              ease: 'linear'
-            }}
-          />
+    <>
+      {/* Pozadí s textem */}
+      {isVisible && <div
+        className={`robot-animation fixed bottom-0 left-0 right-0 h-24 z-40 shadow-lg ${barColor ? '' : 'bg-gradient-to-l from-blue-900 via-blue-800 to-blue-900/95'}`}
+        style={{
+          opacity: showBackground ? 1 : 0,
+          ...(barColor ? { background: barColor } : {}),
+        }}
+      />}
 
-          {/* Text vycentrovaný na celé obrazovce */}
-          <motion.div
-            className="robot-animation fixed bottom-0 left-0 right-0 w-full h-24 z-50 flex items-center justify-center"
-            style={{
-              willChange: 'opacity',
-              transform: 'translateZ(0)'
-            }}
-            initial={{ opacity: 0 }}
-            animate={{
-              opacity: showText ? 1 : 0
-            }}
-            transition={{ duration: 0.5, ease: 'linear' }}
-          >
-            <div className="text-white font-bold text-center" style={{
-              fontSize: `${Math.max(1.2, 2 * 1.0)}rem`,
-              wordBreak: 'keep-all',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden'
-            }}>
-              {currentMessage}
-            </div>
-          </motion.div>
+      {/* Text vycentrovaný na celé obrazovce */}
+      {isVisible && <div
+        className="robot-animation fixed bottom-0 left-0 right-0 w-full h-24 z-50 flex items-center justify-center"
+        style={{ opacity: showText ? 1 : 0 }}
+      >
+        <div
+          className="text-white font-bold text-center"
+          style={{ fontSize: '2rem', wordBreak: 'keep-all', whiteSpace: 'nowrap', overflow: 'hidden' }}
+        >
+          {currentMessage}
+        </div>
+      </div>}
 
-          {/* Robot */}
-          <motion.div
-            className="robot-animation fixed z-[9999]"
-            style={{
-              bottom: '0px',
-              right: '0px',
-              willChange: 'transform, opacity',
-              transform: 'translateZ(0)'
-            }}
-            animate={{
-              x: robotPhase === 'movingLeft' ? 'calc(-100vw + 50px)' :
-                 robotPhase === 'atLeft' ? 'calc(-100vw + 50px)' :
-                 robotPhase === 'movingRight' ? 'calc(-85vw + 50px)' :
-                 robotPhase === 'atRight' ? 'calc(-85vw + 50px)' :
-                 robotPhase === 'movingAway' ? 'calc(100vw)' :
-                 'calc(100vw + 50px)',
-              opacity: robotPhase === 'hidden' ? 0 : 1
-            }}
-            transition={{
-              duration: robotPhase === 'movingLeft' ? 4 :
-                       robotPhase === 'movingRight' ? 4 :
-                       robotPhase === 'movingAway' ? 3 : 1,
-              ease: 'linear'
-            }}
-          >
-            <motion.img
-              src={robotImage || seasonalTheme.robotTheme.image}
-              alt={robotImage ? 'Robot' : `Robot ${seasonalTheme.robotTheme.theme}`}
-              className="w-auto object-contain"
-              style={{
-                height: '16rem',
-                filter: 'drop-shadow(4px 4px 12px rgba(0,0,0,0.4))',
-                // Zrcadlově otočit doprava, když jede zprava doleva
-                transform: (robotPhase === 'movingRight' || robotPhase === 'atRight' || robotPhase === 'movingAway')
-                  ? 'scaleX(-1)'
-                  : 'scaleX(1)',
-                transition: 'transform 0.3s ease-in-out'
-              }}
-              onError={(e) => {
-                // Fallback na výchozí robot, pokud obrázek neexistuje
-                const target = e.target as HTMLImageElement;
-                if (target.src !== '/pictures/robotz.png') {
-                  target.src = '/pictures/robotz.png';
-                }
-              }}
-            />
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+      {/* Robot — kontejner je namontovaný pořád. Kdyby se odmontovával,
+          transition by při startu neměla odkud vyjít a robot by na cílovou
+          pozici skočil místo aby přejel (ověřeno měřením transformu). */}
+      <div
+        className="robot-animation fixed z-[9999]"
+        style={{
+          bottom: 0,
+          right: 0,
+          opacity: robotPhase === 'hidden' ? 0 : 1,
+          transform: `translate3d(${phase.x}, 0, 0)`,
+          ['--robot-dur' as string]: `${phase.ms}ms`,
+          // Vrstvu na GPU drž jen když se opravdu hýbe, ne 24/7.
+          willChange: phase.ms > 0 ? 'transform' : 'auto',
+        }}
+      >
+        <img
+          src={robotImage || seasonalTheme.robotTheme.image}
+          alt={robotImage ? 'Robot' : `Robot ${seasonalTheme.robotTheme.theme}`}
+          className="w-auto object-contain robot-sprite"
+          style={{
+            height: '16rem',
+            transform: facingLeft ? 'scaleX(-1)' : 'scaleX(1)',
+          }}
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            if (target.src !== '/pictures/robotz.png') {
+              target.src = '/pictures/robotz.png';
+            }
+          }}
+        />
+      </div>
+    </>
   );
 };
 
