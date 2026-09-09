@@ -5,6 +5,7 @@ import { WeatherHeader } from "@/components/WeatherHeader";
 import { DailyRobot } from "@/components/DailyRobot";
 import { Snowfall } from "@/components/Snowfall";
 import { ChristmasGarland } from "@/components/ChristmasGarland";
+import { ServiceAlerts } from "@/components/ServiceAlerts";
 import { useDataContext } from "@/context/DataContext";
 
 const SpsMoravska = () => {
@@ -299,6 +300,12 @@ const SpsMoravska = () => {
 
           <ChristmasGarland />
         </div>
+
+        {/* Mimořádnosti a výluky PID pro linky u Jana Masaryka / Šumavské + metro A, C */}
+        <ServiceAlerts
+          stationKeys={['janaMasarykaA', 'janaMasarykaB', 'sumavskaA', 'sumavskaB', 'namestiMiruMetro', 'ipPavlovaMetro']}
+          extraLines={['4', '13', '22', 'A', 'C']}
+        />
 
         {/* Content */}
         <div className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0">

@@ -83,8 +83,11 @@ const TEXT_SENSORS: SensorEndpoint[] = [
   { path: "/text_sensor/vitr_smr_stupn", key: "smerVetruStupne", transform: parseFloat },
 ];
 
-const POLL_INTERVAL = 2_000; // 2 seconds
-const TREND_HISTORY_SIZE = 8; // ~2 minutes of history (8 × 15s)
+const POLL_INTERVAL = 5_000; // 5 s – meteodata se rychleji nemění, šetří CPU na Raspberry Pi
+const RETRY_INTERVAL = 30_000; // 30 s – když je stanice nedostupná, zkoušíme ji znovu pomaleji
+const FETCH_TIMEOUT = 4_000; // 4 s – aby visící požadavky neblokovaly další kolo
+const MAX_FAILS_BEFORE_HIDE = 3;
+const TREND_HISTORY_SIZE = 24; // ~2 minuty historie (24 × 5 s)
 const TREND_THRESHOLD_TEMP = 0.3; // °C difference to count as trend
 const TREND_THRESHOLD_PRESSURE = 0.5; // hPa difference to count as trend
 
@@ -183,7 +186,7 @@ export function useMeteoStation() {
   const [available, setAvailable] = useState(true);
   const failCount = useRef(0);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // trend history buffers
   const tempHistory = useRef<number[]>([]);
@@ -193,16 +196,21 @@ export function useMeteoStation() {
   const minMax = useRef<{ min: number; max: number; day: number } | null>(null);
 
   const fetchAll = useCallback(async () => {
+    // Společný timeout pro celé kolo – bez něj by na Pi po výpadku sítě
+    // zůstávaly viset desítky požadavků najednou.
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
+
     try {
       const results = await Promise.allSettled([
         ...SENSORS.map(async (s) => {
-          const res = await fetch(`${BASE}${s.path}`);
+          const res = await fetch(`${BASE}${s.path}`, { signal: controller.signal });
           if (!res.ok) throw new Error(res.statusText);
           const json = await res.json();
           return { key: s.key, value: json.value as number };
         }),
         ...TEXT_SENSORS.map(async (s) => {
-          const res = await fetch(`${BASE}${s.path}`);
+          const res = await fetch(`${BASE}${s.path}`, { signal: controller.signal });
           if (!res.ok) throw new Error(res.statusText);
           const json = await res.json();
           const value = s.transform ? s.transform(json.value) : json.value;
@@ -259,28 +267,48 @@ export function useMeteoStation() {
         });
 
         setConnected(true);
+        setAvailable(true);
         setLastUpdate(new Date());
         failCount.current = 0;
-      } else {
-        failCount.current++;
-        setConnected(false);
-        if (failCount.current >= 3) setAvailable(false);
+        return true;
       }
+
+      failCount.current++;
+      setConnected(false);
+      if (failCount.current >= MAX_FAILS_BEFORE_HIDE) setAvailable(false);
+      return false;
     } catch {
       failCount.current++;
       setConnected(false);
-      if (failCount.current >= 3) setAvailable(false);
+      if (failCount.current >= MAX_FAILS_BEFORE_HIDE) setAvailable(false);
+      return false;
+    } finally {
+      clearTimeout(timeoutId);
     }
   }, []);
 
+  // Dotazování běží pořád. Když stanice neodpovídá, pruh se po několika
+  // neúspěších schová, ale dál se každých 30 s zkouší znovu – po naběhnutí
+  // sítě nebo restartu meteostanice se sám objeví. Dřív se po 3 chybách
+  // (např. hned po zapnutí Raspberry Pi, než naběhla síť) přestalo dotazovat
+  // úplně a počasí zmizelo až do obnovení stránky.
   useEffect(() => {
-    if (!available) return;
-    fetchAll();
-    intervalRef.current = setInterval(fetchAll, POLL_INTERVAL);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+    let cancelled = false;
+
+    const tick = async () => {
+      const ok = await fetchAll();
+      if (cancelled) return;
+      const delay = ok || failCount.current < MAX_FAILS_BEFORE_HIDE ? POLL_INTERVAL : RETRY_INTERVAL;
+      intervalRef.current = setTimeout(tick, delay);
     };
-  }, [fetchAll, available]);
+
+    tick();
+
+    return () => {
+      cancelled = true;
+      if (intervalRef.current) clearTimeout(intervalRef.current);
+    };
+  }, [fetchAll]);
 
   return { data, extras, connected, available, lastUpdate };
 }

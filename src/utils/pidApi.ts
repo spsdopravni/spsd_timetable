@@ -505,6 +505,10 @@ export const getDepartures = async (stationIds: string | string[]): Promise<{ de
         if (dep.delay?.seconds) {
           delay = dep.delay.seconds;
         }
+        // Golemio posílá is_available=false, když vozidlo zatím nehlásí polohu.
+        // V tom případě je delay=0 jen výchozí hodnota, ne pozorování – historie
+        // zpoždění (delayHistory) takové záznamy přeskakuje.
+        const delayAvailable = dep.delay?.is_available === true || (dep.delay?.seconds !== undefined && dep.delay?.seconds !== null);
 
         // Správné field names podle API dokumentace
         const vehicleNumber = dep.vehicle?.vehicle_registration_number || dep.vehicle?.registration_number;
@@ -596,6 +600,7 @@ export const getDepartures = async (stationIds: string | string[]): Promise<{ de
           arrival_timestamp: arrivalTimestamp,
           departure_timestamp: arrivalTimestamp,
           delay: delay,
+          delay_available: delayAvailable,
           route_short_name: dep.route?.short_name || 'N/A',
           route_type: dep.route?.type || 0,
           headsign: dep.trip?.headsign || 'Neznámý směr',

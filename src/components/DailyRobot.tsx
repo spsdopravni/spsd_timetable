@@ -1,17 +1,36 @@
-import React, { useState, useEffect, useRef, memo, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useRef, memo, useCallback } from 'react';
 import funFacts from '@/data/fun_facts.json';
 import nameDays from '@/data/name_days.json';
 import { useDataContext } from '@/context/DataContext';
+
+/**
+ * Fáze animace robota. Pohyb je řízený čistě CSS transitions (viz index.css,
+ * třídy .robot-sprite / .robot-phase-*), takže běží na kompozitoru GPU a
+ * neseká se, i když je hlavní JS vlákno vytížené re-renderem tabule
+ * (důležité pro Raspberry Pi).
+ */
+type RobotPhase = 'hidden' | 'movingLeft' | 'atLeft' | 'movingRight' | 'atRight' | 'movingAway';
+
+const PHASE_CLASS: Record<RobotPhase, string> = {
+  hidden: 'robot-phase-hidden',
+  movingLeft: 'robot-phase-left',
+  atLeft: 'robot-phase-left',
+  movingRight: 'robot-phase-right',
+  atRight: 'robot-phase-right',
+  movingAway: 'robot-phase-away',
+};
+
 const DailyRobotComponent = ({ barColor, customMessages = [], robotImage }: { barColor?: string; customMessages?: string[]; robotImage?: string }) => {
   const { seasonalTheme } = useDataContext();
   const [currentMessage, setCurrentMessage] = useState('');
-  const [isVisible, setIsVisible] = useState(false);
-  const [robotPhase, setRobotPhase] = useState('hidden'); // 'hidden', 'movingLeft', 'atLeft', 'movingRight', 'atRight', 'movingAway'
+  const [robotPhase, setRobotPhase] = useState<RobotPhase>('hidden');
+  // Když se obrázek robota nepodaří načíst, spadneme na výchozího robota.
+  const [imageFailed, setImageFailed] = useState(false);
   const [showBackground, setShowBackground] = useState(false);
   const [showText, setShowText] = useState(false);
   const [messageCounter, setMessageCounter] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const isAnimatingRef = useRef(false);
+  const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const getDayName = useCallback(() => {
     const days = ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota'];
@@ -77,7 +96,6 @@ const DailyRobotComponent = ({ barColor, customMessages = [], robotImage }: { ba
     const day = getDayName();
     const nameDay = getNameDayInfo();
     const hour = new Date().getHours();
-    const minutes = new Date().getMinutes();
     const dayOfWeek = new Date().getDay(); // 0=neděle, 1=pondělí, ..., 5=pátek, 6=sobota
     const holidays = getSchoolHolidays();
 
@@ -181,163 +199,109 @@ const DailyRobotComponent = ({ barColor, customMessages = [], robotImage }: { ba
     setCurrentMessage(generateMessage());
   }, [messageCounter]);
 
-  // Postupná animace - robot jede z prava doleva a zpět
+  // Postupná animace - robot jede z prava doleva a zpět.
+  // Časová osa (ms od startu):
+  //   0     movingLeft   – jede zprava doleva (4 s)
+  //   4000  atLeft       – čeká vlevo
+  //   6000  movingRight  – vrací se doprava (4 s), zobrazí se lišta
+  //   10000 atRight      – zobrazí se text
+  //   15000               – text i lišta zmizí
+  //   16000 movingAway   – odjíždí doprava (3 s)
+  //   19000 hidden       – konec
   useEffect(() => {
-    const startAnimation = () => {
-      // Pokud už animace běží, přeskoč
-      if (isAnimating) {
-        return;
-      }
+    const schedule = (fn: () => void, ms: number) => {
+      timeoutsRef.current.push(setTimeout(fn, ms));
+    };
 
-      setIsAnimating(true);
-      setMessageCounter(prev => prev + 1); // Změna textu při každém zobrazení
-      setIsVisible(true);
+    const startAnimation = () => {
+      if (isAnimatingRef.current) return;
+      isAnimatingRef.current = true;
+
+      setMessageCounter(prev => prev + 1);
+      // Robot je v DOM pořád (schovaný za pravým okrajem), takže stačí
+      // přepnout fázi a CSS transition se rozjede z aktuální pozice.
       setRobotPhase('movingLeft');
 
-      // Robot dorazí doleva po 4 sekundách
-      setTimeout(() => {
-        setRobotPhase('atLeft');
-      }, 4000);
-
-      // Robot se začne vracet doprava po 2 sekundách
-      setTimeout(() => {
-        setRobotPhase('movingRight');
-        setShowBackground(true);
-      }, 6000);
-
-      // Robot dorazí doprava s pozadím
-      setTimeout(() => {
-        setRobotPhase('atRight');
-        setShowText(true);
-      }, 10000);
-
-      // Text a pozadí zmizí po 15 sekundách
-      setTimeout(() => {
-        setShowText(false);
-        setShowBackground(false);
-      }, 15000);
-
-      // Robot odjíždí doprava po 16 sekundách (po zmizení textu)
-      setTimeout(() => {
-        setRobotPhase('movingAway');
-      }, 16000);
-
-      // Vše úplně zmizí po 19 sekundách
-      setTimeout(() => {
+      schedule(() => setRobotPhase('atLeft'), 4000);
+      schedule(() => { setRobotPhase('movingRight'); setShowBackground(true); }, 6000);
+      schedule(() => { setRobotPhase('atRight'); setShowText(true); }, 10000);
+      schedule(() => { setShowText(false); setShowBackground(false); }, 15000);
+      schedule(() => setRobotPhase('movingAway'), 16000);
+      schedule(() => {
         setRobotPhase('hidden');
-        setIsVisible(false);
-        setIsAnimating(false); // Animace skončila
+        isAnimatingRef.current = false;
       }, 19000);
     };
 
-    // První zobrazení po 2 sekundách
+    // První zobrazení po 2 sekundách, pak každou minutu
     const initialTimer = setTimeout(startAnimation, 2000);
-
-    // Pak každou minutu
     const showTimer = setInterval(startAnimation, 60000);
 
     return () => {
       clearTimeout(initialTimer);
       clearInterval(showTimer);
+      timeoutsRef.current.forEach(clearTimeout);
+      timeoutsRef.current = [];
+      isAnimatingRef.current = false;
     };
-  }, [isAnimating]); // Závislost na isAnimating
+  }, []);
 
+  const facingRight = robotPhase === 'movingRight' || robotPhase === 'atRight' || robotPhase === 'movingAway';
+  const preferredImage = robotImage || seasonalTheme.robotTheme.image;
+  const imageSrc = imageFailed ? '/pictures/robotz.png' : preferredImage;
+  const isHidden = robotPhase === 'hidden';
+
+  // Všechny tři prvky zůstávají v DOM trvale. Obrázek se tak stáhne a dekóduje
+  // jen jednou při načtení stránky – ne při každém průjezdu (dřív se element
+  // odpojoval a Raspberry Pi pak robota dekódovalo znovu, na pomalé síti se
+  // místo něj stihl ukázat jen alt text a ikonka načítání).
   return (
-    <AnimatePresence>
-      {isVisible && (
-        <>
-          {/* Pozadí s textem */}
-          <motion.div
-            className={`robot-animation fixed bottom-0 left-0 right-0 h-24 z-40 shadow-lg ${barColor ? '' : 'bg-gradient-to-l from-blue-900 via-blue-800 to-blue-900/95'}`}
-            style={{
-              willChange: 'opacity',
-              transform: 'translateZ(0)',
-              ...(barColor ? { background: barColor } : {})
-            }}
-            initial={{ opacity: 0 }}
-            animate={{
-              opacity: showBackground ? 1 : 0
-            }}
-            exit={{ opacity: 0 }}
-            transition={{
-              duration: 0.5,
-              ease: 'linear'
-            }}
-          />
+    <>
+      {/* Pozadí s textem */}
+      <div
+        aria-hidden={!showBackground}
+        className={`robot-animation robot-fade fixed bottom-0 left-0 right-0 h-24 z-40 shadow-lg pointer-events-none ${barColor ? '' : 'bg-gradient-to-l from-blue-900 via-blue-800 to-blue-900/95'}`}
+        style={{
+          opacity: showBackground ? 1 : 0,
+          ...(barColor ? { background: barColor } : {})
+        }}
+      />
 
-          {/* Text vycentrovaný na celé obrazovce */}
-          <motion.div
-            className="robot-animation fixed bottom-0 left-0 right-0 w-full h-24 z-50 flex items-center justify-center"
-            style={{
-              willChange: 'opacity',
-              transform: 'translateZ(0)'
-            }}
-            initial={{ opacity: 0 }}
-            animate={{
-              opacity: showText ? 1 : 0
-            }}
-            transition={{ duration: 0.5, ease: 'linear' }}
-          >
-            <div className="text-white font-bold text-center" style={{
-              fontSize: `${Math.max(1.2, 2 * 1.0)}rem`,
-              wordBreak: 'keep-all',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden'
-            }}>
-              {currentMessage}
-            </div>
-          </motion.div>
+      {/* Text vycentrovaný na celé obrazovce */}
+      <div
+        aria-hidden={!showText}
+        className="robot-animation robot-fade fixed bottom-0 left-0 right-0 w-full h-24 z-50 flex items-center justify-center pointer-events-none"
+        style={{ opacity: showText ? 1 : 0 }}
+      >
+        <div className="text-white font-bold text-center" style={{
+          fontSize: `${Math.max(1.2, 2 * 1.0)}rem`,
+          wordBreak: 'keep-all',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden'
+        }}>
+          {currentMessage}
+        </div>
+      </div>
 
-          {/* Robot */}
-          <motion.div
-            className="robot-animation fixed z-[9999]"
-            style={{
-              bottom: '0px',
-              right: '0px',
-              willChange: 'transform, opacity',
-              transform: 'translateZ(0)'
-            }}
-            animate={{
-              x: robotPhase === 'movingLeft' ? 'calc(-100vw + 50px)' :
-                 robotPhase === 'atLeft' ? 'calc(-100vw + 50px)' :
-                 robotPhase === 'movingRight' ? 'calc(-85vw + 50px)' :
-                 robotPhase === 'atRight' ? 'calc(-85vw + 50px)' :
-                 robotPhase === 'movingAway' ? 'calc(100vw)' :
-                 'calc(100vw + 50px)',
-              opacity: robotPhase === 'hidden' ? 0 : 1
-            }}
-            transition={{
-              duration: robotPhase === 'movingLeft' ? 4 :
-                       robotPhase === 'movingRight' ? 4 :
-                       robotPhase === 'movingAway' ? 3 : 1,
-              ease: 'linear'
-            }}
-          >
-            <motion.img
-              src={robotImage || seasonalTheme.robotTheme.image}
-              alt={robotImage ? 'Robot' : `Robot ${seasonalTheme.robotTheme.theme}`}
-              className="w-auto object-contain"
-              style={{
-                height: '16rem',
-                filter: 'drop-shadow(4px 4px 12px rgba(0,0,0,0.4))',
-                // Zrcadlově otočit doprava, když jede zprava doleva
-                transform: (robotPhase === 'movingRight' || robotPhase === 'atRight' || robotPhase === 'movingAway')
-                  ? 'scaleX(-1)'
-                  : 'scaleX(1)',
-                transition: 'transform 0.3s ease-in-out'
-              }}
-              onError={(e) => {
-                // Fallback na výchozí robot, pokud obrázek neexistuje
-                const target = e.target as HTMLImageElement;
-                if (target.src !== '/pictures/robotz.png') {
-                  target.src = '/pictures/robotz.png';
-                }
-              }}
-            />
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+      {/* Robot */}
+      <div
+        aria-hidden={isHidden}
+        className={`robot-animation robot-sprite fixed z-[9999] pointer-events-none ${PHASE_CLASS[robotPhase]}`}
+      >
+        <img
+          src={imageSrc}
+          // Prázdný alt: kdyby se obrázek načítal pomalu, nechceme místo
+          // robota vidět text „Robot autumn“ a ikonku obrázku.
+          alt=""
+          decoding="async"
+          className={`robot-image w-auto object-contain ${facingRight ? 'robot-image-flipped' : ''}`}
+          style={{ height: '16rem' }}
+          onError={() => {
+            if (!imageFailed) setImageFailed(true);
+          }}
+        />
+      </div>
+    </>
   );
 };
 
