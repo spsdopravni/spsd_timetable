@@ -35,6 +35,15 @@ export function gitInfo() {
 
 export function buildApp({ outDir = 'dist-bench', mock = true } = {}) {
   const t0 = Date.now();
+
+  // Vite se volá přímo, takže se neprovede npm hook `prebuild`. Bez něj
+  // neexistuje src/styles/fontawesome-subset.css a build spadne — což se
+  // stane v každém čerstvém checkoutu, kde ještě nikdo nespustil npm run build.
+  const faSubset = path.join(ROOT, 'scripts', 'fa-subset.mjs');
+  if (fs.existsSync(faSubset)) {
+    execSync(`node ${JSON.stringify(faSubset)}`, { cwd: ROOT, stdio: 'ignore' });
+  }
+
   execSync(`npx vite build --outDir ${outDir} --emptyOutDir`, {
     cwd: ROOT, stdio: 'inherit',
     env: { ...process.env, VITE_USE_MOCK_DATA: mock ? 'true' : 'false' },
