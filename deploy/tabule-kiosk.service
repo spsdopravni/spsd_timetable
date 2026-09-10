@@ -1,0 +1,23 @@
+[Unit]
+Description=SPSD tabule - Chromium kiosk
+After=graphical.target tabule-web.service
+Wants=tabule-web.service
+
+[Service]
+Type=simple
+User=pi
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/pi/.Xauthority
+# URL se generuje pri instalaci (install.sh), vcetne routy
+EnvironmentFile=/etc/default/tabule
+
+
+# Přepínače i s vysvětlením jsou v tabule-chromium.sh — v ExecStart nejdou
+# komentáře, protože systemd nespouští příkaz přes shell.
+ExecStart=/opt/tabule/deploy/tabule-chromium.sh
+
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=graphical.target

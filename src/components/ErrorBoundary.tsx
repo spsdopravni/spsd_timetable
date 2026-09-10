@@ -2,6 +2,7 @@ import React, { Component, ReactNode, ErrorInfo } from 'react';
 import { AlertTriangle, RefreshCcw, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { scheduleReload } from '@/utils/kioskRecovery';
 
 interface Props {
   children: ReactNode;
@@ -34,6 +35,12 @@ export class ErrorBoundary extends Component<Props, State> {
       error,
       errorInfo
     });
+
+    // Na tabuli není kdo kliknout na "Zkusit znovu" — obrazovka u vchodu
+    // nemá klávesnici ani myš. Bez tohohle zůstala po první neodchycené
+    // chybě viset hláška až do ruční návštěvy. scheduleReload má vlastní
+    // pojistku proti smyčce a na mobilní PWA (/m*) se nespustí vůbec.
+    scheduleReload(`ErrorBoundary: ${error.message}`);
 
     // Log to external service in production
     if (import.meta.env.PROD) {

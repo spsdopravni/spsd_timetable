@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useDataContext, ALL_STATIONS } from "@/context/DataContext";
+import { ALL_STATIONS, useDataContext, useSeasonal, useStations, useTime } from "@/context/DataContext";
 import { Clock, MapPin, AlertTriangle, Moon, Wrench, Info, ArrowRight, Bell, BellRing, Footprints } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { DepartureTracker } from "@/components/DepartureTracker";
@@ -265,7 +265,11 @@ function MobileDepartureCard({
 /* ── metro header ──────────────────────────────────────────── */
 
 function MetroHeader({ metro, accentColor }: { metro: MetroInfoDef[]; accentColor: string }) {
-  const { getDeparturesForStation, time } = useDataContext();
+  const time = useTime();
+  const { getDeparturesForStation } = useDataContext();
+  // Bez přihlášení by se tyhle zastávky vůbec nestahovaly — provider
+  // od teď načítá jen to, co je opravdu na obrazovce.
+  useStations(metro.map(m => m.stationKey));
   const nowSec = Math.floor((Date.now() + time.timeOffset) / 1000);
 
   const metroIcon: Record<string, string> = {
@@ -328,7 +332,9 @@ export function MobileDepartures({ building }: { building: MobileBuildingDef }) 
     };
   }, []);
 
-  const { getDeparturesForStation, time, seasonalTheme, refreshStation } = useDataContext();
+  const time = useTime();
+  const { seasonalTheme } = useSeasonal();
+  const { getDeparturesForStation, refreshStation } = useDataContext();
   const currentTime = time.currentTime;
   const timeOffset = time.timeOffset;
   const [nowSec, setNowSec] = useState(Math.floor((Date.now() + timeOffset) / 1000));
@@ -348,6 +354,9 @@ export function MobileDepartures({ building }: { building: MobileBuildingDef }) 
   }, [timeOffset]);
 
   const station = building.stations[stationIdx] || building.stations[0];
+  // Všechny zastávky budovy, ne jen právě zobrazenou — swipe mezi nimi
+  // má ukázat data okamžitě, ne čekat na první fetch.
+  useStations(building.stations.map(st => st.key));
 
   const goToStation = (idx: number) => {
     if (idx === stationIdx || idx < 0 || idx >= building.stations.length) return;

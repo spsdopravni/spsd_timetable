@@ -3,6 +3,13 @@ import { useState, useEffect, useRef, useCallback } from "react";
 // Dev: Vite proxy, Prod: Nginx proxy — both on /meteo
 const BASE = "/meteo";
 
+/**
+ * V mock režimu se meteostanice neptáme vůbec. Školní ESP32 je dostupné jen
+ * ze sítě školy, takže při vývoji každé kolo skončilo dvanácti neúspěšnými
+ * požadavky a konzole byla plná chyb, které nic neznamenají.
+ */
+const MOCK_MODE = import.meta.env.VITE_USE_MOCK_DATA === 'true';
+
 export interface MeteoData {
   teplota: number | null;
   vlhkost: number | null;
@@ -83,11 +90,14 @@ const TEXT_SENSORS: SensorEndpoint[] = [
   { path: "/text_sensor/vitr_smr_stupn", key: "smerVetruStupne", transform: parseFloat },
 ];
 
-const POLL_INTERVAL = 5_000; // 5 s – meteodata se rychleji nemění, šetří CPU na Raspberry Pi
+// 12 senzorů = 12 požadavků na kolo. Při 5 s to je 144 req/min na ESP32;
+// naměřeno, že polling meteostanice byl hlavní zdroj síťového provozu tabule
+// (439 → 83 req/min po zpomalení). Meteodata se takhle rychle nemění.
+const POLL_INTERVAL = 15_000; // 15 s
 const RETRY_INTERVAL = 30_000; // 30 s – když je stanice nedostupná, zkoušíme ji znovu pomaleji
 const FETCH_TIMEOUT = 4_000; // 4 s – aby visící požadavky neblokovaly další kolo
 const MAX_FAILS_BEFORE_HIDE = 3;
-const TREND_HISTORY_SIZE = 24; // ~2 minuty historie (24 × 5 s)
+const TREND_HISTORY_SIZE = 8; // ~2 minuty historie (8 × 15 s)
 const TREND_THRESHOLD_TEMP = 0.3; // °C difference to count as trend
 const TREND_THRESHOLD_PRESSURE = 0.5; // hPa difference to count as trend
 
@@ -183,7 +193,7 @@ export function useMeteoStation() {
   const [data, setData] = useState<MeteoData>(INITIAL_DATA);
   const [extras, setExtras] = useState<MeteoExtras>(INITIAL_EXTRAS);
   const [connected, setConnected] = useState(false);
-  const [available, setAvailable] = useState(true);
+  const [available, setAvailable] = useState(!MOCK_MODE);
   const failCount = useRef(0);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const intervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -207,13 +217,21 @@ export function useMeteoStation() {
           const res = await fetch(`${BASE}${s.path}`, { signal: controller.signal });
           if (!res.ok) throw new Error(res.statusText);
           const json = await res.json();
-          return { key: s.key, value: json.value as number };
+          // Přijmi jen skutečné číslo. Když na té adrese sedí něco, co vrací
+          // jiný tvar, nesmí se undefined dostat do stavu — MeteoStation na
+          // něm zavolá .toFixed() a shodí celou tabuli. (Ověřeno testem
+          // kontejneru proti stub serveru.)
+          const num = typeof json?.value === 'number' ? json.value : Number(json?.value);
+          if (!Number.isFinite(num)) throw new Error('nečíselná hodnota');
+          return { key: s.key, value: num };
         }),
         ...TEXT_SENSORS.map(async (s) => {
           const res = await fetch(`${BASE}${s.path}`, { signal: controller.signal });
           if (!res.ok) throw new Error(res.statusText);
           const json = await res.json();
+          if (json?.value === undefined || json?.value === null) throw new Error('chybí hodnota');
           const value = s.transform ? s.transform(json.value) : json.value;
+          if (typeof value === 'number' && !Number.isFinite(value)) throw new Error('nečíselná hodnota');
           return { key: s.key, value };
         }),
       ]);
@@ -293,6 +311,7 @@ export function useMeteoStation() {
   // (např. hned po zapnutí Raspberry Pi, než naběhla síť) přestalo dotazovat
   // úplně a počasí zmizelo až do obnovení stránky.
   useEffect(() => {
+    if (MOCK_MODE) return;
     let cancelled = false;
 
     const tick = async () => {

@@ -1,0 +1,14 @@
+[Unit]
+Description=SPSD tabule - staticky web server pro dist/
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/opt/tabule/dist
+ExecStart=/usr/bin/python3 -m http.server 8080 --bind 127.0.0.1
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

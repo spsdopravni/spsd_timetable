@@ -3,12 +3,13 @@ import { TramDeparturesConnected } from "@/components/TramDeparturesConnected";
 import { DailyRobot } from "@/components/DailyRobot";
 import { Snowfall } from "@/components/Snowfall";
 import { ChristmasGarland } from "@/components/ChristmasGarland";
-import { useDataContext } from "@/context/DataContext";
+import { useSeasonal, useTime } from "@/context/DataContext";
 
 const ACCENT = "#dc301b"; // PID červená
 
 const Letna = () => {
-  const { time, seasonalTheme } = useDataContext();
+  const time = useTime();
+  const { seasonalTheme } = useSeasonal();
 
   useEffect(() => {
     document.body.classList.add('tram-display');

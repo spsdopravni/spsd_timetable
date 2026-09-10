@@ -3,7 +3,7 @@ import { TramDeparturesConnected } from "@/components/TramDeparturesConnected";
 import { DailyRobot } from "@/components/DailyRobot";
 import { Snowfall } from "@/components/Snowfall";
 import { ChristmasGarland } from "@/components/ChristmasGarland";
-import { useDataContext, ALL_STATIONS } from "@/context/DataContext";
+import { ALL_STATIONS, useDataContext, useSeasonal, useTime } from "@/context/DataContext";
 import { walkingMinutes } from "@/utils/walking";
 import { getStopCoords } from "@/utils/pidApi";
 
@@ -14,7 +14,9 @@ const DISPLAY_LOCATION = { lat: 50.107159, lon: 14.428045 };
 const ACCENT = "#F03553";
 
 const MakerFaire = () => {
-  const { time, seasonalTheme, getDeparturesForStation } = useDataContext();
+  const time = useTime();
+  const { seasonalTheme } = useSeasonal();
+  const { getDeparturesForStation } = useDataContext();
 
   useEffect(() => {
     document.body.classList.add('tram-display');

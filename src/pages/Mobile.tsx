@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useDataContext } from "@/context/DataContext";
+import { useSeasonal, useTime } from "@/context/DataContext";
 
 const BUILDINGS = [
   { name: "Budova Motol", route: "/m/motol", stops: ["Vozovna Motol", "Motol (metro A, B)"] },
@@ -10,7 +10,8 @@ const BUILDINGS = [
 
 const Mobile = () => {
   const navigate = useNavigate();
-  const { seasonalTheme, time } = useDataContext();
+  const time = useTime();
+  const { seasonalTheme } = useSeasonal();
   const currentTime = time.currentTime;
 
   return (

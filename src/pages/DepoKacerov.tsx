@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { TramDeparturesConnected } from "@/components/TramDeparturesConnected";
 import { DailyRobot } from "@/components/DailyRobot";
 import { Snowfall } from "@/components/Snowfall";
-import { useDataContext, ALL_STATIONS } from "@/context/DataContext";
+import { ALL_STATIONS, useSeasonal, useTime } from "@/context/DataContext";
 import { walkingMinutes } from "@/utils/walking";
 import { getStopCoords } from "@/utils/pidApi";
 
@@ -56,7 +56,8 @@ const SCREENS: { type: "metro" | "bus"; subtitle: string; left: Col; right?: Col
 ];
 
 const DepoKacerov = () => {
-  const { time, seasonalTheme } = useDataContext();
+  const time = useTime();
+  const { seasonalTheme } = useSeasonal();
 
   useEffect(() => {
     document.body.classList.add("tram-display");

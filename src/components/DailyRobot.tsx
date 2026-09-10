@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, memo, useCallback } from 'react';
 import funFacts from '@/data/fun_facts.json';
 import nameDays from '@/data/name_days.json';
-import { useDataContext } from '@/context/DataContext';
+import { useSeasonal } from "@/context/DataContext";
 
 /**
  * Fáze animace robota. Pohyb je řízený čistě CSS transitions (viz index.css,
@@ -21,7 +21,7 @@ const PHASE_CLASS: Record<RobotPhase, string> = {
 };
 
 const DailyRobotComponent = ({ barColor, customMessages = [], robotImage }: { barColor?: string; customMessages?: string[]; robotImage?: string }) => {
-  const { seasonalTheme } = useDataContext();
+  const { seasonalTheme } = useSeasonal();
   const [currentMessage, setCurrentMessage] = useState('');
   const [robotPhase, setRobotPhase] = useState<RobotPhase>('hidden');
   // Když se obrázek robota nepodaří načíst, spadneme na výchozího robota.

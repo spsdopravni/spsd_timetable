@@ -1,0 +1,6 @@
+[Unit]
+Description=SPSD tabule - preventivni restart kiosku
+
+[Service]
+Type=oneshot
+ExecStart=/bin/systemctl restart tabule-kiosk.service

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Home, AlertTriangle } from "lucide-react";
 import { DepartureTracker } from "@/components/DepartureTracker";
-import { useDataContext } from "@/context/DataContext";
+import { useTime } from "@/context/DataContext";
 import type { Departure } from "@/types/pid";
 
 /**
@@ -15,7 +15,7 @@ import type { Departure } from "@/types/pid";
 const Share = () => {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const { time } = useDataContext();
+  const time = useTime();
   const [error, setError] = useState<string | null>(null);
   const [departure, setDeparture] = useState<Departure | null>(null);
   const [stationName, setStationName] = useState<string>("");

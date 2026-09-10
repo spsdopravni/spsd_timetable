@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tabule na Raspberry Pi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+
+<style>
+  :root {
+    --ground:       #eef0f4;
+    --panel:        #ffffff;
+    --panel-sunk:   #f4f6f9;
+    --edge:         #d6dae2;
+    --edge-soft:    #e6e9ee;
+    --ink:          #131a26;
+    --ink-2:        #495468;
+    --ink-3:        #7a869c;
+    --board:        #0d1b3e;
+    --board-ink:    #f2f5fb;
+    --rail:         #1e4fd8;
+    --amber:        #c97a0c;
+    --amber-bg:     #fdf3e0;
+    --good:         #14713f;
+    --good-bg:      #e6f3eb;
+    --bad:          #ab2028;
+    --bad-bg:       #fbeaeb;
+    --shadow:       0 1px 2px rgba(19,26,38,.06), 0 8px 24px -12px rgba(19,26,38,.18);
+
+    --f-display: "Barlow Condensed", "Oswald", "Arial Narrow", sans-serif;
+    --f-body:    "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --f-mono:    "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  :root:not([data-theme="light"]) {
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground:     #0b1120;
+      --panel:      #121a2c;
+      --panel-sunk: #0e1626;
+      --edge:       #26314a;
+      --edge-soft:  #1c2537;
+      --ink:        #e8ecf4;
+      --ink-2:      #a3aec4;
+      --ink-3:      #78849c;
+      --board:      #060d1f;
+      --board-ink:  #e8ecf4;
+      --rail:       #6b93ff;
+      --amber:      #e5a63f;
+      --amber-bg:   #2a2110;
+      --good:       #58c68d;
+      --good-bg:    #10281c;
+      --bad:        #f0838a;
+      --bad-bg:     #2c1216;
+      --shadow:     0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.7);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground:     #0b1120;
+    --panel:      #121a2c;
+    --panel-sunk: #0e1626;
+    --edge:       #26314a;
+    --edge-soft:  #1c2537;
+    --ink:        #e8ecf4;
+    --ink-2:      #a3aec4;
+    --ink-3:      #78849c;
+    --board:      #060d1f;
+    --board-ink:  #e8ecf4;
+    --rail:       #6b93ff;
+    --amber:      #e5a63f;
+    --amber-bg:   #2a2110;
+    --good:       #58c68d;
+    --good-bg:    #10281c;
+    --bad:        #f0838a;
+    --bad-bg:     #2c1216;
+    --shadow:     0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.7);
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 60rem; margin: 0 auto; padding: 0 1.5rem 6rem; }
+  .prose { max-width: 42rem; }
+
+  /* ── board header ─────────────────────────────────── */
+
+  .board {
+    background: var(--board);
+    color: var(--board-ink);
+    margin-bottom: 3rem;
+    border-bottom: 4px solid var(--rail);
+  }
+  .board-in {
+    max-width: 60rem; margin: 0 auto; padding: 2.75rem 1.5rem 2.25rem;
+    display: flex; flex-direction: column; gap: 1.25rem;
+  }
+  .kicker {
+    font-family: var(--f-mono);
+    font-size: .72rem; font-weight: 500;
+    letter-spacing: .14em; text-transform: uppercase;
+    color: #8fa6de;
+    display: flex; flex-wrap: wrap; gap: .5rem 1.25rem;
+  }
+  h1 {
+    font-family: var(--f-display);
+    font-size: clamp(2.6rem, 6.5vw, 4.25rem);
+    font-weight: 700; line-height: .98; letter-spacing: -.005em;
+    text-wrap: balance; margin: 0;
+  }
+  h1 em { font-style: normal; color: #ffc871; }
+  .standfirst {
+    font-size: 1.0625rem; line-height: 1.6; color: #b9c6e4;
+    max-width: 40rem; margin: 0;
+  }
+
+  /* ── departure-board strip ────────────────────────── */
+
+  .strip {
+    display: grid; gap: 1px;
+    background: var(--edge);
+    border: 1px solid var(--edge);
+    border-radius: 10px; overflow: hidden;
+    margin: 0 0 3rem;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  }
+  .cell { background: var(--panel); padding: 1rem 1.125rem 1.125rem; }
+  .cell-k {
+    font-family: var(--f-mono); font-size: .7rem; font-weight: 500;
+    letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3);
+    display: block; margin-bottom: .5rem;
+  }
+  .cell-v {
+    font-family: var(--f-mono); font-variant-numeric: tabular-nums;
+    display: flex; align-items: baseline; gap: .4rem; flex-wrap: wrap;
+  }
+  .was { font-size: 1rem; color: var(--ink-3); text-decoration: line-through; text-decoration-thickness: 1px; }
+  .arrow { color: var(--ink-3); font-size: .85rem; }
+  .now { font-size: 1.5rem; font-weight: 600; color: var(--ink); letter-spacing: -.02em; }
+  .delta { font-size: .78rem; font-weight: 500; color: var(--good); margin-left: .1rem; }
+
+  /* ── typography ───────────────────────────────────── */
+
+  h2 {
+    font-family: var(--f-display);
+    font-size: clamp(1.75rem, 3.6vw, 2.4rem);
+    font-weight: 600; line-height: 1.08; letter-spacing: .002em;
+    margin: 4rem 0 .5rem; text-wrap: balance;
+  }
+  h2:first-child { margin-top: 0; }
+  h3 {
+    font-family: var(--f-body);
+    font-size: 1.0625rem; font-weight: 600; line-height: 1.35;
+    margin: 2rem 0 .375rem;
+  }
+  p { margin: 0 0 1rem; }
+  .lede { font-size: 1.0625rem; color: var(--ink-2); }
+  .eyebrow {
+    font-family: var(--f-mono); font-size: .7rem; font-weight: 500;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--rail);
+    margin: 0 0 .375rem;
+  }
+  code, .m {
+    font-family: var(--f-mono); font-size: .875em;
+    background: var(--panel-sunk); border: 1px solid var(--edge-soft);
+    padding: .08em .34em; border-radius: 4px;
+    overflow-wrap: anywhere;
+  }
+  a { color: var(--rail); }
+
+  /* ── verdict ──────────────────────────────────────── */
+
+  .verdict {
+    background: var(--panel); border: 1px solid var(--edge);
+    border-left: 4px solid var(--amber);
+    border-radius: 8px; padding: 1.5rem 1.625rem;
+    box-shadow: var(--shadow); margin: 0 0 2.5rem;
+  }
+  .verdict p:last-child { margin-bottom: 0; }
+  .verdict strong { color: var(--ink); }
+
+  /* ── symptom split ────────────────────────────────── */
+
+  .split { display: grid; gap: 1.25rem; grid-template-columns: 1fr; margin: 1.75rem 0 0; }
+  @media (min-width: 46rem) { .split { grid-template-columns: 1fr 1fr; } }
+
+  .sym {
+    background: var(--panel); border: 1px solid var(--edge);
+    border-radius: 8px; padding: 1.375rem 1.5rem 1.5rem;
+    display: flex; flex-direction: column; gap: .625rem;
+    box-shadow: var(--shadow);
+  }
+  .sym h3 { margin: 0; font-size: 1.125rem; }
+  .sym p { margin: 0; font-size: .9375rem; color: var(--ink-2); }
+  .sym-tag {
+    align-self: flex-start;
+    font-family: var(--f-mono); font-size: .68rem; font-weight: 600;
+    letter-spacing: .1em; text-transform: uppercase;
+    padding: .28rem .55rem; border-radius: 4px;
+  }
+  .t-app  { background: var(--good-bg); color: var(--good); }
+  .t-ops  { background: var(--amber-bg); color: var(--amber); }
+  .sym-who {
+    margin-top: auto; padding-top: .875rem; border-top: 1px solid var(--edge-soft);
+    font-size: .875rem; color: var(--ink-2);
+  }
+  .sym-who b { color: var(--ink); font-weight: 600; }
+
+  /* ── tables ───────────────────────────────────────── */
+
+  .scroll { overflow-x: auto; margin: 1.5rem 0 0; -webkit-overflow-scrolling: touch; }
+  table { border-collapse: collapse; width: 100%; font-size: .9375rem; min-width: 34rem; }
+  caption {
+    text-align: left; font-size: .8125rem; color: var(--ink-3);
+    padding-bottom: .625rem;
+  }
+  th, td {
+    text-align: left; padding: .6rem .875rem;
+    border-bottom: 1px solid var(--edge-soft); vertical-align: top;
+  }
+  thead th {
+    font-family: var(--f-mono); font-size: .7rem; font-weight: 600;
+    letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3);
+    border-bottom: 1px solid var(--edge);
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .win { font-weight: 600; }
+  .win-app { color: var(--good); }
+  .win-os  { color: var(--amber); }
+  .win-hw  { color: var(--bad); }
+
+  /* ── decision list ────────────────────────────────── */
+
+  .checks { list-style: none; padding: 0; margin: 1.5rem 0 0; display: grid; gap: 1px; background: var(--edge); border: 1px solid var(--edge); border-radius: 8px; overflow: hidden; }
+  .checks li { background: var(--panel); padding: 1.125rem 1.25rem; display: grid; gap: .5rem; }
+  @media (min-width: 46rem) { .checks li { grid-template-columns: 15rem 1fr; gap: 1.5rem; align-items: start; } }
+  .check-cmd { font-family: var(--f-mono); font-size: .8125rem; color: var(--ink); overflow-wrap: anywhere; }
+  .check-cmd b { display: block; font-family: var(--f-body); font-size: .8125rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--rail); margin-bottom: .3rem; }
+  .check-then { font-size: .9375rem; color: var(--ink-2); margin: 0; }
+  .check-then b { color: var(--ink); }
+
+  /* ── quote for teacher ────────────────────────────── */
+
+  .say {
+    background: var(--board); color: var(--board-ink);
+    border-radius: 10px; padding: 2rem 2rem 2.125rem;
+    margin: 1.75rem 0 0; display: grid; gap: 1rem;
+  }
+  .say p { margin: 0; color: #c9d5f0; font-size: 1.0625rem; line-height: 1.6; }
+  .say p:first-of-type { color: var(--board-ink); }
+  .say .eyebrow { color: #8fa6de; }
+  .say .m, .say code { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.14); color: #ffd9a0; }
+
+  .note {
+    font-size: .875rem; color: var(--ink-3);
+    border-top: 1px solid var(--edge); padding-top: 1.25rem; margin-top: 3.5rem;
+  }
+
+  :focus-visible { outline: 2px solid var(--rail); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+
+<header class="board">
+  <div class="board-in">
+    <div class="kicker">
+      <span>SPŠD Odjezdová tabule</span>
+      <span>Audit výkonu · 9. 9. 2026</span>
+      <span>branch dev</span>
+    </div>
+    <h1>Jde tabuli doladit,<br>nebo je vinen <em>hardware?</em></h1>
+    <p class="standfirst">
+      Spor se vedl o jednu otázku, jenže symptomy jsou dva a každý má jinou příčinu.
+      Tenhle dokument je rozděluje, ukazuje naměřená čísla před a po opravách, a nabízí
+      šest údajů z Raspberry Pi, které spor rozhodnou bez dalšího hádání.
+    </p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="strip">
+    <div class="cell">
+      <span class="cell-k">CPU / s</span>
+      <span class="cell-v"><span class="was">48,7</span><span class="arrow">→</span><span class="now">29,9</span><span class="delta">−39 %</span></span>
+    </div>
+    <div class="cell">
+      <span class="cell-k">Přepočty stylů / s</span>
+      <span class="cell-v"><span class="was">36,9</span><span class="arrow">→</span><span class="now">14,8</span><span class="delta">−60 %</span></span>
+    </div>
+    <div class="cell">
+      <span class="cell-k">Požadavků / min</span>
+      <span class="cell-v"><span class="was">440</span><span class="arrow">→</span><span class="now">78</span><span class="delta">−82 %</span></span>
+    </div>
+    <div class="cell">
+      <span class="cell-k">JS při startu</span>
+      <span class="cell-v"><span class="was">570</span><span class="arrow">→</span><span class="now">380</span><span class="delta">kB</span></span>
+    </div>
+    <div class="cell">
+      <span class="cell-k">DOM uzlů / min</span>
+      <span class="cell-v"><span class="was">+2535</span><span class="arrow">→</span><span class="now">−1,1</span><span class="delta">leak pryč</span></span>
+    </div>
+    <div class="cell">
+      <span class="cell-k">Robot na obrazovce</span>
+      <span class="cell-v"><span class="was">90 %</span><span class="arrow">→</span><span class="now">32 %</span><span class="delta">dle záměru</span></span>
+    </div>
+  </div>
+
+  <section class="prose">
+    <h2>Verdikt</h2>
+    <div class="verdict">
+      <p>
+        <strong>Štefan má pravdu v tom, že aplikaci jde doladit</strong> — ale ne v tom, že tím
+        vyřeší oba symptomy. <strong>Učitel má pravdu v tom, že současné řešení není
+        provozuschopné 24/7</strong> — ale ne v tom, že „to nejde“.
+      </p>
+      <p>
+        Spor je nerozhodnutelný hlavně proto, že zatím nikdo nezměřil jediné číslo
+        z toho konkrétního zařízení. Trhané FPS má v kódu konkrétní, ověřenou příčinu
+        a je opravitelné v řádu hodin. Zatuhnutí po dnech běhu <strong>v kódu prokázanou
+        příčinu nemá</strong> a řeší se provozní vrstvou, ne refaktorem.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="prose">
+      <h2>Dva symptomy, dvě různé příčiny</h2>
+      <p class="lede">
+        Většina té hádky vzniká z toho, že se o obou mluví jako o jedné věci — „appka je
+        pomalá a padá“. Rozdělené vypadají takhle:
+      </p>
+    </div>
+
+    <div class="split">
+      <article class="sym">
+        <span class="sym-tag t-app">A · trhané FPS</span>
+        <h3>Jedna animace běží 3× častěji, než má</h3>
+        <p>
+          V <span class="m">index.css</span> jsou vypnuté všechny CSS animace kromě robota.
+          Tabule tedy nebyla „plná animací“ — měla jednu. A ta kvůli chybné závislosti
+          efektu jezdila s periodou 21 s místo 60 s: naměřeno <b>90 % času na obrazovce</b>
+          místo zamýšlených 32 %.
+        </p>
+        <p>
+          Framer Motion ji navíc počítá v JS na hlavním vlákně 60×/s — souběžně
+          s dvěma až třemi překresleními celého stromu za sekundu, protože běžely
+          tři nesynchronizované vteřinové časovače.
+        </p>
+        <p class="sym-who">Řeší <b>optimalizace aplikace</b>. Jeden řádek plus pár desítek dalších. <b>Hotovo.</b></p>
+      </article>
+
+      <article class="sym">
+        <span class="sym-tag t-ops">B · zatuhne po dnech</span>
+        <h3>Není se čím zvednout</h3>
+        <p>
+          Audit prošel celý <span class="m">src/</span> a leak prakticky nenašel: cache má
+          strop, historie má strop, časovače mají úklid. Zato v celém projektu nebylo
+          jediné <span class="m">location.reload()</span> — ErrorBoundary čekal na klik
+          a tabule u vchodu nemá klávesnici.
+        </p>
+        <p>
+          V repozitáři nebyla žádná systemd unit, watchdog ani noční restart. A
+          <span class="m">npm start</span> je pořád <span class="m">vite build &amp;&amp; vite preview</span>,
+          takže Pi při každém bootu buildovalo a pak vedle prohlížeče trvale drželo Node.
+        </p>
+        <p class="sym-who">Řeší <b>provozní vrstva</b>, ne kód. Zhruba 30 minut práce. <b>Hotovo.</b></p>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <div class="prose">
+      <h2>Co se změřilo</h2>
+      <p class="lede">
+        Stejná metodika před i po: Chromium s šestinásobným zpomalením CPU, routa
+        <span class="m">/spsmotol</span>, 2 minuty. Absolutní čísla z MacBooku nic neříkají
+        o Pi — smysl má jen ten poměr.
+      </p>
+    </div>
+
+    <div class="scroll">
+      <table>
+        <caption>Test úniku paměti se zrychlenými časovači, scénář „meteostanice zamrzla“ — 2 minuty ≈ 3,5 hodiny provozu.</caption>
+        <thead>
+          <tr><th>Metrika</th><th>Před</th><th>Po</th><th>Co to znamená</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Přírůstek DOM uzlů</td><td class="num">+2535/min</td><td class="num">−1,1/min</td><td>Strom už neroste</td></tr>
+          <tr><td>Přírůstek posluchačů</td><td class="num">+93,5/min</td><td class="num">−0,8/min</td><td>Nic se nehromadí</td></tr>
+          <tr><td>Růst haldy</td><td class="num">0,50 MB/min</td><td class="num">0,17 MB/min</td><td>Pod prahem</td></tr>
+          <tr><td>Nevyřízené požadavky</td><td class="num">1350</td><td class="num">12</td><td>Fronta je omezená</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="prose">
+      <p style="margin-top:1.5rem">
+        Ta poslední řádka je jádro symptomu B. Meteostanice se ptala každé 2 sekundy
+        na 12 senzorů a když ESP32 přijalo spojení, ale neodpovědělo, fronta se plnila
+        donekonečna — bez timeoutu a bez pojistky proti souběhu. Je to jediná
+        reprodukovaná příčina zatuhnutí, a reprodukuje se na notebooku za 90 sekund.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="prose">
+      <h2>Kdy vyhrává která strategie</h2>
+      <p class="lede">
+        Odpověď na „optimalizovat, nebo vyměnit distribuci“ závisí na scénáři.
+        Proto se nejdřív měří.
+      </p>
+    </div>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Scénář</th><th>Vyhrává</th><th>Proč</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Pi 4, 1080p, akcelerace funguje</td>
+            <td class="win win-app">Optimalizace</td>
+            <td>Dvě až tři překreslení za sekundu na obsah, který se mění jednou za minutu, je mnohonásobek potřebné práce.</td>
+          </tr>
+          <tr>
+            <td>Televize jede ve 4K</td>
+            <td class="win win-os">Konfigurace OS</td>
+            <td>Čtyřnásobná plocha k překreslení. Jeden řádek v <span class="m">cmdline.txt</span> vydá za všechny opravy kódu dohromady.</td>
+          </tr>
+          <tr>
+            <td><span class="m">chrome://gpu</span> hlásí Software only</td>
+            <td class="win win-os">Konfigurace OS</td>
+            <td>Všechno se kreslí procesorem. Dokud to platí, je pořadí oprav v kódu vylosované.</td>
+          </tr>
+          <tr>
+            <td>Pi 3 nebo Zero 2 W, 512 MB–1 GB</td>
+            <td class="win win-os">Lehčí systém</td>
+            <td>Tady má učitel pravdu i o distribuci. Pi OS Lite je rozdíl mezi „jede“ a „nejede“.</td>
+          </tr>
+          <tr>
+            <td><span class="m">get_throttled</span> je nenulové</td>
+            <td class="win win-hw">Zdroj a chlazení</td>
+            <td>Pi neběželo na plném taktu. Všechna měření výkonu jsou pak měřením napájecího kabelu.</td>
+          </tr>
+          <tr>
+            <td>Opravdu jen chyby v kódu</td>
+            <td class="win win-app">Optimalizace</td>
+            <td>Ale i tak potřebuje watchdog — neexistenci leaku nelze dokázat.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="prose">
+      <h2>Šest čísel, které rozhodnou spor</h2>
+      <p class="lede">
+        Dohromady dvacet minut práce přímo na Pi. Skript <span class="m">deploy/diagnose.sh</span>
+        vypíše všechno naráz.
+      </p>
+    </div>
+
+    <ol class="checks">
+      <li>
+        <div class="check-cmd"><b>Čím se to spouští</b>ps -eo args | grep chromium</div>
+        <p class="check-then">Když v příkazu figuruje <span class="m">vite preview</span>, přejdi na předpřipravený <span class="m">dist/</span> a teprve pak měř cokoli. A zkontroluj URL — routa <span class="m">/</span> je marketingová stránka, ne tabule.</p>
+      </li>
+      <li>
+        <div class="check-cmd"><b>Napájení</b>vcgencmd get_throttled</div>
+        <p class="check-then">Není <span class="m">0x0</span>? <b>Vyměň zdroj a přidej chladič, a do té doby neměř nic jiného.</b> Bity 16–19 pamatují historii od bootu.</p>
+      </li>
+      <li>
+        <div class="check-cmd"><b>Rozlišení</b>cat /sys/class/drm/card*-HDMI-A-1/modes</div>
+        <p class="check-then">Když <span class="m">3840x2160</span>, přidej <span class="m">video=HDMI-A-1:1920x1080@60D</span> do <span class="m">cmdline.txt</span>. Na 55" z chodby to nikdo nepozná.</p>
+      </li>
+      <li>
+        <div class="check-cmd"><b>Akcelerace</b>chrome://gpu → Canvas, Compositing</div>
+        <p class="check-then">„Software only“ znamená, že GPU je mimo hru. Fix je <span class="m">dtoverlay=vc4-kms-v3d</span>, ne změna kódu.</p>
+      </li>
+      <li>
+        <div class="check-cmd"><b>Je to leak?</b>deploy/soak.sh, 24 h</div>
+        <p class="check-then">Růst nad 5 MB/h monotónně = leak existuje. Pod 1 MB/h nebo plató po pár hodinách = <b>leak neexistuje a hledat ho je ztráta času.</b></p>
+      </li>
+      <li>
+        <div class="check-cmd"><b>Až to zatuhne: NEREBOOTUJ</b>ps aux | grep chromium; dmesg -T | tail</div>
+        <p class="check-then">Tohle je nejcennější měření z celého seznamu. Rozliší čtyři různé příčiny se čtyřmi různými opravami — zaseknuté vlákno, došlou paměť, pád prohlížeče, nebo jen usnulou obrazovku.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section class="prose">
+    <h2>Návrh, jak spor uzavřít</h2>
+    <div class="say">
+      <p class="eyebrow">Ke shodě s učitelem</p>
+      <p>
+        Symptomy jsou dva a mají různé příčiny. Trhané FPS má v kódu konkrétní,
+        ověřenou a už opravenou příčinu. Zatuhnutí po dnech běhu ale prokázanou
+        příčinu v kódu nemá — a máte pravdu, že řešení bez automatického zotavení
+        není pro provoz 24/7 přijatelné.
+      </p>
+      <p>
+        Navrhuji spor rozdělit: provozní pojistku uděláme bez ohledu na výsledek
+        diskuse, a paralelně změříme šest čísel přímo z Pi. Dosud jsme oba
+        argumentovali bez jediného údaje z toho konkrétního zařízení.
+      </p>
+      <p>
+        A dohodněme se předem na čísle, které to rozhodne:
+        <span class="m">p95 frame time ≤ 33 ms po dobu 30 minut</span> a
+        <span class="m">RSS rendereru neroste rychleji než 1 MB/h za 12 h</span>.
+        Když to naměříme, aplikace se doladit dala. Když ne ani po celém seznamu,
+        měl jste pravdu a jdeme na jiné řešení.
+      </p>
+    </div>
+
+    <p class="note">
+      Měřeno na MacBooku s šestinásobným zpomalením CPU, které nenahrazuje test na
+      skutečném hardwaru — nezachytí propustnost GPU na 55" panelu, teplotní
+      throttling ani SD kartu. Absolutní hodnoty jsou proto optimistické; srovnávat
+      lze jen před a po při stejném nastavení. Reprodukovatelný postup je
+      v repozitáři: <span class="m">npm run bench</span>, <span class="m">npm run leak</span>,
+      <span class="m">deploy/diagnose.sh</span>.
+    </p>
+  </section>
+
+</div>
+
+</body>
+</html>

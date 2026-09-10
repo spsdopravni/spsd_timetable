@@ -1,5 +1,5 @@
 import { memo, useEffect, useMemo, useState } from "react";
-import { useDataContext } from "@/context/DataContext";
+import { useDataContext, useTime } from "@/context/DataContext";
 import { fetchPidAlerts, selectAlertsForLines, formatValidity, getLineBadgeStyle, type PidAlert } from "@/utils/pidAlerts";
 
 const REFRESH_MS = 3 * 60 * 1000;
@@ -19,7 +19,8 @@ interface ServiceAlertsProps {
  * Prolínání je jen přes opacity (kompozitor), kvůli Raspberry Pi.
  */
 function ServiceAlertsComponent({ stationKeys, extraLines = [] }: ServiceAlertsProps) {
-  const { stationData, time } = useDataContext();
+  const time = useTime();
+  const { stationData } = useDataContext();
   const [alerts, setAlerts] = useState<PidAlert[]>([]);
   const [index, setIndex] = useState(0);
   const [visible, setVisible] = useState(true);
@@ -83,7 +84,7 @@ function ServiceAlertsComponent({ stationKeys, extraLines = [] }: ServiceAlertsP
   return (
     <div
       className="w-full text-white shadow-lg border-b border-white/10"
-      style={{ background: "#1f2937", borderLeft: `14px solid ${accent}` }}
+      style={{ background: "#1f2937" }}
     >
       <div
         className="service-alert-fade flex items-center gap-5 px-5"
