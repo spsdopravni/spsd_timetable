@@ -260,9 +260,9 @@ const Spsmotol = () => {
         {/* Content area */}
         <div className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0">
           {/* Left panel - Směr Řepy nebo Směr Zličín */}
-          <div className="flex-1 p-2 overflow-hidden flex flex-col min-h-0">
+          <div className="flex-1 px-3 py-2 overflow-hidden flex flex-col min-h-0">
             {/* Direction header - elegant style */}
-            <div className={`${settings.motion !== 'full' ? '' : `direction-header-animation ${isDirectionFadingOut ? 'fade-out' : ''}`} bg-white border-b-2 border-gray-200 text-gray-800 px-3 flex items-center justify-center rounded-t-xl shadow-sm`} style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }} key={`left-header-${directionAnimationKey}`}>
+            <div className={`${settings.motion !== 'full' ? '' : `direction-header-animation ${isDirectionFadingOut ? 'fade-out' : ''}`} ${settings.layout === 'cards' ? 'bg-white rounded-xl shadow-sm mb-2' : 'bg-white border-b border-gray-200 rounded-t-xl shadow-sm'} text-gray-800 px-4 flex items-center justify-center`} style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }} key={`left-header-${directionAnimationKey}`}>
               <div className="flex items-center justify-center gap-2 w-full h-full">
                 <h2 className="font-bold leading-none" style={{ fontSize: 'clamp(1.75rem, 3.5vh, 2.5rem)' }}>
                   {React.isValidElement(leftStation.name) ? (
@@ -290,9 +290,9 @@ const Spsmotol = () => {
           </div>
 
           {/* Right panel - Směr Centrum nebo Směr Nemocnice Motol */}
-          <div className="flex-1 p-2 overflow-hidden flex flex-col min-h-0">
+          <div className="flex-1 px-3 py-2 overflow-hidden flex flex-col min-h-0">
             {/* Direction header - elegant style */}
-            <div className={`${settings.motion !== 'full' ? '' : `direction-header-animation ${isDirectionFadingOut ? 'fade-out' : ''}`} bg-white border-b-2 border-gray-200 text-gray-800 px-3 flex items-center justify-center rounded-t-xl shadow-sm`} style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }} key={`right-header-${directionAnimationKey}`}>
+            <div className={`${settings.motion !== 'full' ? '' : `direction-header-animation ${isDirectionFadingOut ? 'fade-out' : ''}`} ${settings.layout === 'cards' ? 'bg-white rounded-xl shadow-sm mb-2' : 'bg-white border-b border-gray-200 rounded-t-xl shadow-sm'} text-gray-800 px-4 flex items-center justify-center`} style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }} key={`right-header-${directionAnimationKey}`}>
               <div className="flex items-center justify-center gap-2 w-full h-full">
                 <h2 className="font-bold leading-none" style={{ fontSize: 'clamp(1.75rem, 3.5vh, 2.5rem)' }}>
                   {React.isValidElement(rightStation.name) ? (

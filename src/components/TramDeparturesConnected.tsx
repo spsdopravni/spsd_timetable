@@ -370,12 +370,12 @@ const TramDeparturesConnectedComponent = ({
   const limitedDepartures = catchableDepartures.slice(0, maxItems);
 
   return (
-    <Card className={`h-full border-0 rounded-t-none rounded-b-xl shadow-sm flex flex-col overflow-hidden ${
-      layout === 'cards' ? 'bg-slate-100' : 'bg-white'
+    <Card className={`h-full border-0 shadow-sm flex flex-col overflow-hidden ${
+      layout === 'cards' ? 'bg-slate-100 rounded-xl' : 'bg-white rounded-t-none rounded-b-xl'
     }`}>
       <CardContent
-        className="flex-1 p-2 flex flex-col min-h-full"
-        style={{ paddingTop: `${0.5 * 1.0}rem` }}
+        className="flex-1 px-4 pb-3 flex flex-col min-h-full"
+        style={{ paddingTop: '0.75rem' }}
       >
         <div className="flex-1 flex flex-col">
         {limitedDepartures.length === 0 && !loading ? (
