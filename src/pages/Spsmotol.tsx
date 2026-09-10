@@ -248,8 +248,8 @@ const Spsmotol = () => {
             ale nikde nevykreslený, takže se hlášení neukazovala vůbec. */}
         <AlertBanner alerts={activeAlerts} />
 
-        {/* Meteostanice */}
-        <MeteoStation />
+        {/* Meteostanice – jen při vývoji. Na produkci pruh nemá být vidět. */}
+        {import.meta.env.DEV && <MeteoStation />}
 
         {/* Mimořádnosti a výluky PID pro linky z Vozovny Motol a Motolu */}
         <ServiceAlerts

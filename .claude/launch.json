@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "tabule",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:watch"],
+      "port": 3000
+    }
+  ]
+}
