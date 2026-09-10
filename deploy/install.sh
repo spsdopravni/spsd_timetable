@@ -40,7 +40,7 @@ install -m 644 "$DIR"/tabule-kiosk.service    /etc/systemd/system/
 install -m 644 "$DIR"/tabule-restart.service  /etc/systemd/system/
 install -m 644 "$DIR"/tabule-restart.timer    /etc/systemd/system/
 install -m 644 "$DIR"/tabule-watchdog.service /etc/systemd/system/
-chmod +x "$DIR"/tabule-watchdog.sh "$DIR"/diagnose.sh "$DIR"/soak.sh
+chmod +x "$DIR"/tabule-watchdog.sh "$DIR"/diagnose.sh "$DIR"/soak.sh "$DIR"/tabule-chromium.sh
 
 systemctl daemon-reload
 if [ "$REMOTE" -eq 0 ]; then
