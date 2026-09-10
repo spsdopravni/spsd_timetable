@@ -367,6 +367,20 @@ const TramDeparturesConnectedComponent = ({
   // Nejdřív vyhodit spoje, na které se už nedá doběhnout, teprve pak omezit
   // počet — jinak by nestihnutelné odjezdy ukrajovaly z limitu.
   const catchableDepartures = departures.filter(isCatchable);
+  /**
+   * Odsazení uvnitř řádku odjezdu.
+   *
+   * Držíme to na jednom místě, aby obě varianty dýchaly stejně. Dřív tu byl
+   * padding 0.6 rem na všech stranách, takže se odznak linky lepil na hranu
+   * karty a čas na pravý okraj.
+   *
+   * Vodorovně víc než svisle: řádek je široký a nízký, takže vzduch po
+   * stranách je vidět, kdežto svislý jen zvětšuje výšku a ubírá odjezdů.
+   * V seznamu je odsazení menší — položka nemá vlastní hranu, od které by
+   * se text musel odtahovat, a zbytečný vzduch by rozbil rytmus linek.
+   */
+  const rowPadding = layout === 'cards' ? '0.9rem 1.6rem' : '0.75rem 1.3rem';
+
   const limitedDepartures = catchableDepartures.slice(0, maxItems);
 
   return (
@@ -415,7 +429,7 @@ const TramDeparturesConnectedComponent = ({
                       : 'border-b border-gray-100 last:border-b-0'
                   }`}
                   style={{
-                    padding: `${Math.max(0.3, 0.6 * 1.0)}rem`,
+                    padding: rowPadding,
                     minHeight: `${Math.max(4, 6 * 1.0)}rem`,
                     ...(layout === 'cards' && { marginBottom: '0.5rem' }),
                     // Zvýrazněný řádek se pozná podle podbarvení a odznaku
@@ -423,7 +437,9 @@ const TramDeparturesConnectedComponent = ({
                     // tři signály pro jednu informaci.
                     ...(isSchoolTram(departure, stationName) && {
                       background: 'rgba(235, 93, 67, 0.12)',
-                      ...(layout === 'list' && { borderBottomColor: 'transparent' })
+                      // V seznamu dostane podbarvení stejné zaoblení jako
+                      // kartička, ať nekončí ostrou hranou uprostřed sloupce.
+                      ...(layout === 'list' && { borderBottomColor: 'transparent', borderRadius: '0.75rem' })
                     })
                   }}
                 >
