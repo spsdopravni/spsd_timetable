@@ -25,7 +25,16 @@ FROM nginx:1.27-alpine AS runtime
 COPY docker/nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/dist /usr/share/nginx/html
 
-ENV NGINX_PORT=80 \
+# Prázdné výchozí hodnoty jsou nutné: envsubst nahradí jen proměnné, které
+# v prostředí existují. Kdyby některá chyběla, zůstal by v konfiguraci
+# literál ${GOLEMIO_KEY_2}, nginx by ho vzal jako svoji proměnnou a odmítl
+# by nastartovat. Takhle se jen nedoplní token a selže konkrétní požadavek.
+ENV GOLEMIO_KEY_1="" \
+    GOLEMIO_KEY_2="" \
+    GOLEMIO_KEY_3="" \
+    GOLEMIO_KEY_PRAGENSIS="" \
+    WEATHER_KEY="" \
+    NGINX_PORT=80 \
     METEO_UPSTREAM=http://10.0.10.208 \
     GOLEMIO_UPSTREAM=https://api.golemio.cz \
     WEATHER_UPSTREAM=https://api.weatherapi.com \

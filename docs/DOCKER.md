@@ -70,8 +70,8 @@ Build args:
 |---|---|
 | `VITE_USE_MOCK_DATA` | `true` = běží na vymyšlených datech, k vyzkoušení bez klíčů |
 
-`VITE_API_PROXY=/api` nastavuje Dockerfile napevno — bez něj by se klient
-snažil chodit přímo na Golemio a potřeboval by klíče v buildu.
+`VITE_API_PROXY` je nově výchozí `/api`, takže proxy režim platí i pro build
+na Vercelu (viz `docs/NASAZENI.md`). Dockerfile ho nastavuje explicitně.
 
 ## Co image obsahuje
 

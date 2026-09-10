@@ -3,7 +3,7 @@ import type { WeatherData } from "@/types/weather";
 import { apiCache } from "./apiCache";
 
 // Viz pidApi.ts: v proxy režimu klíč doplní nginx a v bundlu není.
-const API_PROXY = import.meta.env.VITE_API_PROXY as string | undefined;
+const API_PROXY = (import.meta.env.VITE_API_PROXY ?? '/api') as string;
 const USE_PROXY = Boolean(API_PROXY);
 const WEATHER_API_KEY = (import.meta.env.VITE_WEATHER_KEY as string) || "";
 const WEATHER_BASE = USE_PROXY ? `${API_PROXY}/weather` : "https://api.weatherapi.com/v1";

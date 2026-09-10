@@ -5,12 +5,14 @@ import { apiCache, cached } from "./apiCache";
 /**
  * Kam se chodí pro data.
  *
- * VITE_API_PROXY (např. "/api") zapne režim přes vlastní server: klient volá
- * stejný origin a klíč k API se doplňuje až v nginxu. Bez něj se chodí přímo
- * na Golemio a klíče musí být v buildu — což znamená, že si je kdokoli
- * přečte z bundlu. Docker build proto proxy zapíná.
+ * Výchozí je "/api" — tedy vlastní origin, kde klíč doplní až server
+ * (nginx v Dockeru nebo serverless funkce na Vercelu). Klíče se tak
+ * nedostanou do bundlu, odkud si je jinak kdokoli přečte.
+ *
+ * Přímé volání Golemia se zapne prázdnou hodnotou VITE_API_PROXY="";
+ * pak ale musí být klíče v buildu (VITE_GOLEMIO_KEY_*).
  */
-const API_PROXY = import.meta.env.VITE_API_PROXY as string | undefined;
+const API_PROXY = (import.meta.env.VITE_API_PROXY ?? '/api') as string;
 const USE_PROXY = Boolean(API_PROXY);
 const API_BASE = USE_PROXY ? `${API_PROXY}/pid` : "https://api.golemio.cz";
 
