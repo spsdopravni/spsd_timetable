@@ -71,7 +71,7 @@ function TrendArrow({ trend, onDark = false, className = "" }: { trend: Trend; o
 /* ── alert icon ────────────────────────────────────────────── */
 
 function AlertIcon({ alert, size = "w-6 h-6" }: { alert: WeatherAlert; size?: string }) {
-  const color = alert.severity === "danger" ? "text-red-600" : "text-amber-600";
+  const color = alert.severity === "danger" ? "text-red-300" : "text-amber-300";
   const cls = `${size} ${color}`;
   switch (alert.type) {
     case "frost": return <Snowflake className={cls} />;
@@ -117,14 +117,14 @@ function AlertBannerRotating({ alerts }: { alerts: WeatherAlert[] }) {
   const isDanger = alert.severity === "danger";
 
   return (
-    <div className={`relative overflow-hidden border-b ${isDanger ? "bg-red-50 border-red-200" : "bg-amber-50 border-amber-200"}`}>
+    <div className={`relative overflow-hidden border-b border-white/10 ${isDanger ? "bg-red-900/60" : "bg-amber-900/50"}`}>
       <div className="relative flex items-center justify-center gap-4 py-2 px-6">
         <div
           className={`flex items-center gap-3 transition-all duration-400 ${visible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"}`}
           style={{ transition: "opacity 0.4s ease, transform 0.4s ease" }}
         >
           <AlertIcon alert={alert} size="w-6 h-6" />
-          <span className={`text-lg font-bold tracking-wide ${isDanger ? "text-red-700" : "text-amber-800"}`}>
+          <span className={`text-lg font-bold tracking-wide ${isDanger ? "text-red-100" : "text-amber-100"}`}>
             {alert.message}
           </span>
         </div>
@@ -137,8 +137,8 @@ function AlertBannerRotating({ alerts }: { alerts: WeatherAlert[] }) {
                 key={i}
                 className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
                   i === index % alerts.length
-                    ? (isDanger ? "bg-red-500 w-3" : "bg-amber-500 w-3")
-                    : "bg-gray-300"
+                    ? (isDanger ? "bg-red-300 w-3" : "bg-amber-300 w-3")
+                    : "bg-white/25"
                 }`}
                 style={{ borderRadius: "999px" }}
               />
@@ -180,21 +180,21 @@ function Metric({ icon, label, value, unit, accent = "", sub, trend, variant = "
         {icon}
       </div>
       <div className="min-w-0">
-        <div className={`text-xs font-medium uppercase tracking-wide leading-tight truncate ${isEvent ? "text-white/60" : "text-gray-500"}`}>
+        <div className="text-xs font-medium uppercase tracking-wide leading-tight truncate text-white/55">
           {label}
         </div>
         <div className="flex items-baseline gap-1">
           <span
-            className={`font-bold leading-tight tabular-nums ${isEvent ? "text-white" : accent || "text-gray-900"}`}
+            className={`font-bold leading-tight tabular-nums ${accent || "text-white"}`}
             style={{ fontSize: "clamp(1.4rem, 2.6vh, 2rem)" }}
           >
             {value}
           </span>
-          <span className={`text-sm font-medium ${isEvent ? "text-white/50" : "text-gray-400"}`}>{unit}</span>
-          {trend && <TrendArrow trend={trend} onDark={isEvent} />}
+          <span className="text-sm font-medium text-white/45">{unit}</span>
+          {trend && <TrendArrow trend={trend} onDark />}
         </div>
         {sub && (
-          <div className={`text-xs leading-tight truncate ${isEvent ? "text-white/50" : "text-gray-400"}`}>{sub}</div>
+          <div className="text-xs leading-tight truncate text-white/45">{sub}</div>
         )}
       </div>
     </div>
@@ -208,7 +208,7 @@ interface MeteoStationProps {
 }
 
 function MeteoStationComponent({ variant = "default" }: MeteoStationProps) {
-  const { data, extras, connected, available, lastUpdate } = useMeteoStation();
+  const { data, extras, connected, available } = useMeteoStation();
 
   // On HTTPS (Vercel) — meteostation not reachable, hide completely
   if (!available) return null;
@@ -220,15 +220,15 @@ function MeteoStationComponent({ variant = "default" }: MeteoStationProps) {
   if (!hasData) {
     return (
       <div
-        className={`w-full ${isEvent ? "" : "bg-white/95 border-b-4 border-blue-600"}`}
+        className={`w-full ${isEvent ? "" : "bg-blue-900 border-b-4 border-blue-600"}`}
         style={eventAccent ? { background: "#1a1a1a", borderTop: `3px solid ${eventAccent.hex}`, borderBottom: `3px solid ${eventAccent.hex}` } : undefined}
       >
         <div className="flex items-center justify-center gap-3 py-4 px-6">
           <div
-            className={`w-3 h-3 rounded-full animate-pulse ${isEvent ? "" : "bg-blue-500"}`}
+            className={`w-3 h-3 rounded-full animate-pulse ${isEvent ? "" : "bg-blue-300"}`}
             style={eventAccent ? { background: eventAccent.hex } : undefined}
           />
-          <span className={`text-lg ${isEvent ? "text-white/70" : "text-gray-500"}`}>
+          <span className={`text-lg ${isEvent ? "text-white/70" : "text-white/60"}`}>
             Meteostanice — načítání dat...
           </span>
         </div>
@@ -251,7 +251,7 @@ function MeteoStationComponent({ variant = "default" }: MeteoStationProps) {
 
   return (
     <div
-      className={`w-full shadow-sm ${isEvent ? "" : `border-b-4 ${connected ? "bg-white/95 border-blue-600" : "bg-red-50/60 border-red-400"}`}`}
+      className={`w-full ${isEvent ? "" : `border-b-4 border-blue-600 ${connected ? "bg-blue-900" : "bg-blue-950"}`}`}
       style={eventAccent ? { background: "#1a1a1a", borderTop: `3px solid ${eventAccent.hex}`, borderBottom: `3px solid ${eventAccent.hex}` } : undefined}
     >
 
@@ -263,26 +263,26 @@ function MeteoStationComponent({ variant = "default" }: MeteoStationProps) {
         {/* ── teplota (velká, výrazná) ─────────────────── */}
         <div
           className="flex items-center gap-3 pr-6 flex-shrink-0"
-          style={eventAccent ? { borderRight: `1px solid rgba(${eventAccent.rgb}, 0.35)` } : { borderRight: "1px solid rgb(229,231,235)" }}
+          style={eventAccent ? { borderRight: `1px solid rgba(${eventAccent.rgb}, 0.35)` } : { borderRight: "1px solid rgba(255,255,255,0.18)" }}
         >
-          <Thermometer className={`w-10 h-10 ${temperatureColor(data.teplota, isEvent)}`} />
+          <Thermometer className={`w-10 h-10 ${temperatureColor(data.teplota, true)}`} />
           <div>
             <div className="flex items-center gap-2">
-              <span className={`text-xs font-medium uppercase tracking-wide ${isEvent ? "text-white/60" : "text-gray-500"}`}>Teplota</span>
-              <TrendArrow trend={extras.tempTrend} onDark={isEvent} />
+              <span className="text-xs font-medium uppercase tracking-wide text-white/55">Teplota</span>
+              <TrendArrow trend={extras.tempTrend} onDark />
             </div>
-            <div className={`font-extrabold leading-none tabular-nums ${temperatureColor(data.teplota, isEvent)}`} style={{ fontSize: "clamp(2.2rem, 4vh, 3.2rem)" }}>
+            <div className={`font-extrabold leading-none tabular-nums ${temperatureColor(data.teplota, true)}`} style={{ fontSize: "clamp(2.2rem, 4vh, 3.2rem)" }}>
               {val(data.teplota)}
-              <span className={`font-bold ml-0.5 ${isEvent ? "text-white/60" : "text-gray-400"}`} style={{ fontSize: "clamp(1rem, 2vh, 1.5rem)" }}>&#176;C</span>
+              <span className={`font-bold ml-0.5 text-white/50`} style={{ fontSize: "clamp(1rem, 2vh, 1.5rem)" }}>&#176;C</span>
             </div>
             <div className="flex items-center gap-3 mt-0.5">
               {feelsLikeDiff && (
-                <span className={`text-xs ${isEvent ? "text-white/60" : "text-gray-500"}`}>
+                <span className="text-xs text-white/55">
                   Pocitově {val(extras.feelsLike)}&#176;C
                 </span>
               )}
               {extras.tempMin !== null && extras.tempMax !== null && (
-                <span className={`text-xs tabular-nums ${isEvent ? "text-white/50" : "text-gray-400"}`}>
+                <span className="text-xs tabular-nums text-white/40">
                   {val(extras.tempMin)}&#176; / {val(extras.tempMax)}&#176;
                 </span>
               )}
@@ -294,7 +294,7 @@ function MeteoStationComponent({ variant = "default" }: MeteoStationProps) {
         <div className="flex-1 grid grid-cols-6 gap-x-5">
           <Metric
             variant={variant}
-            icon={<Droplets className={iconCls("w-6 h-6 text-blue-600")} style={iconStyle} />}
+            icon={<Droplets className={iconCls("w-6 h-6 text-blue-300")} style={iconStyle} />}
             label="Vlhkost"
             value={val(data.vlhkost, 0)}
             unit="%"
@@ -304,7 +304,7 @@ function MeteoStationComponent({ variant = "default" }: MeteoStationProps) {
 
           <Metric
             variant={variant}
-            icon={<Gauge className={iconCls("w-6 h-6 text-blue-600")} style={iconStyle} />}
+            icon={<Gauge className={iconCls("w-6 h-6 text-blue-300")} style={iconStyle} />}
             label="Tlak"
             value={val(data.tlakMoreHladina, 0)}
             unit="hPa"
@@ -314,7 +314,7 @@ function MeteoStationComponent({ variant = "default" }: MeteoStationProps) {
 
           <Metric
             variant={variant}
-            icon={<Wind className={iconCls("w-6 h-6 text-blue-600")} style={iconStyle} />}
+            icon={<Wind className={iconCls("w-6 h-6 text-blue-300")} style={iconStyle} />}
             label="Vítr"
             value={val(data.prumernaRychlostVetruKmh)}
             unit="km/h"
@@ -326,7 +326,7 @@ function MeteoStationComponent({ variant = "default" }: MeteoStationProps) {
             variant={variant}
             icon={
               <Navigation
-                className={`${iconCls("text-blue-600")} w-6 h-6 transition-transform duration-700`}
+                className={`${iconCls("text-blue-300")} w-6 h-6 transition-transform duration-700`}
                 style={{
                   ...(iconStyle ?? {}),
                   transform: data.smerVetruStupne !== null
@@ -343,17 +343,17 @@ function MeteoStationComponent({ variant = "default" }: MeteoStationProps) {
 
           <Metric
             variant={variant}
-            icon={<CloudRain className={iconCls(`w-6 h-6 ${isRaining ? "text-blue-700" : "text-blue-600"}`)} style={iconStyle} />}
+            icon={<CloudRain className={iconCls(`w-6 h-6 ${isRaining ? "text-sky-200" : "text-blue-300"}`)} style={iconStyle} />}
             label="Srážky dnes"
             value={val(data.srazkyZaDen, 1)}
             unit="mm"
-            accent={isRaining ? "text-blue-700" : ""}
+            accent={isRaining ? "text-sky-200" : ""}
             sub={isRaining ? `${val(data.srazkyZaMin, 2)} mm/min` : undefined}
           />
 
           <Metric
             variant={variant}
-            icon={<Waves className={iconCls("w-6 h-6 text-blue-600")} style={iconStyle} />}
+            icon={<Waves className={iconCls("w-6 h-6 text-blue-300")} style={iconStyle} />}
             label="Rosný bod"
             value={val(data.rosnyBod)}
             unit="&#176;C"
@@ -364,26 +364,22 @@ function MeteoStationComponent({ variant = "default" }: MeteoStationProps) {
         {/* ── status ───────────────────────────────────── */}
         <div
           className="flex-shrink-0 pl-6"
-          style={eventAccent ? { borderLeft: `1px solid rgba(${eventAccent.rgb}, 0.35)` } : { borderLeft: "1px solid rgb(229,231,235)" }}
+          style={eventAccent ? { borderLeft: `1px solid rgba(${eventAccent.rgb}, 0.35)` } : { borderLeft: "1px solid rgba(255,255,255,0.18)" }}
         >
-          <div className="flex flex-col items-end gap-1">
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-2.5 h-2.5 rounded-full ${!isEvent && connected ? "bg-emerald-500" : !isEvent && !connected ? "bg-red-500" : ""}`}
-                style={eventAccent ? { background: connected ? eventAccent.hex : "#ef4444", boxShadow: connected ? `0 0 8px rgba(${eventAccent.rgb}, 0.6)` : undefined } : undefined}
-              />
-              <span
-                className={`text-xs font-medium ${!isEvent ? (connected ? "text-emerald-700" : "text-red-600") : ""}`}
-                style={eventAccent ? { color: connected ? eventAccent.hex : "#ef4444" } : undefined}
-              >
-                {connected ? "Online" : "Offline"}
-              </span>
-            </div>
-            {lastUpdate && (
-              <span className={`text-xs tabular-nums ${isEvent ? "text-white/50" : "text-gray-400"}`}>
-                {lastUpdate.toLocaleTimeString("cs-CZ")}
-              </span>
-            )}
+          {/* Jen tečka a stav. Čas poslední aktualizace vedle velkých hodin
+              v hlavičce působil jako druhý, konkurenční čas — a nikdo ho
+              na tabuli nečte. */}
+          <div className="flex items-center gap-2">
+            <div
+              className={`w-2.5 h-2.5 rounded-full ${!isEvent && connected ? "bg-emerald-400" : !isEvent && !connected ? "bg-red-400" : ""}`}
+              style={eventAccent ? { background: connected ? eventAccent.hex : "#ef4444" } : undefined}
+            />
+            <span
+              className={`text-xs font-medium ${!isEvent ? (connected ? "text-emerald-300" : "text-red-300") : ""}`}
+              style={eventAccent ? { color: connected ? eventAccent.hex : "#ef4444" } : undefined}
+            >
+              {connected ? "Online" : "Offline"}
+            </span>
           </div>
         </div>
       </div>

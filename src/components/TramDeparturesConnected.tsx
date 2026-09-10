@@ -274,84 +274,57 @@ const TramDeparturesConnectedComponent = ({
     return alerts;
   };
 
+  /**
+   * Kolik sekund chůze na zastávku počítáme.
+   *
+   * Když je k dispozici GPS (walkSeconds), použije se. Jinak platí ručně
+   * změřené hodnoty pro jednotlivé zastávky — tyhle konstanty byly do teď
+   * rozeseté uvnitř formatDisplayTime, takže se stejná čísla používala
+   * na dvou místech a nešlo podle nich filtrovat.
+   */
+  const walkTimeFor = (departure: Departure): number => {
+    if (walkSeconds !== undefined && walkSeconds > 0) return walkSeconds;
+
+    const station = stationName.toLowerCase();
+
+    if (station.includes('vozovna')) {
+      const combined = `${departure.headsign ?? ''} ${departure.trip_headsign ?? ''}`.toLowerCase();
+      if (combined.includes('centrum')) return 30;
+      if (combined.includes('řepy') || combined.includes('repy')) return 50;
+      return 0;
+    }
+    if (station.includes('motol')) return 60;
+    if (station.includes('vyšehrad') || station.includes('vysehrad')) return 60;
+    if (station.includes('svatoplukova')) return 60;
+    if (station.includes('jana masaryka')) return 120;
+    if (station.includes('šumavská') || station.includes('sumavska')) return 240;
+    return 0;
+  };
+
+  /**
+   * Dá se spoj ještě stihnout?
+   *
+   * Nestihnutelné odjezdy se ze seznamu vyřazují úplně: informace „Nestíháš"
+   * je na tabuli k ničemu, jen zabírá řádek, na kterém by mohl být spoj,
+   * na který student doběhne.
+   */
+  const isCatchable = (departure: Departure): boolean => {
+    const timeToArrival = departure.arrival_timestamp - currentTime;
+    if (timeToArrival <= 0) return false;
+    return timeToArrival >= walkTimeFor(departure);
+  };
+
   const formatDisplayTime = (departure: Departure) => {
     const timeToArrival = departure.arrival_timestamp - currentTime;
 
     if (showTimesInMinutes) {
       const minutes = Math.floor(timeToArrival / 60);
 
-      // GPS-based stíháš/nestíháš — má přednost před hardcoded heuristikou.
-      if (walkSeconds !== undefined && walkSeconds > 0) {
-        if (timeToArrival < walkSeconds) return 'Nestíháš';
-        if (timeToArrival < walkSeconds + 60) return 'Stíháš';
-        return `${minutes} min`;
-      }
-
-      const station = stationName.toLowerCase();
-      if ((station.includes('motol') && !station.includes('vozovna')) && minutes < 4) {
-        return 'Nestíháš';
-      }
-
-      if (station.includes('vozovna motol') || station.includes('vozovna')) {
-        const headsign = departure.headsign?.toLowerCase() || '';
-        const direction = departure.trip_headsign?.toLowerCase() || '';
-        const combinedInfo = `${headsign} ${direction}`.toLowerCase();
-
-        if (combinedInfo.includes('centrum')) {
-          if (timeToArrival < 30) {
-            return 'Nestíháš';
-          } else if (timeToArrival < 60) {
-            return 'Stíháš';
-          }
-        }
-        else if (combinedInfo.includes('řepy') || combinedInfo.includes('repy')) {
-          if (timeToArrival < 50) {
-            return 'Nestíháš';
-          } else if (timeToArrival < 60) {
-            return 'Stíháš';
-          }
-        }
-        else if (timeToArrival < 60) {
-          return 'Stíháš';
-        }
-      }
-      else if ((station.includes('motol') && !station.includes('vozovna')) && timeToArrival < 60) {
-        return 'Nestíháš';
-      }
-      else if (station.includes('vyšehrad') || station.includes('vysehrad')) {
-        if (timeToArrival < 60) {
-          return 'Nestíháš';
-        } else if (timeToArrival < 120) {
-          return 'Stíháš';
-        }
-      }
-      else if (station.includes('svatoplukova')) {
-        if (timeToArrival < 60) {
-          return 'Nestíháš';
-        } else if (timeToArrival < 120) {
-          return 'Stíháš';
-        }
-      }
-      // Jana Masaryka - 2 min chůze (120s)
-      else if (station.includes('jana masaryka')) {
-        if (timeToArrival < 120) {
-          return 'Nestíháš';
-        } else if (timeToArrival < 180) {
-          return 'Stíháš';
-        }
-      }
-      // Šumavská - 4 min chůze (240s)
-      else if (station.includes('šumavská') || station.includes('sumavska')) {
-        if (timeToArrival < 240) {
-          return 'Nestíháš';
-        } else if (timeToArrival < 300) {
-          return 'Stíháš';
-        }
-      }
-      else if (timeToArrival < 60) {
-        return '<1 min';
-      }
-
+      // Nestihnutelné spoje jsou už odfiltrované (viz isCatchable), takže
+      // tady zbývá jen odlišit „stihneš tak tak" od běžného odpočtu.
+      const walk = walkTimeFor(departure);
+      if (walk > 0 && timeToArrival < walk + 60) return 'Stíháš';
+      if (timeToArrival < 60) return walk > 0 ? 'Stíháš' : '<1 min';
       return `${minutes} min`;
     } else {
       return new Date(departure.arrival_timestamp * 1000).toLocaleTimeString('cs-CZ', {
@@ -387,7 +360,10 @@ const TramDeparturesConnectedComponent = ({
     );
   }
 
-  const limitedDepartures = departures.slice(0, maxItems);
+  // Nejdřív vyhodit spoje, na které se už nedá doběhnout, teprve pak omezit
+  // počet — jinak by nestihnutelné odjezdy ukrajovaly z limitu.
+  const catchableDepartures = departures.filter(isCatchable);
+  const limitedDepartures = catchableDepartures.slice(0, maxItems);
 
   return (
     <Card className="shadow-lg bg-white/90 h-full border-2 border-gray-300 flex flex-col overflow-hidden">
@@ -400,8 +376,12 @@ const TramDeparturesConnectedComponent = ({
           <div className="text-center py-8 text-gray-600 flex-1 flex items-center justify-center">
             <div>
               <Info className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 mx-auto mb-2 sm:mb-4 text-gray-400" style={{ width: `${Math.max(3, 4 * 1.0)}rem`, height: `${Math.max(3, 4 * 1.0)}rem` }} />
-              <p style={{ fontSize: `${Math.max(1.8, 2.8 * 1.0)}rem` }}>Žádné odjezdy do 30 min</p>
-              <p style={{ fontSize: `${Math.max(1.4, 2.2 * 1.0)}rem` }}>Zkontrolujte později</p>
+              <p style={{ fontSize: `${Math.max(1.8, 2.8 * 1.0)}rem` }}>
+                {departures.length > 0 ? 'Nic už nestihneš' : 'Žádné odjezdy do 30 min'}
+              </p>
+              <p style={{ fontSize: `${Math.max(1.4, 2.2 * 1.0)}rem` }}>
+                {departures.length > 0 ? 'Další spoj se objeví za chvíli' : 'Zkontrolujte později'}
+              </p>
             </div>
           </div>
         ) : (limitedDepartures.length > 0 || loading) ? (
@@ -532,12 +512,15 @@ const TramDeparturesConnectedComponent = ({
                     <div className="flex items-center gap-2">
                       {(() => {
                         const display = formatDisplayTime(departure);
-                        const isStihas = showTimesInMinutes && (display.includes('Stíháš') || display.includes('Nestíháš'));
+                        // 'Nestíháš' se sem už nedostane — takové spoje jsou
+                        // odfiltrované v isCatchable, takže zbývá jen zelené
+                        // „Stíháš" ve smyslu „běž, ale dáš to".
+                        const isStihas = showTimesInMinutes && display === 'Stíháš';
                         if (isStihas) {
                           return (
                             <div className="font-bold" style={{
                               fontSize: `${Math.max(2.2, 4.0 * 1.0)}rem`,
-                              color: display.includes('Nestíháš') ? '#dc2626' : '#16a34a'
+                              color: '#16a34a'
                             }}>
                               {display}
                             </div>
