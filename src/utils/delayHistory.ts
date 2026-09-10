@@ -6,6 +6,9 @@
  * je 192 kB, které blokují první vykreslení kvůli zápisu statistik, na kterém
  * nezáleží. Takhle se stáhne až při prvním použití, po prvním snímku.
  */
+/** V mock režimu se do statistik nezapisuje ani nečte — jde o cizí službu. */
+const MOCK_MODE = import.meta.env.VITE_USE_MOCK_DATA === 'true';
+
 type SupabaseClient = typeof import("./supabase")["supabase"];
 let supabasePromise: Promise<SupabaseClient> | null = null;
 const getSupabase = (): Promise<SupabaseClient> => {
@@ -25,7 +28,7 @@ export async function recordDelaySnapshot(args: {
   routeType: number;
   delaySeconds: number;
 }): Promise<void> {
-  if (!args.tripId) return;
+  if (MOCK_MODE || !args.tripId) return;
   const now = Date.now();
   const last = lastSnapshot.get(args.tripId);
   if (last && now - last < 60_000) return;
@@ -64,6 +67,7 @@ const BOARD_SNAPSHOT_THROTTLE_MS = 10 * 60_000;
 export function recordDelaySnapshotsFromDepartures(
   departures: { trip_id?: string; route_short_name: string; route_type: number; delay?: number; delay_available?: boolean }[],
 ): void {
+  if (MOCK_MODE) return;
   const now = Date.now();
   const rows: {
     route_short_name: string;
@@ -121,6 +125,7 @@ export async function getAverageDelay(
   routeShortName: string,
   hourOfDay: number,
 ): Promise<DelayAverage | null> {
+  if (MOCK_MODE) return null;
   const key = `${routeShortName}-${hourOfDay}`;
   const cached = averagesCache.get(key);
   if (cached && Date.now() - cached.ts < CACHE_TTL_MS) return cached.data;
@@ -150,6 +155,7 @@ const BULK_CACHE_TTL_MS = 10 * 60 * 1000;
  * dotaz pro celou tabuli místo dotazu per spoj. Cache 10 min.
  */
 export async function getAverageDelaysForRoutes(routeShortNames: string[]): Promise<DelayAverageMap> {
+  if (MOCK_MODE) return new Map();
   const routes = Array.from(new Set(routeShortNames)).sort();
   if (routes.length === 0) return new Map();
 

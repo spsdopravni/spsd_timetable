@@ -3,6 +3,13 @@ import { useState, useEffect, useRef, useCallback } from "react";
 // Dev: Vite proxy, Prod: Nginx proxy — both on /meteo
 const BASE = "/meteo";
 
+/**
+ * V mock režimu se meteostanice neptáme vůbec. Školní ESP32 je dostupné jen
+ * ze sítě školy, takže při vývoji každé kolo skončilo dvanácti neúspěšnými
+ * požadavky a konzole byla plná chyb, které nic neznamenají.
+ */
+const MOCK_MODE = import.meta.env.VITE_USE_MOCK_DATA === 'true';
+
 export interface MeteoData {
   teplota: number | null;
   vlhkost: number | null;
@@ -186,7 +193,7 @@ export function useMeteoStation() {
   const [data, setData] = useState<MeteoData>(INITIAL_DATA);
   const [extras, setExtras] = useState<MeteoExtras>(INITIAL_EXTRAS);
   const [connected, setConnected] = useState(false);
-  const [available, setAvailable] = useState(true);
+  const [available, setAvailable] = useState(!MOCK_MODE);
   const failCount = useRef(0);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const intervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -304,6 +311,7 @@ export function useMeteoStation() {
   // (např. hned po zapnutí Raspberry Pi, než naběhla síť) přestalo dotazovat
   // úplně a počasí zmizelo až do obnovení stránky.
   useEffect(() => {
+    if (MOCK_MODE) return;
     let cancelled = false;
 
     const tick = async () => {

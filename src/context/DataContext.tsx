@@ -226,26 +226,39 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
   });
 
   // Fetch world time for synchronization
+  /**
+   * Posun proti serverovému času.
+   *
+   * Bere se z hlavičky Date vlastního serveru, ne z externí služby. Dřív se
+   * volalo worldtimeapi.org, což je cizí origin — prohlížeč to blokoval CORS
+   * politikou (požadavek vůbec neprošel) a tabule tak stejně jela na lokálním
+   * čase, jen o tři sekundy později a s chybou v konzoli.
+   *
+   * HEAD na vlastní origin je zadarmo, funguje offline v rámci školní sítě
+   * a dá čas serveru, který má NTP.
+   */
   const fetchWorldTime = useCallback(async (): Promise<number> => {
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-
-      const response = await fetch('https://worldtimeapi.org/api/timezone/Europe/Prague', {
-        signal: controller.signal
+      // GET na malý statický soubor, ne HEAD na "/" — HEAD na SPA fallback
+      // některé servery (mimo jiné vite preview) ukončí s ERR_ABORTED.
+      // manifest.json má pár set bajtů a existuje v každém buildu.
+      const response = await fetch('/manifest.json', {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(3000),
       });
 
-      clearTimeout(timeoutId);
+      const dateHeader = response.headers.get('date');
+      if (!dateHeader) return 0;
 
-      if (!response.ok) {
-        return 0;
-      }
+      const serverTime = new Date(dateHeader).getTime();
+      if (!Number.isFinite(serverTime)) return 0;
 
-      const data = await response.json();
-      const serverTime = new Date(data.datetime);
-      const localTime = new Date();
-      return serverTime.getTime() - localTime.getTime();
-    } catch (error) {
+      const offset = serverTime - Date.now();
+      // Hlavička Date má přesnost na sekundy, takže posun pod pár sekund je
+      // šum. Korigovat se vyplatí až u rozdílů, které jsou vidět na tabuli.
+      return Math.abs(offset) > 5000 ? offset : 0;
+    } catch {
+      // Bez serveru zůstává lokální čas; na Pi ho drží NTP.
       return 0;
     }
   }, []);
