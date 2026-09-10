@@ -30,17 +30,25 @@ export interface DisplaySettings {
   snowfall: SnowfallMode;
   /** Vloží ukázkový alert do banneru, ať jde ověřit, že se zobrazuje. */
   testAlert: boolean;
+  /** Verze tvaru uložených dat – řídí jednorázové migrace v load(). */
+  version: number;
 }
+
+const SETTINGS_VERSION = 2;
 
 export const DEFAULT_SETTINGS: DisplaySettings = {
   showWeatherInHeader: false,
   showTimesInMinutes: true,
   maxItems: 7,
   layout: 'list',
-  motion: 'reduced',
+  // 'full': přechody karet a střídání směrů patří k tabuli. 'reduced' bylo
+  // krátce výchozí (9.–10. 9. 2026) a z tabule zmizely animace, které tam
+  // byly vždycky. Kdo je chce omezit, přepne v Nastavení.
+  motion: 'full',
   showRobot: true,
   snowfall: 'auto',
   testAlert: false,
+  version: SETTINGS_VERSION,
 };
 
 /** Úsporný režim — vypne to, co podle měření stojí nejvíc výkonu. */
@@ -64,8 +72,15 @@ function load(scope?: string): DisplaySettings {
 
     // Migrace ze starého tvaru: disableAnimations: boolean → motion
     if (typeof parsed.disableAnimations === 'boolean' && parsed.motion === undefined) {
-      parsed.motion = parsed.disableAnimations ? 'off' : 'reduced';
+      parsed.motion = parsed.disableAnimations ? 'off' : 'full';
       delete parsed.disableAnimations;
+    }
+    // Migrace v2: 'reduced' se na tabule uložilo jako výchozí hodnota, ne
+    // jako volba uživatele. Jednou ho zvedneme na 'full'; kdo si 'reduced'
+    // zvolí po téhle změně, má už `version: 2` a necháme ho být.
+    if (parsed.version === undefined) {
+      if (parsed.motion === 'reduced') parsed.motion = 'full';
+      parsed.version = SETTINGS_VERSION;
     }
     return { ...DEFAULT_SETTINGS, ...parsed };
   } catch {
