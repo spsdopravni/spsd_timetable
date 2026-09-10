@@ -244,11 +244,17 @@
 }
 
 /* Systémové „omezit pohyb" má poslední slovo. */
+/* Systémové „omezit pohyb" respektujeme, ale volba v Nastavení má přednost.
+   Tabule běží na Pi, kde tohle nastavení nikdo nezapne — zato na
+   vývojářově Macu bývá zapnuté a robot pak jen skáče, což vypadá jako
+   chyba. Kdo v Nastavení zvolí „Vše", dostane animace bez ohledu na systém.
+   Selektor musí mít stejnou specificitu jako pravidla robota výš (0,3,0),
+   jinak by je nepřebil; rozhoduje pak pořadí v souboru. */
 @media (prefers-reduced-motion: reduce) {
-  .robot-sprite,
-  .robot-image,
-  .robot-fade,
-  .service-alert-fade {
+  :root:not([data-motion="full"]) .robot-sprite,
+  :root:not([data-motion="full"]) .robot-image,
+  :root:not([data-motion="full"]) .robot-fade,
+  :root:not([data-motion="full"]) .service-alert-fade {
     transition: none !important;
     animation: none !important;
   }
