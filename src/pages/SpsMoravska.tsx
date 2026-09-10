@@ -296,7 +296,7 @@ const SpsMoravska = () => {
         <div className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0">
           {/* Left */}
           <div className="flex-1 p-2 overflow-hidden flex flex-col min-h-0">
-            <div className={`${settings.motion !== 'full' ? '' : `direction-header-animation ${isDirectionFadingOut ? 'fade-out' : ''}`} bg-white/95 border-b-8 border-blue-600 text-gray-800 px-3 shadow-lg flex items-center justify-center rounded-lg`} style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }} key={`left-header-${directionAnimationKey}`}>
+            <div className={`${settings.motion !== 'full' ? '' : `direction-header-animation ${isDirectionFadingOut ? 'fade-out' : ''}`} bg-white border-b-2 border-gray-200 text-gray-800 px-3 flex items-center justify-center rounded-t-xl shadow-sm`} style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }} key={`left-header-${directionAnimationKey}`}>
               <div className="flex items-center justify-center gap-2 w-full h-full">
                 <h2 className="font-bold leading-none" style={{ fontSize: 'clamp(1.75rem, 3.5vh, 2.5rem)' }}>
                   {(leftStation as any).directionJsx || leftStation.direction}
@@ -317,7 +317,7 @@ const SpsMoravska = () => {
 
           {/* Right */}
           <div className="flex-1 p-2 overflow-hidden flex flex-col min-h-0">
-            <div className={`${settings.motion !== 'full' ? '' : `direction-header-animation ${isDirectionFadingOut ? 'fade-out' : ''}`} bg-white/95 border-b-8 border-blue-600 text-gray-800 px-3 shadow-lg flex items-center justify-center rounded-lg`} style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }} key={`right-header-${directionAnimationKey}`}>
+            <div className={`${settings.motion !== 'full' ? '' : `direction-header-animation ${isDirectionFadingOut ? 'fade-out' : ''}`} bg-white border-b-2 border-gray-200 text-gray-800 px-3 flex items-center justify-center rounded-t-xl shadow-sm`} style={{ height: '6vh', minHeight: '70px', maxHeight: '90px' }} key={`right-header-${directionAnimationKey}`}>
               <div className="flex items-center justify-center gap-2 w-full h-full">
                 <h2 className="font-bold leading-none" style={{ fontSize: 'clamp(1.75rem, 3.5vh, 2.5rem)' }}>
                   {(rightStation as any).directionJsx || rightStation.direction}

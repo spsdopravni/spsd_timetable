@@ -366,7 +366,7 @@ const TramDeparturesConnectedComponent = ({
   const limitedDepartures = catchableDepartures.slice(0, maxItems);
 
   return (
-    <Card className="shadow-lg bg-white/90 h-full border-2 border-gray-300 flex flex-col overflow-hidden">
+    <Card className="bg-white h-full border-0 rounded-t-none rounded-b-xl shadow-sm flex flex-col overflow-hidden">
       <CardContent
         className="flex-1 p-2 flex flex-col min-h-full"
         style={{ paddingTop: `${0.5 * 1.0}rem` }}
@@ -400,19 +400,19 @@ const TramDeparturesConnectedComponent = ({
                   className={disableAnimations ? '' : 'departure-card-animation'}
                 >
                   <div
-                  className={`flex flex-col lg:flex-row items-start lg:items-center justify-between rounded-lg border relative flex-1 gap-1 sm:gap-2 lg:gap-0 ${
-                    isSchoolTram(departure, stationName)
-                      ? 'border-gray-100'
-                      : 'border-gray-100 bg-white'
+                  className={`flex flex-col lg:flex-row items-start lg:items-center justify-between relative flex-1 gap-1 sm:gap-2 lg:gap-0 border-b border-gray-100 last:border-b-0 ${
+                    isSchoolTram(departure, stationName) ? 'rounded-lg' : ''
                   }`}
                   style={{
                     padding: `${Math.max(0.3, 0.6 * 1.0)}rem`,
-                    marginBottom: `${0.3 * 1.0}rem`,
                     minHeight: `${Math.max(4, 6 * 1.0)}rem`,
+                    // Zvýrazněný řádek nese barvu na levé hraně místo rámečku
+                    // a stínu — ty ho dřív odtrhávaly od seznamu a působil
+                    // jako plovoucí kartička v jinak souvislém sloupci.
                     ...(isSchoolTram(departure, stationName) && {
-                      background: 'linear-gradient(to right, rgba(235, 93, 67, 0.2), rgba(235, 93, 67, 0.15))',
-                      borderColor: '#EB5D43',
-                      boxShadow: '0 2px 8px rgba(235, 93, 67, 0.4)'
+                      background: 'rgba(235, 93, 67, 0.10)',
+                      borderLeft: '4px solid #EB5D43',
+                      borderBottomColor: 'transparent'
                     })
                   }}
                 >
