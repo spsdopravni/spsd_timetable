@@ -3,6 +3,7 @@ import { Clock, AlertTriangle, Info, Snowflake, Car, MapPin, Wrench, Bus, Wind, 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useTime, useStation } from "@/context/DataContext";
+import type { DepartureLayout } from "@/hooks/useDisplaySettings";
 import { getAverageDelaysForRoutes, delayAverageKey, type DelayAverageMap } from "@/utils/delayHistory";
 import type { Departure } from "@/types/pid";
 
@@ -49,6 +50,8 @@ function getPredictedDelay(map: DelayAverageMap, departure: Departure): { text: 
 interface TramDeparturesConnectedProps {
   stationKey: string; // Klíč stanice z ALL_STATIONS
   maxItems?: number;
+  /** 'list' = souvislý seznam s oddělovači, 'cards' = oddělené kartičky. */
+  layout?: DepartureLayout;
   customTitle?: string;
   showTimesInMinutes?: boolean;
   stationName?: string;
@@ -61,6 +64,7 @@ interface TramDeparturesConnectedProps {
 const TramDeparturesConnectedComponent = ({
   stationKey,
   maxItems = 7,
+  layout = 'list',
   customTitle,
   showTimesInMinutes = false,
   stationName = "",
@@ -366,7 +370,9 @@ const TramDeparturesConnectedComponent = ({
   const limitedDepartures = catchableDepartures.slice(0, maxItems);
 
   return (
-    <Card className="bg-white h-full border-0 rounded-t-none rounded-b-xl shadow-sm flex flex-col overflow-hidden">
+    <Card className={`h-full border-0 rounded-t-none rounded-b-xl shadow-sm flex flex-col overflow-hidden ${
+      layout === 'cards' ? 'bg-slate-100' : 'bg-white'
+    }`}>
       <CardContent
         className="flex-1 p-2 flex flex-col min-h-full"
         style={{ paddingTop: `${0.5 * 1.0}rem` }}
@@ -400,19 +406,24 @@ const TramDeparturesConnectedComponent = ({
                   className={disableAnimations ? '' : 'departure-card-animation'}
                 >
                   <div
-                  className={`flex flex-col lg:flex-row items-start lg:items-center justify-between relative flex-1 gap-1 sm:gap-2 lg:gap-0 border-b border-gray-100 last:border-b-0 ${
-                    isSchoolTram(departure, stationName) ? 'rounded-lg' : ''
+                  className={`flex flex-col lg:flex-row items-start lg:items-center justify-between relative flex-1 gap-1 sm:gap-2 lg:gap-0 ${
+                    layout === 'cards'
+                      // Kartičky vystupují kontrastem proti podkladu panelu,
+                      // ne rámečkem. Bílá karta na bílém pozadí potřebovala
+                      // obrys, který pak jen přidával šum.
+                      ? 'rounded-xl bg-white shadow-sm'
+                      : 'border-b border-gray-100 last:border-b-0'
                   }`}
                   style={{
                     padding: `${Math.max(0.3, 0.6 * 1.0)}rem`,
                     minHeight: `${Math.max(4, 6 * 1.0)}rem`,
-                    // Zvýrazněný řádek nese barvu na levé hraně místo rámečku
-                    // a stínu — ty ho dřív odtrhávaly od seznamu a působil
-                    // jako plovoucí kartička v jinak souvislém sloupci.
+                    ...(layout === 'cards' && { marginBottom: '0.5rem' }),
+                    // Zvýrazněný řádek se pozná podle podbarvení a odznaku
+                    // „Školní tramvaj". Barevný pruh na hraně tu byl navíc —
+                    // tři signály pro jednu informaci.
                     ...(isSchoolTram(departure, stationName) && {
-                      background: 'rgba(235, 93, 67, 0.10)',
-                      borderLeft: '4px solid #EB5D43',
-                      borderBottomColor: 'transparent'
+                      background: 'rgba(235, 93, 67, 0.12)',
+                      ...(layout === 'list' && { borderBottomColor: 'transparent' })
                     })
                   }}
                 >

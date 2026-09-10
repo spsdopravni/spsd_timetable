@@ -311,6 +311,7 @@ const SpsMoravska = () => {
                 showTimesInMinutes={settings.showTimesInMinutes}
                 stationName={leftStation.simpleName}
                 disableAnimations={settings.motion !== 'full'}
+                layout={settings.layout}
               />
             </div>
           </div>
@@ -332,6 +333,7 @@ const SpsMoravska = () => {
                 showTimesInMinutes={settings.showTimesInMinutes}
                 stationName={rightStation.simpleName}
                 disableAnimations={settings.motion !== 'full'}
+                layout={settings.layout}
               />
             </div>
           </div>

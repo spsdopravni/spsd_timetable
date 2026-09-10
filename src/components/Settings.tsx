@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
 import {
-  X, CloudSun, Timer, Rows3, Sparkles, Bot, Snowflake, Megaphone, Leaf, RotateCcw,
+  X, CloudSun, Timer, Rows3, Sparkles, Bot, Snowflake, Megaphone, Leaf, RotateCcw, LayoutList,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import type { DisplaySettings, MotionLevel, SnowfallMode } from '@/hooks/useDisplaySettings';
+import type { DisplaySettings, MotionLevel, SnowfallMode, DepartureLayout } from '@/hooks/useDisplaySettings';
 
 interface SettingsProps {
   isOpen: boolean;
@@ -148,6 +148,18 @@ export const Settings = ({
                   value={settings.showTimesInMinutes ? 'min' : 'abs'}
                   onChange={v => onSettingChange('showTimesInMinutes', v === 'min')}
                   options={[{ value: 'min', label: 'Za 4 min' }, { value: 'abs', label: '16:32' }]}
+                />
+              </Row>
+
+              <Row icon={LayoutList} title="Vzhled seznamu" hint="Souvislý seznam, nebo oddělené kartičky.">
+                <Segmented
+                  label="Vzhled seznamu"
+                  value={settings.layout}
+                  onChange={v => onSettingChange('layout', v as DepartureLayout)}
+                  options={[
+                    { value: 'list' as DepartureLayout, label: 'Seznam' },
+                    { value: 'cards' as DepartureLayout, label: 'Kartičky' },
+                  ]}
                 />
               </Row>
 

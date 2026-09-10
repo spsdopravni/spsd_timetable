@@ -284,6 +284,7 @@ const Spsmotol = () => {
                 showTimesInMinutes={settings.showTimesInMinutes}
                 stationName={leftStation.simpleName || leftStation.textName || mainStationName}
                 disableAnimations={settings.motion !== 'full'}
+                layout={settings.layout}
               />
             </div>
           </div>
@@ -313,6 +314,7 @@ const Spsmotol = () => {
                 showTimesInMinutes={settings.showTimesInMinutes}
                 stationName={rightStation.simpleName || rightStation.textName || mainStationName}
                 disableAnimations={settings.motion !== 'full'}
+                layout={settings.layout}
               />
             </div>
           </div>

@@ -84,7 +84,7 @@ function ServiceAlertsComponent({ stationKeys, extraLines = [] }: ServiceAlertsP
   return (
     <div
       className="w-full text-white shadow-lg border-b border-white/10"
-      style={{ background: "#1f2937", borderLeft: `14px solid ${accent}` }}
+      style={{ background: "#1f2937" }}
     >
       <div
         className="service-alert-fade flex items-center gap-5 px-5"

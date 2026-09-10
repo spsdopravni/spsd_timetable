@@ -10,6 +10,8 @@ import { useCallback, useEffect, useState } from 'react';
 
 export type MotionLevel = 'full' | 'reduced' | 'off';
 export type SnowfallMode = 'auto' | 'on' | 'off';
+/** Jak vypadá seznam odjezdů: souvislý seznam, nebo oddělené kartičky. */
+export type DepartureLayout = 'list' | 'cards';
 
 export interface DisplaySettings {
   /** Počasí v hlavičce při rozděleném zobrazení. */
@@ -18,6 +20,8 @@ export interface DisplaySettings {
   showTimesInMinutes: boolean;
   /** Kolik odjezdů na sloupec. Na slabém HW je každý řádek práce navíc. */
   maxItems: number;
+  /** Vzhled seznamu: 'list' = souvislý seznam, 'cards' = oddělené kartičky. */
+  layout: DepartureLayout;
   /** full = vše, reduced = jen robot, off = nehýbe se nic. */
   motion: MotionLevel;
   /** Robot dole. Nejdražší jednotlivá věc na obrazovce. */
@@ -32,6 +36,7 @@ export const DEFAULT_SETTINGS: DisplaySettings = {
   showWeatherInHeader: false,
   showTimesInMinutes: true,
   maxItems: 7,
+  layout: 'list',
   motion: 'reduced',
   showRobot: true,
   snowfall: 'auto',
