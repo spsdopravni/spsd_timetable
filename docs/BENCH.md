@@ -1168,7 +1168,45 @@ medián ze dvou běhů na větev:
 | load (ms) | 275 | **136** | −51 % |
 | požadavků / min | 439,5 | **81,9** | −81 % |
 
-## 11. Co ještě zbývá
+## 11. Přepočty stylů — dořešeno
+
+Po prvním kole zbývalo 12,8 přepočtů stylů za sekundu, jejichž zdroj nebyl
+známý. Měření přes `--settings` (vypínání funkcí jednu po druhé) ukázalo,
+že za nimi stál celý robot:
+
+| varianta | CPU ms/s | styly ms/s | přepočtů/s |
+|---|---:|---:|---:|
+| tehdejší stav | 64,4 | 9,3 | 12,3 |
+| bez robota | 40,7 | 1,5 | **0,2** |
+
+Příčinou bylo, že moje první verze robota psala při každé fázi inline styl
+včetně vlastní property `--robot-dur`. Verze z `main` řídí fáze CSS třídou
+(`robot-phase-left` atd.), takže se nemění nic, co by si vynutilo přepočet.
+Po sloučení obou přístupů:
+
+| varianta | CPU ms/s | styly ms/s | přepočtů/s |
+|---|---:|---:|---:|
+| současný stav | 16,4 | 0,9 | **0,4** |
+| bez robota | 16,2 | 0,9 | 0,2 |
+
+Z 37 přepočtů za sekundu v původním kódu zbylo 0,4 a robot je prakticky
+zadarmo (16,4 vs 16,2 ms/s s ním vypnutým). Tyhle tři běhy proběhly v jedné
+relaci, takže jsou mezi sebou srovnatelné.
+
+### Poznámka k metodice — dvě chyby, které jsem udělal
+
+1. **Souběžný zápis do stromu.** Nechal jsem měřicí skript, který přepíná
+   `git checkout` mezi commity, běžet na pozadí a mezitím commitoval. Skript
+   mi přepsal `src/` starou verzí a commit tak zachytil hromadný revert.
+   Když měření sahá na pracovní strom, nesmí se do něj během běhu sahat.
+2. **Měření v odděleném worktree** vypadalo jako řešení, ale dva běhy téhož
+   commitu se lišily 3× a `req/min` spadlo na 4 — stránka si tam zjevně
+   nenačítala data stejně. Čísla z worktree nepoužívej.
+
+Platí tedy dál pravidlo z §3: srovnávat jen běhy proložené v jedné relaci
+v jednom pracovním stromu, a nic mezitím nedělat.
+
+## 12. Co ještě zbývá
 
 Změřený strop: s vypnutým robotem, animacemi i sněžením (`--settings
 motion=off,showRobot=false,snowfall=off`) padne CPU na ~37 ms/s. To je
@@ -1177,18 +1215,15 @@ stojí ~9 ms/s místo původních 24.
 
 Nezpracované, seřazeno podle odhadovaného přínosu:
 
-1. **Pořád 12,8 přepočtů stylů za sekundu**, i když je robot levný. Zbývá
-   dohledat, co je spouští — kandidáti jsou opacity přechody pruhu s textem
-   a vteřinová změna textu hodin.
-2. **Obrázky.** Hlavička je 288 kB PNG (784×736), robot 171–249 kB každý,
+1. **Obrázky.** Hlavička je 288 kB PNG (784×736), robot 171–249 kB každý,
    favicon 156 kB v rozlišení 489×510 px. Na Macu se to neprojeví, na Pi to
    je paměť a GPU textury. Převést na WebP a zmenšit na skutečně zobrazované
    rozměry.
-3. **Snowfall chunk (46 kB)** se stahuje celý rok, i když sněžení běží
+2. **Snowfall chunk (46 kB)** se stahuje celý rok, i když sněžení běží
    41 dní. Načítat přes dynamický import.
-4. **`setExtras` uvnitř `setData` updateru** (`useMeteoStation.ts`) — vedlejší
+3. **`setExtras` uvnitř `setData` updateru** (`useMeteoStation.ts`) — vedlejší
    efekt v reduceru, každý poll dělá dvojí render.
-5. **Globální `*` pravidla s `!important`** v `index.css` — teď už jen dvě,
+4. **Globální `*` pravidla s `!important`** v `index.css` — teď už jen dvě,
    ale pořád platí na každý element.
 
 Mimo frontend, ale s větším dopadem než cokoli výše: **proxovat Golemio
