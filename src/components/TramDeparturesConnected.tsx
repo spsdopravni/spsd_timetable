@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useTime, useStation } from "@/context/DataContext";
 import type { DepartureLayout } from "@/hooks/useDisplaySettings";
 import { getAverageDelaysForRoutes, delayAverageKey, type DelayAverageMap } from "@/utils/delayHistory";
+import { LukaContinuation } from "@/components/LukaContinuation";
 import type { Departure } from "@/types/pid";
 
 // Predikce se ukazuje až od tolika pozorování (méně = náhoda).
@@ -159,7 +160,7 @@ const TramDeparturesConnectedComponent = ({
             style={{ width: `${Math.max(1.6, 2.8 * 1.0)}rem`, height: `${Math.max(1.6, 2.8 * 1.0)}rem`, verticalAlign: 'middle' }}
           />
           <ArrowRight style={{ width: `${Math.max(1.6, 2.8 * 1.0)}rem`, height: `${Math.max(1.6, 2.8 * 1.0)}rem` }} className="text-blue-600" />
-          <span className="text-orange-600 font-medium">301/352</span>
+          <LukaContinuation departure={departure} />
         </div>
       );
     }

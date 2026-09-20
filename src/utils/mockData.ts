@@ -111,6 +111,23 @@ export const getMockDepartures = (): { departures: Departure[], alerts: any[] } 
       last_position_age: 0,
     },
     {
+      arrival_timestamp: now + 1500, // za 15 minut
+      departure_timestamp: now + 1500,
+      delay: 0,
+      route_short_name: "174",
+      route_type: 3, // Autobus
+      headsign: "Luka",
+      is_night: false,
+      trip_id: "174_12360_240101",
+      trip_number: "09",
+      wheelchair_accessible: true,
+      air_conditioning: true,
+      wifi: false,
+      low_floor: true,
+      vehicle_number: "3457",
+      last_position_age: 0,
+    },
+    {
       arrival_timestamp: now + 1020, // za 17 minut
       departure_timestamp: now + 1020,
       delay: 0,
