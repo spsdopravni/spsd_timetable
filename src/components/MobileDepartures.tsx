@@ -10,6 +10,7 @@ import { walkingMinutes } from "@/utils/walking";
 import { usePullToRefresh } from "@/utils/usePullToRefresh";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 import { BottomNav } from "@/components/BottomNav";
+import { LukaContinuation } from "@/components/LukaContinuation";
 import type { Departure } from "@/types/pid";
 
 /* ── types ─────────────────────────────────────────────────── */
@@ -101,7 +102,7 @@ function getDirectionDisplay(departure: Departure) {
         <span>{headsign}</span>
         <img src="/pictures/metroB.svg" alt="B" style={{ width: METRO_ICON_SIZE, height: METRO_ICON_SIZE }} className="inline-block" />
         <ArrowRight className="w-4 h-4 text-blue-600" />
-        <span className="text-orange-600 font-medium">301/352</span>
+        <LukaContinuation departure={departure} />
       </span>
     );
   }

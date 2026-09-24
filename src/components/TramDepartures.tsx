@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DepartureListSkeleton } from "@/components/DepartureListSkeleton";
 import { getDepartures, setThirdApiKey } from "@/utils/pidApi";
+import { LukaContinuation } from "@/components/LukaContinuation";
 import type { Departure } from "@/types/pid";
 
 interface TramDeparturesProps {
@@ -156,7 +157,7 @@ const TramDeparturesComponent = ({ stationId, maxItems = 5, customTitle, showTim
             style={{ width: `${Math.max(1.6, 2.8 * 1.0)}rem`, height: `${Math.max(1.6, 2.8 * 1.0)}rem`, verticalAlign: 'middle' }}
           />
           <ArrowRight style={{ width: `${Math.max(1.6, 2.8 * 1.0)}rem`, height: `${Math.max(1.6, 2.8 * 1.0)}rem` }} className="text-blue-600" />
-          <span className="text-orange-600 font-medium">301/352</span>
+          <LukaContinuation departure={departure} />
         </div>
       );
     }

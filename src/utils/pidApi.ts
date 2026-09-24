@@ -289,6 +289,121 @@ export const getTripStops = async (tripId: string): Promise<TripStop[]> => {
   }
 };
 
+/* ── Návaznost spoje (který vůz pojede dál jako jiná linka) ───── */
+
+const getTripBlockId = async (tripId: string): Promise<string | null> => {
+  try {
+    const res = await fetch(`${API_BASE}/v2/gtfs/trips/${encodeURIComponent(tripId)}`, {
+      headers: authHeaders(SLOT_1),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.block_id ? String(data.block_id) : null;
+  } catch {
+    return null;
+  }
+};
+
+const hmsToTodayUnix = (hms: string): number => {
+  const [h, m, s] = (hms || "00:00:00").split(":").map(Number);
+  const d = new Date();
+  d.setHours(h || 0, m || 0, s || 0, 0); // GTFS umí i 24:xx:xx, setHours to přeteče do dalšího dne
+  return Math.floor(d.getTime() / 1000);
+};
+
+const CONTINUATION_OK_TTL = 6 * 60 * 60 * 1000; // spoj se v rámci dne nemění
+const CONTINUATION_MISS_TTL = 60 * 1000;        // nenalezeno = zkusíme brzy znovu
+const continuationCache = new Map<string, { value: string | null; at: number }>();
+const continuationInflight = new Map<string, Promise<string | null>>();
+
+/**
+ * Zjistí, jako kterou z linek `candidateRoutes` bude pokračovat vůz spoje
+ * `departure` na jeho konečné. Páruje se přes GTFS `block_id` (oběh vozu),
+ * případně přes shodné evidenční číslo vozu. Když nic jistého nenajde, vrací
+ * null a volající ukáže obecný popisek.
+ */
+export const resolveContinuationRoute = (
+  departure: { trip_id?: string; vehicle_number?: string },
+  candidateRoutes: string[],
+): Promise<string | null> => {
+  const tripId = departure.trip_id;
+  if (!tripId) return Promise.resolve(null);
+  if (USE_MOCK_DATA) {
+    // Mock režim: bez API. Sudé číslo vozu -> první linka, liché -> druhá;
+    // se zpožděním, aby šel vidět přechod z obecného popisku.
+    const n = parseInt(departure.vehicle_number || "", 10);
+    const pick = Number.isNaN(n) ? null : candidateRoutes[n % candidateRoutes.length === 0 ? 0 : 1] ?? null;
+    return new Promise((resolve) => setTimeout(() => resolve(pick), 800));
+  }
+
+  const hit = continuationCache.get(tripId);
+  if (hit && Date.now() - hit.at < (hit.value ? CONTINUATION_OK_TTL : CONTINUATION_MISS_TTL)) {
+    return Promise.resolve(hit.value);
+  }
+  const running = continuationInflight.get(tripId);
+  if (running) return running;
+
+  const job = (async () => {
+    try {
+      const stops = await getTripStops(tripId);
+      const terminus = stops[stops.length - 1];
+      if (!terminus) return null;
+      const arrivalUnix = hmsToTodayUnix(terminus.arrivalTime || terminus.departureTime);
+
+      // Podle názvu, ne ID: navazující linka může odjíždět z jiného nástupiště.
+      const url =
+        `${API_BASE}/v2/pid/departureboards?names=${encodeURIComponent(terminus.stopName)}` +
+        `&limit=60&minutesBefore=0&minutesAfter=60`;
+      const res = await fetch(url, { headers: authHeaders(SLOT_1) });
+      if (!res.ok) return null;
+      const data = await res.json();
+
+      const candidates = (data.departures || [])
+        .filter((d: any) => candidateRoutes.includes(d.route?.short_name) && d.trip?.id)
+        .map((d: any) => {
+          const sched = d.departure_timestamp?.scheduled || d.departure_timestamp?.predicted;
+          return {
+            route: d.route.short_name as string,
+            tripId: d.trip.id as string,
+            blockId: (d.trip?.block_id ?? d.block_id) as string | undefined,
+            vehicle: (d.vehicle?.vehicle_registration_number || d.vehicle?.registration_number) as string | undefined,
+            ts: sched ? Math.floor(new Date(sched).getTime() / 1000) : null,
+          };
+        })
+        // Vůz na konečné nejdřív dojede; tolerance 60 s.
+        .filter((c: any) => c.ts !== null && c.ts >= arrivalUnix - 60)
+        .sort((a: any, b: any) => a.ts - b.ts)
+        .slice(0, 6);
+
+      if (candidates.length === 0) return null;
+
+      // 1) Stejné evidenční číslo vozu (jen když ho už API zná na obou spojích).
+      if (departure.vehicle_number) {
+        const byVehicle = candidates.find((c: any) => c.vehicle === departure.vehicle_number);
+        if (byVehicle) return byVehicle.route;
+      }
+
+      // 2) Stejný GTFS block_id.
+      const myBlock = await getTripBlockId(tripId);
+      if (!myBlock) return null;
+      for (const c of candidates) {
+        const block = c.blockId ?? (await getTripBlockId(c.tripId));
+        if (block === myBlock) return c.route;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  })();
+
+  continuationInflight.set(tripId, job);
+  job.then((value) => {
+    continuationCache.set(tripId, { value, at: Date.now() });
+    continuationInflight.delete(tripId);
+  });
+  return job;
+};
+
 export const searchStations = async (query: string): Promise<Station[]> => {
   const cacheKey = `stations_${query.toLowerCase()}`;
 
