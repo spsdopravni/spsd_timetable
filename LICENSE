@@ -1,21 +1,62 @@
-MIT License
+Proprietary License
 
-Copyright (c) 2025 Střední průmyslová škola dopravní, a.s.
+Copyright © 2026 Adam Brož (Brozovec). All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+1. Ownership
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+This project, including its source code, design, structure, documentation, graphics, user interface, and other original materials, is the property of the respective copyright holder(s).
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Unless explicitly stated otherwise, the project was created and is maintained by Adam Brož (Brozovec).
+
+Parts of the project may have been created with assistance from third parties or artificial intelligence tools. This license does not claim ownership of material that is legally owned by another person or entity.
+
+2. No Permission Granted
+
+No license, permission, or other authorization is granted to use, copy, modify, reproduce, distribute, publish, display, sublicense, sell, or otherwise exploit this project or any substantial part of it, except with prior written permission from the applicable copyright holder.
+
+Viewing the source code on GitHub does not constitute permission to use or reproduce it.
+
+3. Prohibited Uses
+
+Without prior written permission, you may not:
+
+* copy or reproduce the project or substantial portions of its source code;
+* publish or deploy the project, including as a public or private website;
+* use the project as the basis for another project;
+* modify and redistribute the project or substantial portions of it;
+* sell, license, sublicense, or otherwise commercially exploit the project;
+* remove or alter copyright notices or attribution;
+* present the project or substantial portions of it as your own work;
+* make the project or substantial portions of its source code publicly available.
+
+4. Derivative Works
+
+Creating a modified version, fork, adaptation, or derivative work based substantially on this project is not permitted without prior written permission from the applicable copyright holder(s).
+
+5. Third-Party Material
+
+This license does not grant rights to third-party material contained within the project.
+
+Any third-party code, libraries, assets, fonts, images, or other materials remain subject to their respective licenses and terms.
+
+6. Contributions
+
+Unless a separate written agreement states otherwise, a contribution made by another person remains subject to any rights that person may have in their contribution.
+
+Contributing to the project does not automatically grant permission to third parties to copy, publish, redistribute, or independently exploit the complete project.
+
+7. Permission Requests
+
+Requests for permission to use, reproduce, modify, publish, distribute, or otherwise use the project should be made directly to the copyright holder.
+
+Permission must be granted in writing before such use begins.
+
+8. Copyright
+
+Unauthorized use, reproduction, distribution, publication, or creation of derivative works may constitute infringement of applicable copyright or other intellectual-property rights.
+
+9. Reservation of Rights
+
+All rights not expressly granted by this license are reserved.
+
+Copyright © 2026 Adam Brož (Brozovec). All rights reserved.
